@@ -1,0 +1,4 @@
+^_pkgdown\.yml$
+^docs$
+^testsim\.R$
+^\.DS_Store$

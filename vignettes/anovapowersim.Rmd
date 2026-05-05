@@ -1,0 +1,126 @@
+---
+title: "Getting started with anovapowersim"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with anovapowersim}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4
+)
+```
+
+`anovapowersim` simulates power for balanced factorial ANOVA
+designs. Specify the factors/levels, the term of interest, and a target partial
+eta squared. `anovapowersim` generates default term-specific cell means,
+simulates datasets, refits the ANOVA with `stats::aov()`, and estimates power.
+
+```{r setup, message=FALSE}
+library(anovapowersim)
+```
+
+## Search for the required sample size
+
+The easiest way to get your required sample size is to use `power_n()` to
+search for the sample size needed to reach the requested `power`.
+
+This example is a 2 x 2 mixed design with one between-subject factor
+(`color`) and one within-subject factor (`age`).
+
+We specify that we are interested in the `color:age` interaction, and that we want to have 80% power to detect a partial eta squared of 0.14. `power_n()` will search for the required sample size per between-subject cell, so `n = 13` gives total `N = 26`.
+
+```{r adaptive}
+power_n(
+  between = c(cond = 2), # cond has 2 levels
+  within = c(stim = 4), # stim has 4 levels
+  term = "cond:stim",
+  target_pes = 0.14,
+  alpha = 0.05,
+  power = 0.80,
+  n_sims = 1000, # use 5000+ for a more precise estimate
+  seed = 123 # for reproducibility
+)
+```
+
+Note: here we use 1000 simulations for a quick example, but the package defaults to 10000 simulations for more precise estimates.
+
+The output table uses compact column names: `n_per_cell` is the sample size per
+between-subject cell, `total_n` is the full sample size, `num_df` and `den_df`
+are the ANOVA degrees of freedom, `ncp` is the noncentrality parameter,
+`power_calc` is the noncentral F power calculation, and `power_sim` is the
+simulation estimate.
+
+### Adding factors and levels
+
+You can add factors and levels as needed, and specify any term of interest. For, example if we want to add a between condition with 3 levels, and we are interested in the 3-way interaction, we can do:
+
+```{r complex, eval=FALSE}
+power_n(
+  between = c(cond = 2, age = 3), # cond has 2 levels, age has 3 levels
+  within = c(stim = 4), # stim has 4 levels
+  term = "cond:stim:age",
+  target_pes = 0.14,
+  alpha = 0.05,
+  power = 0.80,
+  n_sims = 1000, # use 5000+ for a more precise estimate
+  seed = 123 # for reproducibility
+)
+```
+
+## Simulate a power curve
+
+You might want to see how power changes across a range of sample sizes. `power_curve()` simulates power across a range of sample sizes, which you can specify with `n_range`. The result is a tidy data frame that you can plot with `plot_power_curve()`.
+
+```{r curve-fixed}
+pc <- power_curve(
+  between = c(cond = 2),
+  within = c(stim = 2),
+  term = "cond:stim",
+  target_pes = 0.14,
+  n_range = c(16, 20, 23, 28), # n per between-subject cell
+  n_sims = 1000,
+  seed = 123
+)
+pc
+```
+
+```{r plot-fixed}
+plot_power_curve(
+  pc,
+  power_lines = c(.80, .90) # adds horizontal lines at 80% and 90% power
+)
+```
+
+## Advanced options
+
+### Match the G\*Power convention
+
+By default, `anovapowersim` calibrates the simulated cell means so the empirical
+reference dataset has the requested partial eta squared under the fitted
+`stats::aov()` model. This corresponds to the fitted ANOVA denominator-df
+noncentrality convention.
+
+Set `gpower = TRUE` when you want the G\*Power-style convention
+`lambda = total_n * f^2`. This changes the calibration step and the
+`power_calc` column, so it is the best option when you are trying to reproduce a
+G\*Power calculation.
+
+```{r gpower-adaptive}
+power_n(
+  between = c(cond = 2),
+  within = c(stim = 4),
+  term = "cond:stim",
+  target_pes = 0.14,
+  alpha = 0.05,
+  power = 0.80,
+  n_sims = 1000,
+  seed = 123,
+  gpower = TRUE
+)
+```

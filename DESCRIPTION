@@ -1,0 +1,31 @@
+Package: anovapowersim
+Title: Simple power simulations for ANOVAs
+Version: 0.1.0
+Authors@R:
+    person("Shaheed", "Azaad", email = "sazaad@uni-muenster.de", role = c("aut", "cre"))
+Description: Simulation-based a priori power analysis for balanced ANOVA
+    designs using target partial eta squared values.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1)
+Imports:
+    dplyr,
+    ggplot2,
+    MASS,
+    purrr,
+    rlang,
+    stats,
+    tibble,
+    tidyr
+Suggests:
+    knitr,
+    pkgdown,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://shaheedazaad.github.io/anovapowersim/, https://github.com/shaheedazaad/anovapowersim
+BugReports: https://github.com/shaheedazaad/anovapowersim/issues

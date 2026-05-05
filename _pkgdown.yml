@@ -1,0 +1,46 @@
+url: https://shaheedazaad.github.io/anovapowersim/
+
+template:
+  bootstrap: 5
+
+home:
+  title: anovapowersim — Simple power simulations for ANOVAs
+  description: 
+
+navbar:
+  structure:
+    left:  [intro, reference, articles]
+    right: [github]
+  components:
+    intro:
+      text: Get started
+      href: articles/anovapowersim.html
+    reference:
+      text: Function reference
+      href: reference/index.html
+
+reference:
+  - title: Main interface
+    desc: >
+      The entry points most users will call directly.
+    contents:
+      - power_curve
+      - power_n
+      - plot_power_curve
+      - print.anovapowersim_curve
+      - summary.anovapowersim_curve
+
+  - title: Design components
+    desc: >
+      Lower-level building blocks for custom design-based simulations.
+    contents:
+      - balanced_anova_design
+      - design_term_means
+      - simulate_design_dataset
+      - compute_scale_factor
+
+articles:
+  - title: Getting started
+    navbar: ~
+    contents:
+      - anovapowersim

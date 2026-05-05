@@ -1,0 +1,8 @@
+.DS_Store
+testsim.R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rcheck/
+*.tar.gz
