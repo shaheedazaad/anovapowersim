@@ -48,5 +48,7 @@ by `k^2`, so the required multiplier is \$\$k =
 
 ``` r
 compute_scale_factor(0.10, 0.05)   # shrink
+#> [1] 0.6882472
 compute_scale_factor(0.05, 0.10)   # amplify
+#> [1] 1.452966
 ```

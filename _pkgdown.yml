@@ -16,7 +16,7 @@ navbar:
       text: Get started
       href: articles/anovapowersim.html
     reference:
-      text: Function reference
+      text: Reference
       href: reference/index.html
 
 reference:

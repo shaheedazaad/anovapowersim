@@ -2,7 +2,7 @@
 
 `anovapowersim` is designed to make determining a priori power for ANOVAs as easy as possible. You can add as many within/between factors with as many levels as you would like. There's no need to estimate condition means, SDs, or repeated-measures correlations; just enter the target partial eta squared.
 
-The package simulates data and estimates power based on the specified design. It also calculates power (as in G\*power).
+The package simulates data and estimates power based on the specified design. It also provides direct power calculations for comparison.
 
 Getting a priori power for a 2 × 2 × 3 mixed interaction effect is as simple as running the following:
 

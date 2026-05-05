@@ -7,7 +7,7 @@ condition means, SDs, or repeated-measures correlations; just enter the
 target partial eta squared.
 
 The package simulates data and estimates power based on the specified
-design. It also calculates power (as in G\*power).
+design. It also provides direct power calculations for comparison.
 
 Getting a priori power for a 2 × 2 × 3 mixed interaction effect is as
 simple as running the following:

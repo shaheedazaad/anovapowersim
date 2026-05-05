@@ -35,5 +35,16 @@ An object of class `anovapowersim_design_spec`.
 ``` r
 d <- balanced_anova_design(between = c(group = 2), within = c(time = 3))
 d$between_cells
+#> # A tibble: 2 × 1
+#>   group 
+#>   <fct> 
+#> 1 group1
+#> 2 group2
 d$within_cells
+#> # A tibble: 3 × 1
+#>   time 
+#>   <fct>
+#> 1 time1
+#> 2 time2
+#> 3 time3
 ```

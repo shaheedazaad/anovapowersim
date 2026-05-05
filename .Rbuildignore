@@ -2,3 +2,5 @@
 ^docs$
 ^testsim\.R$
 ^\.DS_Store$
+^anovapowersim_cache$
+^vignettes/anovapowersim_cache$

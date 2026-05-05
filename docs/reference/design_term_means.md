@@ -54,4 +54,7 @@ columns indexing within cells.
 ``` r
 d <- balanced_anova_design(between = c(group = 2), within = c(time = 2))
 design_term_means(d, term = "group:time", target_pes = 0.2, n = 20)
+#>            [,1]       [,2]
+#> [1,]  0.2436699 -0.2436699
+#> [2,] -0.2436699  0.2436699
 ```
