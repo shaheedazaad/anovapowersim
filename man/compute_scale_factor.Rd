@@ -31,8 +31,8 @@ denominator held fixed by this package's rescaling. Thus
 \code{pes / (1 - pes)} scales as the target effect's sum of squares. Scaling the
 term's deviations by \code{k} scales the target effect's sum of squares by
 \code{k^2}, so the required multiplier is
-\deqn{k = \sqrt{ \frac{p_\text{new} / (1 - p_\text{new})}
-                      {p_\text{old} / (1 - p_\text{old})} }.}
+\deqn{k = \sqrt{\frac{p_{\mathrm{new}} / (1 - p_{\mathrm{new}})}
+                      {p_{\mathrm{old}} / (1 - p_{\mathrm{old}})}}.}
 }
 \examples{
 compute_scale_factor(0.10, 0.05)   # shrink

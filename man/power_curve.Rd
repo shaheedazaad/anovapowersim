@@ -12,8 +12,6 @@ power_curve(
   n_range,
   n_sims = 10000,
   alpha = 0.05,
-  sd = 1,
-  r = 0.5,
   gpower = FALSE,
   progress = interactive(),
   seed = NULL
@@ -40,10 +38,6 @@ pure within-subject designs, this is the total sample size.}
 
 \item{alpha}{Significance threshold.}
 
-\item{sd}{Common outcome standard deviation.}
-
-\item{r}{Compound-symmetric correlation among within-subject cells.}
-
 \item{gpower}{Logical; if \code{TRUE}, calibrate means to the G*Power-style
 noncentrality convention \code{lambda = total_n * f^2}. The default \code{FALSE}
 calibrates the empirical reference dataset to \code{target_pes}, equivalent to
@@ -67,16 +61,18 @@ function creates a default contrast pattern for the target term, scales it to
 the requested partial eta squared, simulates datasets, refits
 \code{stats::aov()}, and estimates power by counting \code{p < alpha}.
 }
-\examples{
-\dontrun{
-power_curve(
-  between = c(color = 2),
-  within = c(age = 2),
-  term = "color:age",
-  target_pes = 0.20721,
-  n_range = c(16, 20, 23, 28),
-  n_sims = 10000
+\section{Examples}{
+
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{power_curve(
+  between = c(cond = 2),
+  within = c(stim = 2),
+  term = "cond:stim",
+  target_pes = 0.14,
+  n_range = c(16, 20, 23, 28), # n per between-subject cell
+  n_sims = 1000,
+  seed = 123
 )
+}\if{html}{\out{</div>}}
 }
 
-}

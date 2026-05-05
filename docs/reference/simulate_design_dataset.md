@@ -53,13 +53,4 @@ d <- balanced_anova_design(between = c(group = 2), within = c(time = 2))
 m <- design_term_means(d, term = "group:time", target_pes = 0.2, n = 20)
 sim <- simulate_design_dataset(d, n = 20, means = m)
 head(sim)
-#> # A tibble: 6 × 4
-#>   id    group    value time 
-#>   <fct> <fct>    <dbl> <fct>
-#> 1 1     group1 -0.724  time1
-#> 2 1     group1  1.35   time2
-#> 3 2     group1 -0.535  time1
-#> 4 2     group1  0.0397 time2
-#> 5 3     group1  0.121  time1
-#> 6 3     group1  0.776  time2
 ```

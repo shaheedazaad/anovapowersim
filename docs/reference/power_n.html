@@ -13,7 +13,7 @@ n_max, then bisects the bracket."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">anovapowersim</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,7 +22,7 @@ n_max, then bisects the bracket."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/anovapowersim.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Function reference</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/shaheedazaad/anovapowersim/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
@@ -54,8 +54,6 @@ doubles upward from <code>n_start</code> until it brackets the target or reaches
 <span>  power <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  r <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  n_start <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_max <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fl">0.01</span>,</span>
@@ -102,14 +100,6 @@ resolves to <code>"group:time"</code> when that is the design's factor order.</p
 <dd><p>Significance threshold.</p></dd>
 
 
-<dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
-<dd><p>Common outcome standard deviation.</p></dd>
-
-
-<dt id="arg-r">r<a class="anchor" aria-label="anchor" href="#arg-r"></a></dt>
-<dd><p>Compound-symmetric correlation among within-subject cells.</p></dd>
-
-
 <dt id="arg-n-start">n_start<a class="anchor" aria-label="anchor" href="#arg-n-start"></a></dt>
 <dd><p>Starting sample size per between-subject cell. If <code>NULL</code>,
 starts at the smallest value that can support empirical calibration for
@@ -144,22 +134,23 @@ calibrates the empirical reference dataset to <code>target_pes</code>, equivalen
     <p>An <code>anovapowersim_curve</code> object with <code>n_needed</code> and
 <code>total_n_needed</code>.</p>
     </div>
-
     <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu">power_n</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>color <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>age <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  term <span class="op">=</span> <span class="st">"age:color"</span>,</span></span>
-<span class="r-in"><span>  target_pes <span class="op">=</span> <span class="fl">0.20721</span>,</span></span>
-<span class="r-in"><span>  power <span class="op">=</span> <span class="fl">0.90</span>,</span></span>
-<span class="r-in"><span>  n_sims <span class="op">=</span> <span class="fl">10000</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
+    <h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h2>
+
+
+
+<p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="../reference/power_n.html">power_n</a></span><span class="op">(</span></span>
+<span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  term <span class="op">=</span> <span class="st">"cond:stim"</span>,</span>
+<span>  target_pes <span class="op">=</span> <span class="fl">0.14</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  power <span class="op">=</span> <span class="fl">0.80</span>,</span>
+<span>  n_sims <span class="op">=</span> <span class="fl">1000</span>, <span class="co"># use 5000+ for a more precise estimate</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">123</span> <span class="co"># for reproducibility</span></span>
+<span><span class="op">)</span></span></code></pre><p></p></div>
     </div>
+
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

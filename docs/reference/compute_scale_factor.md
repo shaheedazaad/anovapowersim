@@ -35,9 +35,9 @@ The derivation is straightforward: partial eta squared can be written as
 denominator held fixed by this package's rescaling. Thus
 `pes / (1 - pes)` scales as the target effect's sum of squares. Scaling
 the term's deviations by `k` scales the target effect's sum of squares
-by `k^2`, so the required multiplier is \$\$k = \sqrt{
-\frac{p\_\text{new} / (1 - p\_\text{new})} {p\_\text{old} / (1 -
-p\_\text{old})} }.\$\$
+by `k^2`, so the required multiplier is \$\$k =
+\sqrt{\frac{p\_{\mathrm{new}} / (1 - p\_{\mathrm{new}})}
+{p\_{\mathrm{old}} / (1 - p\_{\mathrm{old}})}}.\$\$
 
 ## See also
 
@@ -48,7 +48,5 @@ p\_\text{old})} }.\$\$
 
 ``` r
 compute_scale_factor(0.10, 0.05)   # shrink
-#> [1] 0.6882472
 compute_scale_factor(0.05, 0.10)   # amplify
-#> [1] 1.452966
 ```

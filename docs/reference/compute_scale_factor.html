@@ -13,7 +13,7 @@ size under the same residual structure."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">anovapowersim</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,7 +22,7 @@ size under the same residual structure."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/anovapowersim.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Function reference</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/shaheedazaad/anovapowersim/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
@@ -77,8 +77,8 @@ denominator held fixed by this package's rescaling. Thus
 <code>pes / (1 - pes)</code> scales as the target effect's sum of squares. Scaling the
 term's deviations by <code>k</code> scales the target effect's sum of squares by
 <code>k^2</code>, so the required multiplier is
-$$k = \sqrt{ \frac{p_\text{new} / (1 - p_\text{new})}
-                      {p_\text{old} / (1 - p_\text{old})} }.$$</p>
+$$k = \sqrt{\frac{p_{\mathrm{new}} / (1 - p_{\mathrm{new}})}
+                      {p_{\mathrm{old}} / (1 - p_{\mathrm{old}})}}.$$</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -87,12 +87,9 @@ $$k = \sqrt{ \frac{p_\text{new} / (1 - p_\text{new})}
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">compute_scale_factor</span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.05</span><span class="op">)</span>   <span class="co"># shrink</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.6882472</span>
-<span class="r-in"><span><span class="fu">compute_scale_factor</span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.10</span><span class="op">)</span>   <span class="co"># amplify</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.452966</span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">compute_scale_factor</span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.05</span><span class="op">)</span>   <span class="co"># shrink</span></span>
+<span><span class="fu">compute_scale_factor</span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.10</span><span class="op">)</span>   <span class="co"># amplify</span></span>
+<span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

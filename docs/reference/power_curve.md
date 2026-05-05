@@ -19,8 +19,6 @@ power_curve(
   n_range,
   n_sims = 10000,
   alpha = 0.05,
-  sd = 1,
-  r = 0.5,
   gpower = FALSE,
   progress = interactive(),
   seed = NULL
@@ -63,14 +61,6 @@ power_curve(
 
   Significance threshold.
 
-- sd:
-
-  Common outcome standard deviation.
-
-- r:
-
-  Compound-symmetric correlation among within-subject cells.
-
 - gpower:
 
   Logical; if `TRUE`, calibrate means to the G\*Power-style
@@ -95,15 +85,12 @@ calculated power (`power_calc`), and simulated power (`power_sim`).
 
 ## Examples
 
-``` r
-if (FALSE) { # \dontrun{
-power_curve(
-  between = c(color = 2),
-  within = c(age = 2),
-  term = "color:age",
-  target_pes = 0.20721,
-  n_range = c(16, 20, 23, 28),
-  n_sims = 10000
-)
-} # }
-```
+    power_curve(
+      between = c(cond = 2),
+      within = c(stim = 2),
+      term = "cond:stim",
+      target_pes = 0.14,
+      n_range = c(16, 20, 23, 28), # n per between-subject cell
+      n_sims = 1000,
+      seed = 123
+    )

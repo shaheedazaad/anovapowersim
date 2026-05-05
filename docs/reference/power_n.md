@@ -16,8 +16,6 @@ power_n(
   power = 0.8,
   n_sims = 10000,
   alpha = 0.05,
-  sd = 1,
-  r = 0.5,
   n_start = NULL,
   n_max = 1000,
   tol = 0.01,
@@ -62,14 +60,6 @@ power_n(
 
   Significance threshold.
 
-- sd:
-
-  Common outcome standard deviation.
-
-- r:
-
-  Compound-symmetric correlation among within-subject cells.
-
 - n_start:
 
   Starting sample size per between-subject cell. If `NULL`, starts at
@@ -105,15 +95,13 @@ An `anovapowersim_curve` object with `n_needed` and `total_n_needed`.
 
 ## Examples
 
-``` r
-if (FALSE) { # \dontrun{
-power_n(
-  between = c(color = 2),
-  within = c(age = 2),
-  term = "age:color",
-  target_pes = 0.20721,
-  power = 0.90,
-  n_sims = 10000
-)
-} # }
-```
+    power_n(
+      between = c(cond = 2),
+      within = c(stim = 4),
+      term = "cond:stim",
+      target_pes = 0.14,
+      alpha = 0.05,
+      power = 0.80,
+      n_sims = 1000, # use 5000+ for a more precise estimate
+      seed = 123 # for reproducibility
+    )

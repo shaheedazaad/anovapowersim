@@ -12,8 +12,6 @@ power_n(
   power = 0.8,
   n_sims = 10000,
   alpha = 0.05,
-  sd = 1,
-  r = 0.5,
   n_start = NULL,
   n_max = 1000,
   tol = 0.01,
@@ -42,10 +40,6 @@ resolves to \code{"group:time"} when that is the design's factor order.}
 
 \item{alpha}{Significance threshold.}
 
-\item{sd}{Common outcome standard deviation.}
-
-\item{r}{Compound-symmetric correlation among within-subject cells.}
-
 \item{n_start}{Starting sample size per between-subject cell. If \code{NULL},
 starts at the smallest value that can support empirical calibration for
 the requested design.}
@@ -73,16 +67,19 @@ reach a requested power for a balanced factorial ANOVA design. The search
 doubles upward from \code{n_start} until it brackets the target or reaches
 \code{n_max}, then bisects the bracket.
 }
-\examples{
-\dontrun{
-power_n(
-  between = c(color = 2),
-  within = c(age = 2),
-  term = "age:color",
-  target_pes = 0.20721,
-  power = 0.90,
-  n_sims = 10000
+\section{Examples}{
+
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{power_n(
+  between = c(cond = 2),
+  within = c(stim = 4),
+  term = "cond:stim",
+  target_pes = 0.14,
+  alpha = 0.05,
+  power = 0.80,
+  n_sims = 1000, # use 5000+ for a more precise estimate
+  seed = 123 # for reproducibility
 )
+}\if{html}{\out{</div>}}
 }
 
-}

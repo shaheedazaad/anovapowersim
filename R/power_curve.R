@@ -20,8 +20,6 @@
 #'   pure within-subject designs, this is the total sample size.
 #' @param n_sims Number of simulated datasets per sample size.
 #' @param alpha Significance threshold.
-#' @param sd Common outcome standard deviation.
-#' @param r Compound-symmetric correlation among within-subject cells.
 #' @param gpower Logical; if `TRUE`, calibrate means to the G*Power-style
 #'   noncentrality convention `lambda = total_n * f^2`. The default `FALSE`
 #'   calibrates the empirical reference dataset to `target_pes`, equivalent to
@@ -34,17 +32,18 @@
 #'   freedom (`num_df`, `den_df`), the noncentrality parameter (`ncp`),
 #'   calculated power (`power_calc`), and simulated power (`power_sim`).
 #'
-#' @examples
-#' \dontrun{
+#' @section Examples:
+#' ```{r, eval = FALSE}
 #' power_curve(
-#'   between = c(color = 2),
-#'   within = c(age = 2),
-#'   term = "color:age",
-#'   target_pes = 0.20721,
-#'   n_range = c(16, 20, 23, 28),
-#'   n_sims = 10000
+#'   between = c(cond = 2),
+#'   within = c(stim = 2),
+#'   term = "cond:stim",
+#'   target_pes = 0.14,
+#'   n_range = c(16, 20, 23, 28), # n per between-subject cell
+#'   n_sims = 1000,
+#'   seed = 123
 #' )
-#' }
+#' ```
 #'
 #' @export
 power_curve <- function(between = NULL,
@@ -54,11 +53,11 @@ power_curve <- function(between = NULL,
                         n_range,
                         n_sims = 10000,
                         alpha = 0.05,
-                        sd = 1,
-                        r = 0.5,
                         gpower = FALSE,
                         progress = interactive(),
                         seed = NULL) {
+  sd <- 1
+  r <- 0.5
   setup <- prepare_power_curve_inputs(
     between = between,
     within = within,
@@ -139,17 +138,19 @@ power_curve <- function(between = NULL,
 #' @return An `anovapowersim_curve` object with `n_needed` and
 #'   `total_n_needed`.
 #'
-#' @examples
-#' \dontrun{
+#' @section Examples:
+#' ```{r, eval = FALSE}
 #' power_n(
-#'   between = c(color = 2),
-#'   within = c(age = 2),
-#'   term = "age:color",
-#'   target_pes = 0.20721,
-#'   power = 0.90,
-#'   n_sims = 10000
+#'   between = c(cond = 2),
+#'   within = c(stim = 4),
+#'   term = "cond:stim",
+#'   target_pes = 0.14,
+#'   alpha = 0.05,
+#'   power = 0.80,
+#'   n_sims = 1000, # use 5000+ for a more precise estimate
+#'   seed = 123 # for reproducibility
 #' )
-#' }
+#' ```
 #'
 #' @export
 power_n <- function(between = NULL,
@@ -159,14 +160,14 @@ power_n <- function(between = NULL,
                     power = 0.80,
                     n_sims = 10000,
                     alpha = 0.05,
-                    sd = 1,
-                    r = 0.5,
                     n_start = NULL,
                     n_max = 1000,
                     tol = 0.01,
                     gpower = FALSE,
                     progress = interactive(),
                     seed = NULL) {
+  sd <- 1
+  r <- 0.5
   setup <- prepare_power_curve_inputs(
     between = between,
     within = within,
