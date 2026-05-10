@@ -417,6 +417,28 @@ test_that("power_curve requires explicit n_range", {
 test_that("sample sizes below the calibration minimum are rejected clearly", {
   expect_error(
     quiet_power_curve(
+      between = c(group = 2, stim = 2),
+      term = "group:stim",
+      target_pes = 0.08,
+      n_range = 1,
+      n_sims = 5
+    ),
+    "n_range.*at least 2"
+  )
+
+  expect_error(
+    quiet_power_n(
+      between = c(group = 2, stim = 2),
+      term = "group:stim",
+      target_pes = 0.08,
+      n_start = 1,
+      n_sims = 5
+    ),
+    "n_start.*at least 2"
+  )
+
+  expect_error(
+    quiet_power_curve(
       between = c(group = 2),
       within = c(stimulus = 2, condition = 3),
       term = "group:stimulus:condition",
@@ -466,6 +488,20 @@ test_that("power_n defaults to the calibration minimum", {
   )
 
   expect_true(min(pc$results$n_per_cell) >= 7L)
+})
+
+test_that("power_n default n_start avoids saturated between-subject models", {
+  pc <- quiet_power_n(
+    between = c(group = 2, stim = 2),
+    term = "group:stim",
+    target_pes = 0.08,
+    n_sims = 5,
+    n_max = 4,
+    seed = 15
+  )
+
+  expect_s3_class(pc, "anovapowersim_curve")
+  expect_true(min(pc$results$n_per_cell) >= 2L)
 })
 
 test_that("power_n default n_start uses the NCP estimate when available", {

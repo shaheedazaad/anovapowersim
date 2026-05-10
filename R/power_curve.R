@@ -360,8 +360,8 @@ balanced_anova_design <- function(between = NULL, within = NULL) {
 #'   is the total sample size.
 #' @param sd Common outcome standard deviation.
 #' @param r Compound-symmetric correlation among within-subject cells.
-#' @param gpower Logical; if `TRUE`, calibrate to the G*Power-style
-#'   noncentrality convention `lambda = total_n * f^2`.
+#' @param gpower Logical; if `TRUE`, calibrate to the G*Power-style 
+#'   noncentrality convention `lambda = total_n * f^2` (using the 'as in Cohen (1988) option for within-subjects designs).
 #'
 #' @return A numeric matrix of cell means, with rows indexing between cells and
 #'   columns indexing within cells.
@@ -1170,7 +1170,7 @@ simulate_balanced_design_data <- function(spec, n, means, sd, r,
 #' @keywords internal
 #' @noRd
 minimum_calibration_n <- function(spec) {
-  if (spec$n_within_cells > 1L) spec$n_within_cells + 1L else 1L
+  if (spec$n_within_cells > 1L) spec$n_within_cells + 1L else 2L
 }
 
 
