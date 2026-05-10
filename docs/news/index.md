@@ -1,5 +1,9 @@
 # Changelog
 
+## anovapowersim 1.0.0
+
+- First official release
+
 ## anovapowersim 0.2.0
 
 - Added parallel processing for simulation runs in
