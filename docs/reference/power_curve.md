@@ -21,6 +21,8 @@ power_curve(
   alpha = 0.05,
   gpower = FALSE,
   progress = interactive(),
+  parallel = FALSE,
+  cores = NULL,
   seed = NULL
 )
 ```
@@ -72,6 +74,17 @@ power_curve(
 
   Logical; if `TRUE`, show a text progress bar.
 
+- parallel:
+
+  Logical; if `TRUE`, run simulations for each sample size via the
+  `future` ecosystem.
+
+- cores:
+
+  Optional positive integer number of cores to use when
+  `parallel = TRUE`. If `NULL`, uses one fewer than the number of
+  available cores, with a minimum of one.
+
 - seed:
 
   Optional integer seed for reproducibility.
@@ -92,5 +105,17 @@ calculated power (`power_calc`), and simulated power (`power_sim`).
       target_pes = 0.14,
       n_range = c(16, 20, 23, 28), # n per between-subject cell
       n_sims = 1000,
+      seed = 123
+    )
+
+    power_curve(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.14,
+      n_range = c(12, 16, 20),
+      n_sims = 5000,
+      parallel = TRUE,
+      cores = 4,
       seed = 123
     )

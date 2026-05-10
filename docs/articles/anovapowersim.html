@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">anovapowersim</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,7 @@
       <ul class="navbar-nav me-auto">
 <li class="active nav-item"><a class="nav-link" href="../articles/anovapowersim.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/shaheedazaad/anovapowersim/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -69,10 +70,10 @@ term-specific cell means, simulates datasets, refits the ANOVA with
 <p>The easiest way to get your required sample size is to use
 <code><a href="../reference/power_n.html">power_n()</a></code> to search for the sample size needed to reach the
 requested <code>power</code>.</p>
-<p>This example is a 2 x 2 mixed design with one between-subject factor
-(<code>color</code>) and one within-subject factor
-(<code>age</code>).</p>
-<p>We specify that we are interested in the <code>color:age</code>
+<p>This example is a 2 x 2 mixed design with one between-subjects factor
+(<code>cond</code>) and one within-subject factor
+(<code>stim</code>).</p>
+<p>We specify that we are interested in the <code>cond:stim</code>
 interaction, and that we want to have 80% power to detect a partial eta
 squared of 0.14. <code><a href="../reference/power_n.html">power_n()</a></code> will search for the required
 sample size per between-subject cell, so <code>n = 13</code> gives total
@@ -176,6 +177,27 @@ result is a tidy data frame that you can plot with
 <h2 id="advanced-options">Advanced options<a class="anchor" aria-label="anchor" href="#advanced-options"></a>
 </h2>
 <div class="section level3">
+<h3 id="run-simulations-in-parallel">Run simulations in parallel<a class="anchor" aria-label="anchor" href="#run-simulations-in-parallel"></a>
+</h3>
+<p>For larger simulation runs, set <code>parallel = TRUE</code>. If you
+do not set <code>cores</code>, <code>anovapowersim</code> uses one fewer
+than the number of available cores and prints a message with the chosen
+count. Set <code>cores</code> explicitly when you want a fixed number of
+cores.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/power_curve.html">power_curve</a></span><span class="op">(</span></span>
+<span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  term <span class="op">=</span> <span class="st">"cond:stim"</span>,</span>
+<span>  target_pes <span class="op">=</span> <span class="fl">0.14</span>,</span>
+<span>  n_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">16</span>, <span class="fl">20</span>, <span class="fl">23</span>, <span class="fl">28</span><span class="op">)</span>,</span>
+<span>  n_sims <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">123</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="match-the-gpower-convention">Match the G*Power convention<a class="anchor" aria-label="anchor" href="#match-the-gpower-convention"></a>
 </h3>
 <p>By default, <code>anovapowersim</code> calibrates the simulated cell
@@ -187,7 +209,7 @@ convention.</p>
 convention <code>lambda = total_n * f^2</code>. This changes the
 calibration step and the <code>power_calc</code> column, so it is the
 best option when you are trying to reproduce a G*Power calculation.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/power_n.html">power_n</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>

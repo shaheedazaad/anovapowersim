@@ -21,6 +21,8 @@ power_n(
   tol = 0.01,
   gpower = FALSE,
   progress = interactive(),
+  parallel = FALSE,
+  cores = NULL,
   seed = NULL
 )
 ```
@@ -84,6 +86,17 @@ power_n(
 - progress:
 
   Logical; if `TRUE`, show a text progress bar.
+
+- parallel:
+
+  Logical; if `TRUE`, run simulations for each sample size via the
+  `future` ecosystem.
+
+- cores:
+
+  Optional positive integer number of cores to use when
+  `parallel = TRUE`. If `NULL`, uses one fewer than the number of
+  available cores, with a minimum of one.
 
 - seed:
 

@@ -25,6 +25,11 @@
 #'   calibrates the empirical reference dataset to `target_pes`, equivalent to
 #'   `lambda = den_df * f^2` for the fitted ANOVA.
 #' @param progress Logical; if `TRUE`, show a text progress bar.
+#' @param parallel Logical; if `TRUE`, run simulations for each sample size via
+#'   the `future` ecosystem.
+#' @param cores Optional positive integer number of cores to use when
+#'   `parallel = TRUE`. If `NULL`, uses one fewer than the number of available
+#'   cores, with a minimum of one.
 #' @param seed Optional integer seed for reproducibility.
 #'
 #' @return An `anovapowersim_curve` object. The `$results` tibble contains
@@ -43,6 +48,18 @@
 #'   n_sims = 1000,
 #'   seed = 123
 #' )
+#'
+#' power_curve(
+#'   between = c(group = 2),
+#'   within = c(time = 2),
+#'   term = "group:time",
+#'   target_pes = 0.14,
+#'   n_range = c(12, 16, 20),
+#'   n_sims = 5000,
+#'   parallel = TRUE,
+#'   cores = 4,
+#'   seed = 123
+#' )
 #' ```
 #'
 #' @export
@@ -55,6 +72,8 @@ power_curve <- function(between = NULL,
                         alpha = 0.05,
                         gpower = FALSE,
                         progress = interactive(),
+                        parallel = FALSE,
+                        cores = NULL,
                         seed = NULL) {
   sd <- 1
   r <- 0.5
@@ -68,8 +87,11 @@ power_curve <- function(between = NULL,
     sd = sd,
     r = r,
     gpower = gpower,
-    progress = progress
+    progress = progress,
+    parallel = parallel,
+    cores = cores
   )
+  message_long_serial_run(setup$n_sims, setup$parallel)
 
   if (!is.null(seed)) set.seed(seed)
 
@@ -77,13 +99,13 @@ power_curve <- function(between = NULL,
   validate_calibration_n(ns, setup$spec, "n_range")
   progress_bar <- make_progress_bar(
     enabled = setup$progress,
-    total = length(ns) * setup$n_sims,
+    total = if (setup$parallel) length(ns) else length(ns) * setup$n_sims,
     label = "Simulating power"
   )
   on.exit(close_progress_bar(progress_bar), add = TRUE)
 
   run_one <- function(n) {
-    run_design_power_at_n(
+    row <- run_design_power_at_n(
       spec = setup$spec,
       term = setup$term,
       target_pes = target_pes,
@@ -93,8 +115,12 @@ power_curve <- function(between = NULL,
       sd = sd,
       r = r,
       gpower = setup$gpower,
-      progress_bar = progress_bar
+      progress_bar = if (setup$parallel) NULL else progress_bar,
+      parallel = setup$parallel,
+      cores = setup$cores
     )
+    if (setup$parallel) tick_progress_bar(progress_bar)
+    row
   }
 
   curve <- purrr::map_dfr(ns, run_one)
@@ -165,6 +191,8 @@ power_n <- function(between = NULL,
                     tol = 0.01,
                     gpower = FALSE,
                     progress = interactive(),
+                    parallel = FALSE,
+                    cores = NULL,
                     seed = NULL) {
   sd <- 1
   r <- 0.5
@@ -178,9 +206,12 @@ power_n <- function(between = NULL,
     sd = sd,
     r = r,
     gpower = gpower,
-    progress = progress
+    progress = progress,
+    parallel = parallel,
+    cores = cores
   )
   assert_unit_interval(power, "power")
+  message_long_serial_run(setup$n_sims, setup$parallel)
   if (!is.numeric(n_max) || length(n_max) != 1L ||
       n_max < 1 || n_max != as.integer(n_max)) {
     stop("`n_max` must be a single positive integer.", call. = FALSE)
@@ -246,7 +277,9 @@ power_n <- function(between = NULL,
       sd = sd,
       r = r,
       gpower = setup$gpower,
-      progress_bar = NULL
+      progress_bar = NULL,
+      parallel = setup$parallel,
+      cores = setup$cores
     )
   }
 
@@ -548,7 +581,7 @@ resolve_design_term <- function(term, spec) {
 #' @noRd
 prepare_power_curve_inputs <- function(between, within, term, target_pes,
                                        n_sims, alpha, sd, r, gpower,
-                                       progress) {
+                                       progress, parallel, cores) {
   spec <- balanced_anova_design(between = between, within = within)
   term <- resolve_design_term(term, spec)
   assert_unit_interval(target_pes, "target_pes")
@@ -569,13 +602,19 @@ prepare_power_curve_inputs <- function(between, within, term, target_pes,
   if (!is.logical(progress) || length(progress) != 1L || is.na(progress)) {
     stop("`progress` must be TRUE or FALSE.", call. = FALSE)
   }
+  if (!is.logical(parallel) || length(parallel) != 1L || is.na(parallel)) {
+    stop("`parallel` must be TRUE or FALSE.", call. = FALSE)
+  }
+  cores <- validate_parallel_cores(cores = cores, parallel = parallel)
 
   list(
     spec = spec,
     term = term,
     n_sims = as.integer(n_sims),
     gpower = gpower,
-    progress = progress
+    progress = progress,
+    parallel = parallel,
+    cores = cores
   )
 }
 
@@ -593,8 +632,61 @@ normalize_n_range <- function(n_range) {
 
 #' @keywords internal
 #' @noRd
+validate_parallel_cores <- function(cores, parallel) {
+  available <- as.integer(future::availableCores()[[1L]])
+  if (!is.finite(available) || available < 1L) available <- 1L
+
+  if (!is.null(cores) &&
+      (!is.numeric(cores) || length(cores) != 1L ||
+       !is.finite(cores) || cores < 1 || cores != as.integer(cores))) {
+    stop("`cores` must be a single positive integer.", call. = FALSE)
+  }
+
+  if (!is.null(cores)) {
+    cores <- as.integer(cores)
+    if (cores > available) {
+      stop(
+        "`cores` must not exceed the number of available cores (",
+        available, ").",
+        call. = FALSE
+      )
+    }
+    return(cores)
+  }
+
+  if (!isTRUE(parallel)) return(NULL)
+
+  cores <- max(1L, available - 1L)
+  message(
+    "`parallel = TRUE` and `cores` was not set; using ",
+    cores,
+    " of ",
+    available,
+    " available core",
+    if (available == 1L) "" else "s",
+    "."
+  )
+  cores
+}
+
+
+#' @keywords internal
+#' @noRd
+message_long_serial_run <- function(n_sims, parallel) {
+  if (isTRUE(parallel) || n_sims < 5000L) return(invisible(NULL))
+  message(
+    "`n_sims` is 5000 or more and `parallel = FALSE`; this may take a ",
+    "while. Consider setting `parallel = TRUE` to run simulations in parallel."
+  )
+  invisible(NULL)
+}
+
+
+#' @keywords internal
+#' @noRd
 run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
-                                  alpha, sd, r, gpower, progress_bar = NULL) {
+                                  alpha, sd, r, gpower, progress_bar = NULL,
+                                  parallel = FALSE, cores = NULL) {
   means <- design_term_means(
     design = spec,
     term = term,
@@ -616,7 +708,7 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     gpower = gpower
   )
 
-  successes <- purrr::map_lgl(seq_len(n_sims), function(i) {
+  simulate_one <- function(i) {
     sim <- simulate_design_dataset(
       design = spec,
       n = n,
@@ -627,7 +719,23 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     )
     tick_progress_bar(progress_bar)
     fit_design_term(sim, spec, term, alpha)
-  })
+  }
+
+  successes <- if (parallel) {
+    old_plan <- future::plan()
+    on.exit(future::plan(old_plan), add = TRUE)
+    future::plan(future::multisession, workers = cores)
+    unlist(
+      future.apply::future_lapply(
+        seq_len(n_sims),
+        simulate_one,
+        future.seed = TRUE
+      ),
+      use.names = FALSE
+    )
+  } else {
+    purrr::map_lgl(seq_len(n_sims), simulate_one)
+  }
 
   failed_count <- sum(is.na(successes))
   valid_count <- n_sims - failed_count

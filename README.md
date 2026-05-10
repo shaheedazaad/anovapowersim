@@ -14,33 +14,31 @@ power_n(
   within = c(stim = 2, cond = 3), # stim has 2 levels, cond has 3
   term = "group:stim:cond", # three-way interaction term
   target_pes = 0.08, # target effect size
-  n_sims = 1000, # increase to 5000+ for more precise estimates
+  n_sims = 5000, # increase to 10000+ for more precise estimates
   power = .80,
   alpha = .05,
+  parallel = TRUE, # simulations will be run in parallel for speed
   seed = 123 # for reproducibility
 )
-```
 
-This returns:
-
-``` text
-<anovapowersim_curve>
-  term:          'group:stim:cond'
-  target power:  0.800
-  alpha:         0.05
-  effect size:   pes = 0.08
-  n values:      6 per-cell sample sizes visited
-  sims per cell size: 1000
-  n needed for between-subjects cell: 31
-  total N needed: 62
-
- n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
-         24      48   1000      2     92  8.000      0.702     0.686
-         30      60   1000      2    116 10.087      0.808     0.787
-         31      62   1000      2    120 10.435      0.823     0.815
-         33      66   1000      2    128 11.130      0.848     0.818
-         36      72   1000      2    140 12.174      0.881     0.887
-         48      96   1000      2    188 16.348      0.958     0.959
+#><anovapowersim_curve>
+#>  term:          'group:stim:cond'
+#>  target power:  0.800
+#>  alpha:         0.05
+#>  effect size:   pes = 0.08
+#>  n values:      7 per-cell sample sizes visited
+#>  sims per cell size: 5000
+#>  n needed for between-subjects cell: 30
+#>  total N needed: 60
+#>
+#> n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
+#>         24      48   5000      2     92  8.000      0.702     0.702
+#>         27      54   5000      2    104  9.043      0.760     0.758
+#>         28      56   5000      2    108  9.391      0.777     0.787
+#>         29      58   5000      2    112  9.739      0.793     0.796
+#>         30      60   5000      2    116 10.087      0.808     0.817
+#>         36      72   5000      2    140 12.174      0.881     0.886
+#>         48      96   5000      2    188 16.348      0.958     0.961
 ```
 
 ## Installation
@@ -61,15 +59,14 @@ A preprint is in preparation.
 
 ## Limitations
 
-`anovapowersim` is designed to be simple and easy to use, which means it has some limitations. It does not support:
+`anovapowersim` is designed to be simple and easy to use first, which means it has some limitations for now. It does not support:
 
 - Unbalanced designs
 - Covariates (ANCOVAs)
 - Nonsphericity corrections (though this might change)
-- Parallel processing (simulations can be quite slow)
 - Specific interaction shapes
 - Simple main effects/pairwise comparisons
 
 ## Other packages
 
-`anovapowersim` is fairly limited in its goal to be simple. I recommend checking out [`Superpower`](https://aaroncaldwell.us/Superpower/), which handles some of the limitations above.
+I recommend checking out [`Superpower`](https://aaroncaldwell.us/Superpower/), which handles some of the limitations above.

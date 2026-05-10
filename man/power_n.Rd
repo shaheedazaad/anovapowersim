@@ -17,6 +17,8 @@ power_n(
   tol = 0.01,
   gpower = FALSE,
   progress = interactive(),
+  parallel = FALSE,
+  cores = NULL,
   seed = NULL
 )
 }
@@ -54,6 +56,13 @@ calibrates the empirical reference dataset to \code{target_pes}, equivalent to
 \code{lambda = den_df * f^2} for the fitted ANOVA.}
 
 \item{progress}{Logical; if \code{TRUE}, show a text progress bar.}
+
+\item{parallel}{Logical; if \code{TRUE}, run simulations for each sample size via
+the \code{future} ecosystem.}
+
+\item{cores}{Optional positive integer number of cores to use when
+\code{parallel = TRUE}. If \code{NULL}, uses one fewer than the number of available
+cores, with a minimum of one.}
 
 \item{seed}{Optional integer seed for reproducibility.}
 }

@@ -1,6 +1,6 @@
 Package: anovapowersim
 Title: Simple power simulations for ANOVAs
-Version: 0.1.1
+Version: 0.2.0
 Authors@R:
     person("Shaheed", "Azaad", email = "sazaad@uni-muenster.de", role = c("aut", "cre"))
 Description: Simulation-based a priori power analysis for balanced ANOVA
@@ -13,6 +13,8 @@ Depends:
     R (>= 4.1)
 Imports:
     dplyr,
+    future,
+    future.apply,
     ggplot2,
     MASS,
     purrr,

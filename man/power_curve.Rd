@@ -14,6 +14,8 @@ power_curve(
   alpha = 0.05,
   gpower = FALSE,
   progress = interactive(),
+  parallel = FALSE,
+  cores = NULL,
   seed = NULL
 )
 }
@@ -45,6 +47,13 @@ calibrates the empirical reference dataset to \code{target_pes}, equivalent to
 
 \item{progress}{Logical; if \code{TRUE}, show a text progress bar.}
 
+\item{parallel}{Logical; if \code{TRUE}, run simulations for each sample size via
+the \code{future} ecosystem.}
+
+\item{cores}{Optional positive integer number of cores to use when
+\code{parallel = TRUE}. If \code{NULL}, uses one fewer than the number of available
+cores, with a minimum of one.}
+
 \item{seed}{Optional integer seed for reproducibility.}
 }
 \value{
@@ -71,6 +80,18 @@ the requested partial eta squared, simulates datasets, refits
   target_pes = 0.14,
   n_range = c(16, 20, 23, 28), # n per between-subject cell
   n_sims = 1000,
+  seed = 123
+)
+
+power_curve(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  target_pes = 0.14,
+  n_range = c(12, 16, 20),
+  n_sims = 5000,
+  parallel = TRUE,
+  cores = 4,
   seed = 123
 )
 }\if{html}{\out{</div>}}

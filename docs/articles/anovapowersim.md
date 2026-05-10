@@ -17,10 +17,10 @@ The easiest way to get your required sample size is to use
 [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
 to search for the sample size needed to reach the requested `power`.
 
-This example is a 2 x 2 mixed design with one between-subject factor
-(`color`) and one within-subject factor (`age`).
+This example is a 2 x 2 mixed design with one between-subjects factor
+(`cond`) and one within-subject factor (`stim`).
 
-We specify that we are interested in the `color:age` interaction, and
+We specify that we are interested in the `cond:stim` interaction, and
 that we want to have 80% power to detect a partial eta squared of 0.14.
 [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
 will search for the required sample size per between-subject cell, so
@@ -133,6 +133,28 @@ plot_power_curve(
 ![](anovapowersim_files/figure-html/plot-fixed-1.png)
 
 ## Advanced options
+
+### Run simulations in parallel
+
+For larger simulation runs, set `parallel = TRUE`. If you do not set
+`cores`, `anovapowersim` uses one fewer than the number of available
+cores and prints a message with the chosen count. Set `cores` explicitly
+when you want a fixed number of cores.
+
+``` r
+
+power_curve(
+  between = c(cond = 2),
+  within = c(stim = 2),
+  term = "cond:stim",
+  target_pes = 0.14,
+  n_range = c(16, 20, 23, 28),
+  n_sims = 5000,
+  parallel = TRUE,
+  cores = 4,
+  seed = 123
+)
+```
 
 ### Match the G\*Power convention
 

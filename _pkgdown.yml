@@ -9,7 +9,7 @@ home:
 
 navbar:
   structure:
-    left:  [intro, reference, articles]
+    left:  [intro, reference, articles, news]
     right: [github]
   components:
     intro:
@@ -18,11 +18,14 @@ navbar:
     reference:
       text: Reference
       href: reference/index.html
+    news:
+      text: Changelog
+      href: news/index.html
 
 reference:
-  - title: Main interface
+  - title: Main functions
     desc: >
-      The entry points most users will call directly.
+      Functions for power analysis and simulation.
     contents:
       - power_curve
       - power_n
@@ -32,7 +35,7 @@ reference:
 
   - title: Design components
     desc: >
-      Lower-level building blocks for custom design-based simulations.
+      Component functions for power analyses.
     contents:
       - balanced_anova_design
       - design_term_means

@@ -290,6 +290,117 @@ test_that("power_curve is reproducible with a seed", {
   expect_equal(pc1$results, pc2$results)
 })
 
+test_that("power_curve supports parallel simulations", {
+  pc <- quiet_power_curve(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.1,
+    n_range = c(8, 10),
+    n_sims = 10,
+    parallel = TRUE,
+    cores = min(2L, as.integer(future::availableCores()[[1L]])),
+    seed = 99
+  )
+
+  expect_s3_class(pc, "anovapowersim_curve")
+  expect_equal(pc$results$n_per_cell, c(8L, 10L))
+  expect_true(all(c("n_per_cell", "total_n", "n_sims", "power_sim") %in%
+                    names(pc$results)))
+  expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
+})
+
+test_that("power_curve validates parallel controls", {
+  available <- as.integer(future::availableCores()[[1L]])
+
+  expect_error(
+    quiet_power_curve(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      n_range = 8,
+      parallel = NA
+    ),
+    "`parallel` must be TRUE or FALSE"
+  )
+  expect_error(
+    quiet_power_curve(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      n_range = 8,
+      cores = 0
+    ),
+    "`cores` must be a single positive integer"
+  )
+  expect_error(
+    quiet_power_curve(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      n_range = 8,
+      cores = available + 1L
+    ),
+    "`cores` must not exceed"
+  )
+})
+
+test_that("power_curve reports the default core count in parallel mode", {
+  expect_message(
+    quiet_power_curve(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      n_range = 8,
+      n_sims = 4,
+      parallel = TRUE,
+      seed = 42
+    ),
+    "`parallel = TRUE` and `cores` was not set"
+  )
+})
+
+test_that("power_curve advises parallel mode for long serial runs", {
+  expect_message(
+    expect_error(
+      quiet_power_curve(
+        between = c(group = 2),
+        within = c(time = 2),
+        term = "group:time",
+        target_pes = 0.1,
+        n_range = 1,
+        n_sims = 5000,
+        parallel = FALSE
+      ),
+      "n_range"
+    ),
+    "Consider setting `parallel = TRUE`"
+  )
+})
+
+test_that("power_curve is reproducible with a seed in parallel mode", {
+  args <- list(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.1,
+    n_range = c(8, 10),
+    n_sims = 15,
+    parallel = TRUE,
+    cores = min(2L, as.integer(future::availableCores()[[1L]])),
+    seed = 42
+  )
+
+  pc1 <- do.call(quiet_power_curve, args)
+  pc2 <- do.call(quiet_power_curve, args)
+
+  expect_equal(pc1$results, pc2$results)
+})
+
 test_that("power_curve requires explicit n_range", {
   expect_error(
     quiet_power_curve(
@@ -422,4 +533,78 @@ test_that("power_n is reproducible with a seed", {
 
   expect_equal(pc1$results, pc2$results)
   expect_equal(pc1$n_needed, pc2$n_needed)
+})
+
+test_that("power_n supports parallel simulations within each searched n", {
+  pc <- quiet_power_n(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.1,
+    power = 0.8,
+    n_sims = 6,
+    n_start = 4,
+    n_max = 8,
+    parallel = TRUE,
+    cores = min(2L, as.integer(future::availableCores()[[1L]])),
+    seed = 101
+  )
+
+  expect_s3_class(pc, "anovapowersim_curve")
+  expect_true(nrow(pc$results) >= 1L)
+  expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
+})
+
+test_that("power_n advises parallel mode for long serial runs", {
+  expect_message(
+    expect_error(
+      quiet_power_n(
+        between = c(group = 2),
+        within = c(time = 2),
+        term = "group:time",
+        target_pes = 0.1,
+        n_sims = 5000,
+        n_start = 3,
+        n_max = 1,
+        parallel = FALSE
+      ),
+      "n_max"
+    ),
+    "Consider setting `parallel = TRUE`"
+  )
+})
+
+test_that("power_n validates parallel controls", {
+  available <- as.integer(future::availableCores()[[1L]])
+
+  expect_error(
+    quiet_power_n(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      parallel = c(TRUE, FALSE)
+    ),
+    "`parallel` must be TRUE or FALSE"
+  )
+  expect_error(
+    quiet_power_n(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      cores = 1.5
+    ),
+    "`cores` must be a single positive integer"
+  )
+  expect_error(
+    quiet_power_n(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      cores = available + 1L
+    ),
+    "`cores` must not exceed"
+  )
 })

@@ -1,8 +1,8 @@
 # Package index
 
-## Main interface
+## Main functions
 
-The entry points most users will call directly.
+Functions for power analysis and simulation.
 
 - [`power_curve()`](https://shaheedazaad.github.io/anovapowersim/reference/power_curve.md)
   : Simulate ANOVA power from a balanced factorial design
@@ -17,7 +17,7 @@ The entry points most users will call directly.
 
 ## Design components
 
-Lower-level building blocks for custom design-based simulations.
+Component functions for power analyses.
 
 - [`balanced_anova_design()`](https://shaheedazaad.github.io/anovapowersim/reference/balanced_anova_design.md)
   : Create a balanced factorial ANOVA design specification
