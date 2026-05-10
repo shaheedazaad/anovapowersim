@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">anovapowersim</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -206,9 +206,8 @@ squared under the fitted <code><a href="https://rdrr.io/r/stats/aov.html" class=
 corresponds to the fitted ANOVA denominator-df noncentrality
 convention.</p>
 <p>Set <code>gpower = TRUE</code> when you want the G*Power-style
-convention <code>lambda = total_n * f^2</code>. This changes the
-calibration step and the <code>power_calc</code> column, so it is the
-best option when you are trying to reproduce a G*Power calculation.</p>
+convention (when using the ’as in Cohen (1988) option for
+within-subjects designs) <code>lambda = total_n * f^2</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/power_n.html">power_n</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>

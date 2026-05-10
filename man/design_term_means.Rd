@@ -22,7 +22,7 @@ is the total sample size.}
 \item{r}{Compound-symmetric correlation among within-subject cells.}
 
 \item{gpower}{Logical; if \code{TRUE}, calibrate to the G*Power-style
-noncentrality convention \code{lambda = total_n * f^2}.}
+noncentrality convention \code{lambda = total_n * f^2} (using the 'as in Cohen (1988) option for within-subjects designs).}
 }
 \value{
 A numeric matrix of cell means, with rows indexing between cells and

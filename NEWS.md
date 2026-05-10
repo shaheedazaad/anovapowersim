@@ -1,6 +1,7 @@
 # anovapowersim 1.0.0
 
 * First official release
+* Fixed a bug where adaptive search for purely between-subjects designs would fail if the starting N was too small
 
 # anovapowersim 0.2.0
 

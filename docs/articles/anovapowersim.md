@@ -164,10 +164,9 @@ the fitted [`stats::aov()`](https://rdrr.io/r/stats/aov.html) model.
 This corresponds to the fitted ANOVA denominator-df noncentrality
 convention.
 
-Set `gpower = TRUE` when you want the G\*Power-style convention
-`lambda = total_n * f^2`. This changes the calibration step and the
-`power_calc` column, so it is the best option when you are trying to
-reproduce a G\*Power calculation.
+Set `gpower = TRUE` when you want the G\*Power-style convention (when
+using the ’as in Cohen (1988) option for within-subjects designs)
+`lambda = total_n * f^2`.
 
 ``` r
 

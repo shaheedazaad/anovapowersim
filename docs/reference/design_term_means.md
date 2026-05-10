@@ -42,7 +42,8 @@ design_term_means(design, term, target_pes, n, sd = 1, r = 0.5, gpower = FALSE)
 - gpower:
 
   Logical; if `TRUE`, calibrate to the G\*Power-style noncentrality
-  convention `lambda = total_n * f^2`.
+  convention `lambda = total_n * f^2` (using the 'as in Cohen (1988)
+  option for within-subjects designs).
 
 ## Value
 
