@@ -115,6 +115,62 @@ test_that("default term means do not create non-target condition interactions", 
   expect_equal(three_way$pes, 0, tolerance = 1e-8)
 })
 
+test_that("default term means calibrate common design classes exactly", {
+  check_calibration <- function(between = NULL, within = NULL, term, n,
+                                target_pes = 0.08) {
+    d <- balanced_anova_design(between = between, within = within)
+    resolved_term <- anovapowersim:::resolve_design_term(term, d)
+    means <- design_term_means(
+      d,
+      term = term,
+      target_pes = target_pes,
+      n = n
+    )
+    sim <- simulate_design_dataset(d, n = n, means = means, empirical = TRUE)
+    fit <- anovapowersim:::fit_design_model(sim, d)
+    stats <- anovapowersim:::extract_term_stats(fit, resolved_term)
+
+    expect_equal(stats$pes, target_pes, tolerance = 1e-8)
+  }
+
+  check_calibration(between = c(group = 3), term = "group", n = 4)
+  check_calibration(
+    between = c(group = 2, condition = 3),
+    term = "group:condition",
+    n = 4
+  )
+  check_calibration(within = c(time = 4), term = "time", n = 5)
+  check_calibration(
+    within = c(time = 2, condition = 3),
+    term = "time:condition",
+    n = 7
+  )
+  check_calibration(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "group",
+    n = 5
+  )
+  check_calibration(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "time",
+    n = 5
+  )
+  check_calibration(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "group:time",
+    n = 5
+  )
+  check_calibration(
+    between = c(group = 2),
+    within = c(time = 2, condition = 3),
+    term = "group:time:condition",
+    n = 7
+  )
+})
+
 test_that("G*Power option uses total N noncentrality convention", {
   pc <- quiet_power_curve(
     between = c(group = 2),
@@ -251,6 +307,54 @@ test_that("power_curve handles pure within and pure between designs", {
   expect_equal(between_pc$results$total_n, 24L)
 })
 
+test_that("power_curve handles common factorial design classes", {
+  between_interaction <- quiet_power_curve(
+    between = c(group = 2, condition = 2),
+    term = "group:condition",
+    target_pes = 0.08,
+    n_range = 2,
+    n_sims = 5,
+    seed = 21
+  )
+  expect_equal(between_interaction$results$total_n, 8L)
+  expect_equal(between_interaction$results$num_df, 1)
+
+  within_interaction <- quiet_power_curve(
+    within = c(time = 2, condition = 3),
+    term = "time:condition",
+    target_pes = 0.08,
+    n_range = 7,
+    n_sims = 5,
+    seed = 22
+  )
+  expect_equal(within_interaction$results$total_n, 7L)
+  expect_equal(within_interaction$results$num_df, 2)
+
+  mixed_between_main <- quiet_power_curve(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "group",
+    target_pes = 0.08,
+    n_range = 4,
+    n_sims = 5,
+    seed = 23
+  )
+  expect_equal(mixed_between_main$results$total_n, 8L)
+  expect_equal(mixed_between_main$results$num_df, 1)
+
+  mixed_within_main <- quiet_power_curve(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "time",
+    target_pes = 0.08,
+    n_range = 4,
+    n_sims = 5,
+    seed = 24
+  )
+  expect_equal(mixed_within_main$results$total_n, 8L)
+  expect_equal(mixed_within_main$results$num_df, 2)
+})
+
 test_that("power_curve validates design inputs", {
   expect_error(
     quiet_power_curve(term = "x", target_pes = 0.2, n_range = 10),
@@ -265,6 +369,16 @@ test_that("power_curve validates design inputs", {
     quiet_power_curve(between = c(group = 2), within = c(group = 2),
                        term = "group", target_pes = 0.2, n_range = 10),
     "unique"
+  )
+  expect_error(
+    quiet_power_curve(between = c("group condition" = 2), term = "group condition",
+                       target_pes = 0.2, n_range = 10),
+    "syntactic R names"
+  )
+  expect_error(
+    quiet_power_curve(within = c("time-point" = 2), term = "time-point",
+                       target_pes = 0.2, n_range = 10),
+    "syntactic R names"
   )
   expect_error(
     quiet_power_curve(between = c(group = 2), term = "missing",

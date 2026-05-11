@@ -1,6 +1,11 @@
 ^_pkgdown\.yml$
+^\.github$
+^\.gitignore$
 ^docs$
 ^testsim\.R$
-^\.DS_Store$
+(^|/)\.DS_Store$
 ^anovapowersim_cache$
 ^vignettes/anovapowersim_cache$
+^cran-comments\.md$
+^.*\.tar\.gz$
+^.*\.Rcheck$

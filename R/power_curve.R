@@ -480,6 +480,16 @@ validate_design_spec <- function(between, within) {
       stop("`", arg, "` must be a named integer vector of level counts.",
            call. = FALSE)
     }
+    bad_names <- names(x)[make.names(names(x)) != names(x)]
+    if (length(bad_names)) {
+      stop(
+        "Factor names in `", arg, "` must be syntactic R names. ",
+        "Problem name", if (length(bad_names) == 1L) "" else "s", ": ",
+        paste(shQuote(bad_names), collapse = ", "),
+        ".",
+        call. = FALSE
+      )
+    }
     if (any(x < 2) || any(x != as.integer(x))) {
       stop("Every entry in `", arg, "` must be an integer >= 2.",
            call. = FALSE)

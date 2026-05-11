@@ -1,5 +1,5 @@
 Package: anovapowersim
-Title: Simple power simulations for ANOVAs
+Title: Simple Power Simulations for ANOVAs
 Version: 1.0.0
 Authors@R:
     person("Shaheed", "Azaad", email = "sazaad@uni-muenster.de", role = c("aut", "cre"))

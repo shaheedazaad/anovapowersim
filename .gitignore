@@ -6,5 +6,6 @@ testsim.R
 .Ruserdata
 *.Rcheck/
 *.tar.gz
+cran-comments.md
 anovapowersim_cache/
 vignettes/anovapowersim_cache/
