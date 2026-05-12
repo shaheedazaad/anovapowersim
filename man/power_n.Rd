@@ -12,6 +12,7 @@ power_n(
   power = 0.8,
   n_sims = 10000,
   alpha = 0.05,
+  ss_type = "III",
   n_start = NULL,
   n_max = 1000,
   tol = 0.01,
@@ -41,6 +42,10 @@ resolves to \code{"group:time"} when that is the design's factor order.}
 \item{n_sims}{Number of simulated datasets per sample size.}
 
 \item{alpha}{Significance threshold.}
+
+\item{ss_type}{Sums-of-squares type for the tested ANOVA term. \code{"III"} is
+the default for order-invariant tests in unbalanced designs. Use \code{"I"} to
+reproduce sequential \code{stats::aov()} tests.}
 
 \item{n_start}{Starting sample size per between-subject cell. If \code{NULL},
 starts at the smallest value that can support empirical calibration for

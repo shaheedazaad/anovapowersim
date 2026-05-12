@@ -2,6 +2,7 @@
 ^\.github$
 ^\.gitignore$
 ^docs$
+^data-raw$
 ^testsim\.R$
 (^|/)\.DS_Store$
 ^anovapowersim_cache$

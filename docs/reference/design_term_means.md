@@ -7,7 +7,16 @@ the supplied balanced design assumptions.
 ## Usage
 
 ``` r
-design_term_means(design, term, target_pes, n, sd = 1, r = 0.5, gpower = FALSE)
+design_term_means(
+  design,
+  term,
+  target_pes,
+  n,
+  sd = 1,
+  r = 0.5,
+  gpower = FALSE,
+  ss_type = "III"
+)
 ```
 
 ## Arguments
@@ -44,6 +53,13 @@ design_term_means(design, term, target_pes, n, sd = 1, r = 0.5, gpower = FALSE)
   Logical; if `TRUE`, calibrate to the G\*Power-style noncentrality
   convention `lambda = total_n * f^2` (using the 'as in Cohen (1988)
   option for within-subjects designs).
+
+- ss_type:
+
+  Sums-of-squares type for the tested ANOVA term. `"III"` is the default
+  for order-invariant tests in unbalanced designs. Use `"I"` to
+  reproduce sequential
+  [`stats::aov()`](https://rdrr.io/r/stats/aov.html) tests.
 
 ## Value
 

@@ -12,6 +12,7 @@ power_curve(
   n_range,
   n_sims = 10000,
   alpha = 0.05,
+  ss_type = "III",
   gpower = FALSE,
   progress = interactive(),
   parallel = FALSE,
@@ -39,6 +40,10 @@ pure within-subject designs, this is the total sample size.}
 \item{n_sims}{Number of simulated datasets per sample size.}
 
 \item{alpha}{Significance threshold.}
+
+\item{ss_type}{Sums-of-squares type for the tested ANOVA term. \code{"III"} is
+the default for order-invariant tests in unbalanced designs. Use \code{"I"} to
+reproduce sequential \code{stats::aov()} tests.}
 
 \item{gpower}{Logical; if \code{TRUE}, calibrate means to the G*Power-style
 noncentrality convention \code{lambda = total_n * f^2}. The default \code{FALSE}

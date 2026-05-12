@@ -55,6 +55,7 @@ doubles upward from <code>n_start</code> until it brackets the target or reaches
 <span>  power <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  ss_type <span class="op">=</span> <span class="st">"III"</span>,</span>
 <span>  n_start <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_max <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fl">0.01</span>,</span>
@@ -101,6 +102,12 @@ resolves to <code>"group:time"</code> when that is the design's factor order.</p
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
 <dd><p>Significance threshold.</p></dd>
+
+
+<dt id="arg-ss-type">ss_type<a class="anchor" aria-label="anchor" href="#arg-ss-type"></a></dt>
+<dd><p>Sums-of-squares type for the tested ANOVA term. <code>"III"</code> is
+the default for order-invariant tests in unbalanced designs. Use <code>"I"</code> to
+reproduce sequential <code><a href="https://rdrr.io/r/stats/aov.html" class="external-link">stats::aov()</a></code> tests.</p></dd>
 
 
 <dt id="arg-n-start">n_start<a class="anchor" aria-label="anchor" href="#arg-n-start"></a></dt>

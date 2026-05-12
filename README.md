@@ -20,7 +20,9 @@ power_n(
   parallel = TRUE, # simulations will be run in parallel for speed
   seed = 123 # for reproducibility
 )
+```
 
+```text
 #><anovapowersim_curve>
 #>  term:          'group:stim:cond'
 #>  target power:  0.800
@@ -61,10 +63,10 @@ A preprint is in preparation.
 
 `anovapowersim` is designed to be simple and easy to use first, which means it has some limitations for now. It does not support:
 
-- Unbalanced designs
 - Covariates (ANCOVAs)
+- Means-based simulations for unbalanced designs
 - Nonsphericity corrections (though this might change)
-- Specific interaction shapes
+- Specific interaction shapes (based on means)
 - Simple main effects/pairwise comparisons
 
 ## Other packages

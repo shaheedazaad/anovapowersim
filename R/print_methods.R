@@ -23,18 +23,29 @@ print.anovapowersim_curve <- function(x, ...) {
     cat("  (rescaled, k = ", format(round(x$scale_factor, 3)), ")", sep = "")
   }
   cat("\n")
-  cat("  n values:      ", nrow(x$results), " per-cell sample sizes visited\n", sep = "")
+  if (inherits(x$design, "anovapowersim_unbalanced_design_spec")) {
+    cat("  n values:      explicit unbalanced cell counts\n", sep = "")
+  } else {
+    cat("  n values:      ", nrow(x$results), " per-cell sample sizes visited\n", sep = "")
+  }
   cat("  sims per cell size: ", x$n_sims, "\n", sep = "")
   if (isTRUE(x$gpower)) {
     cat("  G*Power convention: TRUE\n", sep = "")
   }
+  if (!is.null(x$ss_type)) {
+    cat("  SS type:       ", x$ss_type, "\n", sep = "")
+  }
 
-  cat("  n needed for between-subjects cell: ",
-      if (is.na(x$n_needed)) "<not reached>" else x$n_needed, "\n",
-      sep = "")
-  cat("  total N needed: ",
-      if (is.na(x$total_n_needed)) "<not reached>" else x$total_n_needed, "\n",
-      sep = "")
+  if (inherits(x$design, "anovapowersim_unbalanced_design_spec")) {
+    cat("  design:        unbalanced between-subject cells\n", sep = "")
+  } else {
+    cat("  n needed for between-subjects cell: ",
+        if (is.na(x$n_needed)) "<not reached>" else x$n_needed, "\n",
+        sep = "")
+    cat("  total N needed: ",
+        if (is.na(x$total_n_needed)) "<not reached>" else x$total_n_needed, "\n",
+        sep = "")
+  }
   cat("\n")
   print(format_power_results(x$results), row.names = FALSE)
   invisible(x)
@@ -73,6 +84,9 @@ summary.anovapowersim_curve <- function(object, ...) {
   )
   if (isTRUE(object$gpower)) {
     header <- append(header, c(gpower_convention = "TRUE"), after = 4L)
+  }
+  if (!is.null(object$ss_type)) {
+    header <- append(header, c(ss_type = object$ss_type), after = 4L)
   }
   out <- list(header = header, curve = object$results)
   cat("anovapowersim power simulation summary\n")

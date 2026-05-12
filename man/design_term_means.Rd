@@ -4,7 +4,16 @@
 \alias{design_term_means}
 \title{Build calibrated default means for a design term}
 \usage{
-design_term_means(design, term, target_pes, n, sd = 1, r = 0.5, gpower = FALSE)
+design_term_means(
+  design,
+  term,
+  target_pes,
+  n,
+  sd = 1,
+  r = 0.5,
+  gpower = FALSE,
+  ss_type = "III"
+)
 }
 \arguments{
 \item{design}{An \code{anovapowersim_design_spec} from \code{\link[=balanced_anova_design]{balanced_anova_design()}}.}
@@ -23,6 +32,10 @@ is the total sample size.}
 
 \item{gpower}{Logical; if \code{TRUE}, calibrate to the G*Power-style
 noncentrality convention \code{lambda = total_n * f^2} (using the 'as in Cohen (1988) option for within-subjects designs).}
+
+\item{ss_type}{Sums-of-squares type for the tested ANOVA term. \code{"III"} is
+the default for order-invariant tests in unbalanced designs. Use \code{"I"} to
+reproduce sequential \code{stats::aov()} tests.}
 }
 \value{
 A numeric matrix of cell means, with rows indexing between cells and

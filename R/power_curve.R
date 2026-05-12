@@ -20,6 +20,9 @@
 #'   pure within-subject designs, this is the total sample size.
 #' @param n_sims Number of simulated datasets per sample size.
 #' @param alpha Significance threshold.
+#' @param ss_type Sums-of-squares type for the tested ANOVA term. `"III"` is
+#'   the default for order-invariant tests in unbalanced designs. Use `"I"` to
+#'   reproduce sequential `stats::aov()` tests.
 #' @param gpower Logical; if `TRUE`, calibrate means to the G*Power-style
 #'   noncentrality convention `lambda = total_n * f^2`. The default `FALSE`
 #'   calibrates the empirical reference dataset to `target_pes`, equivalent to
@@ -70,6 +73,7 @@ power_curve <- function(between = NULL,
                         n_range,
                         n_sims = 10000,
                         alpha = 0.05,
+                        ss_type = "III",
                         gpower = FALSE,
                         progress = interactive(),
                         parallel = FALSE,
@@ -84,6 +88,7 @@ power_curve <- function(between = NULL,
     target_pes = target_pes,
     n_sims = n_sims,
     alpha = alpha,
+    ss_type = ss_type,
     sd = sd,
     r = r,
     gpower = gpower,
@@ -112,6 +117,7 @@ power_curve <- function(between = NULL,
       n = n,
       n_sims = setup$n_sims,
       alpha = alpha,
+      ss_type = setup$ss_type,
       sd = sd,
       r = r,
       gpower = setup$gpower,
@@ -138,6 +144,7 @@ power_curve <- function(between = NULL,
       n_needed = NA_integer_,
       total_n_needed = NA_integer_,
       gpower = setup$gpower,
+      ss_type = setup$ss_type,
       design = setup$spec,
       call = match.call()
     ),
@@ -186,6 +193,7 @@ power_n <- function(between = NULL,
                     power = 0.80,
                     n_sims = 10000,
                     alpha = 0.05,
+                    ss_type = "III",
                     n_start = NULL,
                     n_max = 1000,
                     tol = 0.01,
@@ -203,6 +211,7 @@ power_n <- function(between = NULL,
     target_pes = target_pes,
     n_sims = n_sims,
     alpha = alpha,
+    ss_type = ss_type,
     sd = sd,
     r = r,
     gpower = gpower,
@@ -228,6 +237,7 @@ power_n <- function(between = NULL,
       target_pes = target_pes,
       target_power = power,
       alpha = alpha,
+      ss_type = setup$ss_type,
       sd = sd,
       r = r,
       gpower = setup$gpower,
@@ -274,6 +284,7 @@ power_n <- function(between = NULL,
       n = n,
       n_sims = setup$n_sims,
       alpha = alpha,
+      ss_type = setup$ss_type,
       sd = sd,
       r = r,
       gpower = setup$gpower,
@@ -312,7 +323,148 @@ power_n <- function(between = NULL,
       n_needed = n_needed,
       total_n_needed = total_n_needed,
       gpower = setup$gpower,
+      ss_type = setup$ss_type,
       design = setup$spec,
+      call = match.call()
+    ),
+    class = "anovapowersim_curve"
+  )
+}
+
+
+#' @keywords internal
+#' @noRd
+cell_counts <- function(...) {
+  dots <- list(...)
+  nms <- names(dots)
+  if (!length(dots)) {
+    stop("Enter at least one cell, ending each cell with `n = count`.",
+         call. = FALSE)
+  }
+  if (is.null(nms) || any(!nzchar(nms))) {
+    stop("Every value in `...` must be named.", call. = FALSE)
+  }
+
+  rows <- list()
+  current <- list()
+  factor_names <- NULL
+  for (i in seq_along(dots)) {
+    nm <- nms[[i]]
+    value <- dots[[i]]
+    if (length(value) != 1L || is.null(value) || is.na(value)) {
+      stop("`", nm, "` values must be single non-missing values.",
+           call. = FALSE)
+    }
+
+    if (identical(nm, "n")) {
+      if (!length(current)) {
+        stop("Each `n` must follow one or more factor values.", call. = FALSE)
+      }
+      current$n <- value
+      row_factor_names <- names(current)[names(current) != "n"]
+      if (is.null(factor_names)) {
+        factor_names <- row_factor_names
+      } else if (!identical(row_factor_names, factor_names)) {
+        stop("Every cell must use the same factor names in the same order.",
+             call. = FALSE)
+      }
+      rows[[length(rows) + 1L]] <- current
+      current <- list()
+    } else {
+      if (nm %in% names(current)) {
+        stop("Factor `", nm, "` appears more than once before the next `n`.",
+             call. = FALSE)
+      }
+      current[[nm]] <- value
+    }
+  }
+
+  if (length(current)) {
+    stop("The final cell is missing `n = count`.", call. = FALSE)
+  }
+
+  out <- dplyr::bind_rows(rows)
+  out$n <- validate_cell_count_values(out$n, "n")
+  tibble::as_tibble(out)
+}
+
+
+#' @keywords internal
+#' @noRd
+power_unbalanced <- function(cell_n,
+                             within = NULL,
+                             term,
+                             target_pes,
+                             n_sims = 10000,
+                             alpha = 0.05,
+                             ss_type = "III",
+                             gpower = FALSE,
+                             progress = interactive(),
+                             parallel = FALSE,
+                             cores = NULL,
+                             seed = NULL) {
+  sd <- 1
+  r <- 0.5
+  spec <- unbalanced_anova_design(cell_n = cell_n, within = within)
+  term <- resolve_design_term(term, spec)
+  ss_type <- validate_ss_type(ss_type)
+  assert_unit_interval(target_pes, "target_pes")
+  assert_unit_interval(alpha, "alpha")
+  if (!is.numeric(n_sims) || length(n_sims) != 1L || n_sims < 1) {
+    stop("`n_sims` must be a positive integer.", call. = FALSE)
+  }
+  if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
+    stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (!is.logical(progress) || length(progress) != 1L || is.na(progress)) {
+    stop("`progress` must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (!is.logical(parallel) || length(parallel) != 1L || is.na(parallel)) {
+    stop("`parallel` must be TRUE or FALSE.", call. = FALSE)
+  }
+  cores <- validate_parallel_cores(cores = cores, parallel = parallel)
+  validate_calibration_n(spec$cell_n, spec, "cell_n$n")
+  message_long_serial_run(as.integer(n_sims), parallel)
+  if (!is.null(seed)) set.seed(seed)
+
+  progress_bar <- make_progress_bar(
+    enabled = progress,
+    total = if (parallel) 1L else as.integer(n_sims),
+    label = "Simulating power"
+  )
+  on.exit(close_progress_bar(progress_bar), add = TRUE)
+
+  row <- run_unbalanced_power(
+    spec = spec,
+    term = term,
+    target_pes = target_pes,
+    n_sims = as.integer(n_sims),
+    alpha = alpha,
+    ss_type = ss_type,
+    sd = sd,
+    r = r,
+    gpower = gpower,
+    progress_bar = if (parallel) NULL else progress_bar,
+    parallel = parallel,
+    cores = cores
+  )
+  if (parallel) tick_progress_bar(progress_bar)
+  warn_power_disagreement(row, as.integer(n_sims))
+
+  structure(
+    list(
+      results = row,
+      term = term,
+      power = NA_real_,
+      alpha = alpha,
+      target_pes = target_pes,
+      scale_factor = NA_real_,
+      n_sims = as.integer(n_sims),
+      n_needed = NA_integer_,
+      total_n_needed = NA_integer_,
+      gpower = gpower,
+      ss_type = ss_type,
+      design = spec,
       call = match.call()
     ),
     class = "anovapowersim_curve"
@@ -362,6 +514,9 @@ balanced_anova_design <- function(between = NULL, within = NULL) {
 #' @param r Compound-symmetric correlation among within-subject cells.
 #' @param gpower Logical; if `TRUE`, calibrate to the G*Power-style 
 #'   noncentrality convention `lambda = total_n * f^2` (using the 'as in Cohen (1988) option for within-subjects designs).
+#' @param ss_type Sums-of-squares type for the tested ANOVA term. `"III"` is
+#'   the default for order-invariant tests in unbalanced designs. Use `"I"` to
+#'   reproduce sequential `stats::aov()` tests.
 #'
 #' @return A numeric matrix of cell means, with rows indexing between cells and
 #'   columns indexing within cells.
@@ -372,9 +527,10 @@ balanced_anova_design <- function(between = NULL, within = NULL) {
 #'
 #' @export
 design_term_means <- function(design, term, target_pes, n, sd = 1, r = 0.5,
-                              gpower = FALSE) {
+                              gpower = FALSE, ss_type = "III") {
   assert_design_spec(design)
   term <- resolve_design_term(term, design)
+  ss_type <- validate_ss_type(ss_type)
   assert_unit_interval(target_pes, "target_pes")
   if (!is.numeric(n) || length(n) != 1L || n < 1 || n != as.integer(n)) {
     stop("`n` must be a single positive integer.", call. = FALSE)
@@ -397,7 +553,8 @@ design_term_means <- function(design, term, target_pes, n, sd = 1, r = 0.5,
     n = as.integer(n),
     sd = sd,
     r = r,
-    gpower = gpower
+    gpower = gpower,
+    ss_type = ss_type
   )
 }
 
@@ -544,6 +701,165 @@ validate_design_spec <- function(between, within) {
 
 #' @keywords internal
 #' @noRd
+unbalanced_anova_design <- function(cell_n, within = NULL) {
+  if (!is.data.frame(cell_n)) {
+    stop("`cell_n` must be a data frame created by cell_counts() or equivalent.",
+         call. = FALSE)
+  }
+  if (!"n" %in% names(cell_n)) {
+    stop("`cell_n` must include an `n` column.", call. = FALSE)
+  }
+  between <- setdiff(names(cell_n), "n")
+  if (!length(between)) {
+    stop("`cell_n` must include at least one between-subject factor column.",
+         call. = FALSE)
+  }
+  bad_names <- between[make.names(between) != between]
+  if (length(bad_names)) {
+    stop(
+      "Factor names in `cell_n` must be syntactic R names. Problem name",
+      if (length(bad_names) == 1L) "" else "s", ": ",
+      paste(shQuote(bad_names), collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+
+  counts <- validate_cell_count_values(cell_n$n, "cell_n$n")
+  cell_n <- tibble::as_tibble(cell_n[, c(between, "n"), drop = FALSE])
+  cell_n$n <- counts
+
+  for (nm in between) {
+    values <- cell_n[[nm]]
+    if (any(is.na(values))) {
+      stop("`cell_n` factor columns must not contain missing values.",
+           call. = FALSE)
+    }
+    if (is.list(values)) {
+      stop("`cell_n` factor columns must be atomic vectors.", call. = FALSE)
+    }
+  }
+
+  key <- interaction_key(cell_n, between)
+  duplicated_cells <- duplicated(key)
+  if (any(duplicated_cells)) {
+    stop("`cell_n` contains duplicate between-subject cells.", call. = FALSE)
+  }
+
+  between_levels <- stats::setNames(
+    lapply(between, function(nm) unique(as.character(cell_n[[nm]]))),
+    between
+  )
+  between_factors <- stats::setNames(
+    lapply(between, function(nm) {
+      factor(between_levels[[nm]], levels = between_levels[[nm]])
+    }),
+    between
+  )
+  between_cells <- tidyr::expand_grid(!!!between_factors)
+  expected_key <- interaction_key(between_cells, between)
+  missing_key <- setdiff(expected_key, key)
+  if (length(missing_key)) {
+    stop(
+      "`cell_n` must include every combination of the between-subject ",
+      "factor levels.",
+      call. = FALSE
+    )
+  }
+  extra_key <- setdiff(key, expected_key)
+  if (length(extra_key)) {
+    stop("`cell_n` contains cells outside the between-subject grid.",
+         call. = FALSE)
+  }
+  cell_n <- cell_n[match(expected_key, key), , drop = FALSE]
+
+  within <- parse_count_vector(within, "within")
+  all_names <- c(between, names(within))
+  if (anyDuplicated(all_names)) {
+    stop("Factor names must be unique across `cell_n` and `within`.",
+         call. = FALSE)
+  }
+  within_levels <- stats::setNames(
+    lapply(names(within), function(nm) {
+      k <- within[[nm]]
+      paste0(nm, seq_len(k))
+    }),
+    names(within)
+  )
+  levels <- c(between_levels, within_levels)
+  factor_levels <- stats::setNames(
+    lapply(names(levels), function(nm) factor(levels[[nm]], levels = levels[[nm]])),
+    names(levels)
+  )
+  within_cells <- if (length(within)) {
+    tidyr::expand_grid(!!!factor_levels[names(within)])
+  } else {
+    tibble::tibble(.dummy_within = factor("dv"))
+  }
+
+  spec <- list(
+    between = between,
+    within = names(within),
+    factor_names = all_names,
+    level_counts = c(stats::setNames(lengths(between_levels), between), within),
+    levels = factor_levels,
+    between_cells = between_cells,
+    within_cells = within_cells,
+    n_between_cells = nrow(between_cells),
+    n_within_cells = if (length(within)) nrow(within_cells) else 1L,
+    cell_n = as.integer(cell_n$n)
+  )
+  class(spec) <- c("anovapowersim_unbalanced_design_spec",
+                   "anovapowersim_design_spec", class(spec))
+  spec
+}
+
+
+#' @keywords internal
+#' @noRd
+parse_count_vector <- function(x, arg) {
+  if (is.null(x)) return(stats::setNames(integer(0), character(0)))
+  if (!is.numeric(x) || is.null(names(x)) || any(names(x) == "")) {
+    stop("`", arg, "` must be a named integer vector of level counts.",
+         call. = FALSE)
+  }
+  bad_names <- names(x)[make.names(names(x)) != names(x)]
+  if (length(bad_names)) {
+    stop(
+      "Factor names in `", arg, "` must be syntactic R names. Problem name",
+      if (length(bad_names) == 1L) "" else "s", ": ",
+      paste(shQuote(bad_names), collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  if (any(x < 2) || any(x != as.integer(x))) {
+    stop("Every entry in `", arg, "` must be an integer >= 2.",
+         call. = FALSE)
+  }
+  stats::setNames(as.integer(x), names(x))
+}
+
+
+#' @keywords internal
+#' @noRd
+validate_cell_count_values <- function(x, arg) {
+  if (!is.numeric(x) || any(is.na(x)) || any(x < 1) ||
+      any(x != as.integer(x))) {
+    stop("`", arg, "` must contain positive integer counts.", call. = FALSE)
+  }
+  as.integer(x)
+}
+
+
+#' @keywords internal
+#' @noRd
+interaction_key <- function(data, columns) {
+  if (!length(columns)) return(rep(".all", nrow(data)))
+  do.call(paste, c(lapply(data[columns], as.character), sep = "\r"))
+}
+
+
+#' @keywords internal
+#' @noRd
 assert_design_spec <- function(design) {
   if (!inherits(design, "anovapowersim_design_spec")) {
     stop("`design` must be created by balanced_anova_design().",
@@ -590,10 +906,11 @@ resolve_design_term <- function(term, spec) {
 #' @keywords internal
 #' @noRd
 prepare_power_curve_inputs <- function(between, within, term, target_pes,
-                                       n_sims, alpha, sd, r, gpower,
+                                       n_sims, alpha, ss_type, sd, r, gpower,
                                        progress, parallel, cores) {
   spec <- balanced_anova_design(between = between, within = within)
   term <- resolve_design_term(term, spec)
+  ss_type <- validate_ss_type(ss_type)
   assert_unit_interval(target_pes, "target_pes")
   assert_unit_interval(alpha, "alpha")
   if (!is.numeric(n_sims) || length(n_sims) != 1L || n_sims < 1) {
@@ -621,6 +938,7 @@ prepare_power_curve_inputs <- function(between, within, term, target_pes,
     spec = spec,
     term = term,
     n_sims = as.integer(n_sims),
+    ss_type = ss_type,
     gpower = gpower,
     progress = progress,
     parallel = parallel,
@@ -637,6 +955,33 @@ normalize_n_range <- function(n_range) {
     stop("`n_range` must contain positive integers.", call. = FALSE)
   }
   sort(unique(as.integer(n_range)))
+}
+
+
+#' @keywords internal
+#' @noRd
+validate_ss_type <- function(ss_type) {
+  if (!is.character(ss_type) || length(ss_type) != 1L || is.na(ss_type)) {
+    stop("`ss_type` must be one of 'III', 'II', or 'I'.", call. = FALSE)
+  }
+  ss_type <- toupper(ss_type)
+  if (!ss_type %in% c("III", "II", "I")) {
+    stop("`ss_type` must be one of 'III', 'II', or 'I'.", call. = FALSE)
+  }
+  ss_type
+}
+
+
+#' @keywords internal
+#' @noRd
+parallel_worker_helpers <- function(names) {
+  env <- new.env(parent = globalenv())
+  for (nm in names) {
+    value <- get(nm, mode = "function")
+    if (is.function(value)) environment(value) <- env
+    assign(nm, value, envir = env)
+  }
+  stats::setNames(lapply(names, get, envir = env), names)
 }
 
 
@@ -695,7 +1040,8 @@ message_long_serial_run <- function(n_sims, parallel) {
 #' @keywords internal
 #' @noRd
 run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
-                                  alpha, sd, r, gpower, progress_bar = NULL,
+                                  alpha, ss_type, sd, r, gpower,
+                                  progress_bar = NULL,
                                   parallel = FALSE, cores = NULL) {
   means <- design_term_means(
     design = spec,
@@ -704,7 +1050,8 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     n = n,
     sd = sd,
     r = r,
-    gpower = gpower
+    gpower = gpower,
+    ss_type = ss_type
   )
   sanity <- sanity_check_term_effect(
     spec = spec,
@@ -715,20 +1062,49 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     sd = sd,
     r = r,
     alpha = alpha,
-    gpower = gpower
+    gpower = gpower,
+    ss_type = ss_type
   )
 
+  helpers <- parallel_worker_helpers(c(
+    "simulate_balanced_design_data",
+    "fit_design_term_stats",
+    "validate_ss_type",
+    "fit_design_model",
+    "fit_car_term_stats",
+    "extract_term_stats",
+    "set_sum_contrasts",
+    "design_aov_formula",
+    "extract_aov_rows",
+    "car_between_rows",
+    "car_repeated_rows",
+    "repeated_measures_wide_data",
+    "make_cell_labels",
+    "interaction_key",
+    "validate_calibration_n",
+    "minimum_calibration_n",
+    "compound_symmetric_sigma",
+    "tick_progress_bar"
+  ))
+  fit_one_stats <- helpers$fit_design_term_stats
+  simulate_one_dataset <- helpers$simulate_balanced_design_data
+  tick_progress <- helpers$tick_progress_bar
   simulate_one <- function(i) {
-    sim <- simulate_design_dataset(
-      design = spec,
+    sim <- simulate_one_dataset(
+      spec = spec,
       n = n,
       means = means,
       sd = sd,
       r = r,
       empirical = FALSE
     )
-    tick_progress_bar(progress_bar)
-    fit_design_term(sim, spec, term, alpha)
+    tick_progress(progress_bar)
+    stats <- tryCatch(
+      fit_one_stats(sim, spec, term, ss_type = ss_type),
+      error = function(e) NULL
+    )
+    if (is.null(stats) || !is.finite(stats$p_value)) return(NA)
+    isTRUE(stats$p_value < alpha)
   }
 
   successes <- if (parallel) {
@@ -749,12 +1125,127 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
 
   failed_count <- sum(is.na(successes))
   valid_count <- n_sims - failed_count
+  if (valid_count == 0L) {
+    stop(
+      "All simulated ANOVA fits failed. This usually indicates an internal ",
+      "model-fitting error rather than zero power.",
+      call. = FALSE
+    )
+  }
   success_count <- sum(successes, na.rm = TRUE)
   power <- if (valid_count > 0L) success_count / valid_count else NA_real_
 
   tibble::tibble(
     n_per_cell = as.integer(n),
     total_n = as.integer(n * max(1L, spec$n_between_cells)),
+    n_sims = n_sims,
+    num_df = sanity$num_df,
+    den_df = sanity$den_df,
+    ncp = round(sanity$ncp, 3),
+    power_calc = round(sanity$power_calc, 3),
+    power_sim = round(power, 3)
+  )
+}
+
+
+#' @keywords internal
+#' @noRd
+run_unbalanced_power <- function(spec, term, target_pes, n_sims, alpha,
+                                 ss_type, sd, r, gpower, progress_bar = NULL,
+                                 parallel = FALSE, cores = NULL) {
+  means <- calibrate_unbalanced_design_means(
+    spec = spec,
+    term = term,
+    target_pes = target_pes,
+    sd = sd,
+    r = r,
+    gpower = gpower,
+    ss_type = ss_type
+  )
+  sanity <- sanity_check_unbalanced_term_effect(
+    spec = spec,
+    term = term,
+    target_pes = target_pes,
+    means = means,
+    sd = sd,
+    r = r,
+    alpha = alpha,
+    gpower = gpower,
+    ss_type = ss_type
+  )
+
+  helpers <- parallel_worker_helpers(c(
+    "simulate_unbalanced_design_data",
+    "fit_design_term_stats",
+    "validate_ss_type",
+    "fit_design_model",
+    "fit_car_term_stats",
+    "extract_term_stats",
+    "set_sum_contrasts",
+    "design_aov_formula",
+    "extract_aov_rows",
+    "car_between_rows",
+    "car_repeated_rows",
+    "repeated_measures_wide_data",
+    "make_cell_labels",
+    "interaction_key",
+    "validate_calibration_n",
+    "minimum_calibration_n",
+    "compound_symmetric_sigma",
+    "tick_progress_bar"
+  ))
+  fit_one_stats <- helpers$fit_design_term_stats
+  simulate_one_dataset <- helpers$simulate_unbalanced_design_data
+  tick_progress <- helpers$tick_progress_bar
+  simulate_one <- function(i) {
+    sim <- simulate_one_dataset(
+      spec = spec,
+      means = means,
+      sd = sd,
+      r = r,
+      empirical = FALSE
+    )
+    tick_progress(progress_bar)
+    stats <- tryCatch(
+      fit_one_stats(sim, spec, term, ss_type = ss_type),
+      error = function(e) NULL
+    )
+    if (is.null(stats) || !is.finite(stats$p_value)) return(NA)
+    isTRUE(stats$p_value < alpha)
+  }
+
+  successes <- if (parallel) {
+    old_plan <- future::plan()
+    on.exit(future::plan(old_plan), add = TRUE)
+    future::plan(future::multisession, workers = cores)
+    unlist(
+      future.apply::future_lapply(
+        seq_len(n_sims),
+        simulate_one,
+        future.seed = TRUE
+      ),
+      use.names = FALSE
+    )
+  } else {
+    purrr::map_lgl(seq_len(n_sims), simulate_one)
+  }
+
+  failed_count <- sum(is.na(successes))
+  valid_count <- n_sims - failed_count
+  if (valid_count == 0L) {
+    stop(
+      "All simulated ANOVA fits failed. This usually indicates an internal ",
+      "model-fitting error rather than zero power.",
+      call. = FALSE
+    )
+  }
+  success_count <- sum(successes, na.rm = TRUE)
+  power <- if (valid_count > 0L) success_count / valid_count else NA_real_
+
+  tibble::tibble(
+    total_n = as.integer(sum(spec$cell_n)),
+    min_cell_n = as.integer(min(spec$cell_n)),
+    max_cell_n = as.integer(max(spec$cell_n)),
     n_sims = n_sims,
     num_df = sanity$num_df,
     den_df = sanity$den_df,
@@ -840,12 +1331,13 @@ warn_power_disagreement <- function(results, n_sims, threshold = 0.05) {
   bad <- which(is.finite(diff) & diff > threshold)
   if (!length(bad)) return(invisible(NULL))
 
-  ns <- paste(results$n_per_cell[bad], collapse = ", ")
+  n_label <- if ("n_per_cell" %in% names(results)) "n_per_cell" else "total_n"
+  ns <- paste(results[[n_label]][bad], collapse = ", ")
   max_diff <- max(diff[bad], na.rm = TRUE)
   msg <- paste0(
     "`power_sim` and `power_calc` differ by more than ",
     threshold * 100,
-    " percentage points for n_per_cell = ",
+    " percentage points for ", n_label, " = ",
     ns,
     " (largest difference = ",
     sprintf("%.3f", max_diff),
@@ -932,7 +1424,7 @@ default_term_pattern <- function(spec, term) {
 #' @keywords internal
 #' @noRd
 calibrate_design_means <- function(spec, term, target_pes, n, sd, r,
-                                   gpower = FALSE) {
+                                   gpower = FALSE, ss_type = "III") {
   base <- default_term_pattern(spec, term)
   exact <- simulate_balanced_design_data(
     spec = spec,
@@ -942,8 +1434,7 @@ calibrate_design_means <- function(spec, term, target_pes, n, sd, r,
     r = r,
     empirical = TRUE
   )
-  fit <- fit_design_model(exact, spec)
-  stats <- extract_term_stats(fit, term)
+  stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
   old_pes <- stats$pes
   if (is.na(old_pes) || old_pes <= 0 || old_pes >= 1) {
     stop("Could not calibrate the default means for term '", term, "'.",
@@ -952,6 +1443,37 @@ calibrate_design_means <- function(spec, term, target_pes, n, sd, r,
   calibration_pes <- calibration_pes_for_ncp(
     target_pes = target_pes,
     total_n = n * max(1L, spec$n_between_cells),
+    num_df = stats$num_df,
+    den_df = stats$den_df,
+    gpower = gpower
+  )
+  k <- compute_scale_factor(old_pes, calibration_pes)
+  base * k
+}
+
+
+#' @keywords internal
+#' @noRd
+calibrate_unbalanced_design_means <- function(spec, term, target_pes, sd, r,
+                                              gpower = FALSE,
+                                              ss_type = "III") {
+  base <- default_term_pattern(spec, term)
+  exact <- simulate_unbalanced_design_data(
+    spec = spec,
+    means = base,
+    sd = sd,
+    r = r,
+    empirical = TRUE
+  )
+  stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
+  old_pes <- stats$pes
+  if (is.na(old_pes) || old_pes <= 0 || old_pes >= 1) {
+    stop("Could not calibrate the default means for term '", term, "'.",
+         call. = FALSE)
+  }
+  calibration_pes <- calibration_pes_for_ncp(
+    target_pes = target_pes,
+    total_n = sum(spec$cell_n),
     num_df = stats$num_df,
     den_df = stats$den_df,
     gpower = gpower
@@ -982,7 +1504,7 @@ calibration_pes_for_ncp <- function(target_pes, total_n, num_df, den_df,
 #' @keywords internal
 #' @noRd
 sanity_check_term_effect <- function(spec, term, target_pes, n, means, sd, r,
-                                     alpha, gpower) {
+                                     alpha, gpower, ss_type = "III") {
   exact <- simulate_balanced_design_data(
     spec = spec,
     n = n,
@@ -991,9 +1513,56 @@ sanity_check_term_effect <- function(spec, term, target_pes, n, means, sd, r,
     r = r,
     empirical = TRUE
   )
-  fit <- fit_design_model(exact, spec)
-  stats <- extract_term_stats(fit, term)
+  stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
   total_n <- n * max(1L, spec$n_between_cells)
+  expected_pes <- calibration_pes_for_ncp(
+    target_pes = target_pes,
+    total_n = total_n,
+    num_df = stats$num_df,
+    den_df = stats$den_df,
+    gpower = gpower
+  )
+  tolerance <- max(1e-6, sqrt(.Machine$double.eps) * 10)
+  if (!is.finite(stats$pes) || abs(stats$pes - expected_pes) > tolerance) {
+    stop(
+      "Sanity check failed: empirical reference data produced partial eta ",
+      "squared ", signif(stats$pes, 6), " for term '", term,
+      "', expected ", signif(expected_pes, 6), ".",
+      call. = FALSE
+    )
+  }
+  ncp <- ncp_from_pes(
+    pes = target_pes,
+    total_n = total_n,
+    den_df = stats$den_df,
+    gpower = gpower
+  )
+  stats$ncp <- ncp
+  stats$power_calc <- stats::pf(
+    stats::qf(1 - alpha, stats$num_df, stats$den_df),
+    stats$num_df,
+    stats$den_df,
+    ncp = ncp,
+    lower.tail = FALSE
+  )
+  stats
+}
+
+
+#' @keywords internal
+#' @noRd
+sanity_check_unbalanced_term_effect <- function(spec, term, target_pes, means,
+                                                sd, r, alpha, gpower,
+                                                ss_type = "III") {
+  exact <- simulate_unbalanced_design_data(
+    spec = spec,
+    means = means,
+    sd = sd,
+    r = r,
+    empirical = TRUE
+  )
+  stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
+  total_n <- sum(spec$cell_n)
   expected_pes <- calibration_pes_for_ncp(
     target_pes = target_pes,
     total_n = total_n,
@@ -1039,7 +1608,7 @@ ncp_from_pes <- function(pes, total_n, den_df, gpower) {
 #' @keywords internal
 #' @noRd
 estimate_ncp_n_needed <- function(spec, term, target_pes, target_power, alpha,
-                                  sd, r, gpower, n_min, n_max) {
+                                  ss_type, sd, r, gpower, n_min, n_max) {
   power_at <- function(n) {
     power_calc_at_n(
       spec = spec,
@@ -1047,6 +1616,7 @@ estimate_ncp_n_needed <- function(spec, term, target_pes, target_power, alpha,
       target_pes = target_pes,
       n = n,
       alpha = alpha,
+      ss_type = ss_type,
       sd = sd,
       r = r,
       gpower = gpower
@@ -1080,7 +1650,8 @@ estimate_ncp_n_needed <- function(spec, term, target_pes, target_power, alpha,
 
 #' @keywords internal
 #' @noRd
-power_calc_at_n <- function(spec, term, target_pes, n, alpha, sd, r, gpower) {
+power_calc_at_n <- function(spec, term, target_pes, n, alpha, ss_type, sd, r,
+                            gpower) {
   base <- default_term_pattern(spec, term)
   exact <- simulate_balanced_design_data(
     spec = spec,
@@ -1090,8 +1661,7 @@ power_calc_at_n <- function(spec, term, target_pes, n, alpha, sd, r, gpower) {
     r = r,
     empirical = TRUE
   )
-  fit <- fit_design_model(exact, spec)
-  term_stats <- extract_term_stats(fit, term)
+  term_stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
   ncp <- ncp_from_pes(
     pes = target_pes,
     total_n = n * max(1L, spec$n_between_cells),
@@ -1179,6 +1749,78 @@ simulate_balanced_design_data <- function(spec, n, means, sd, r,
 
 #' @keywords internal
 #' @noRd
+simulate_unbalanced_design_data <- function(spec, means, sd, r,
+                                            empirical = FALSE) {
+  if (isTRUE(empirical)) {
+    validate_calibration_n(spec$cell_n, spec, "cell_n$n")
+  }
+
+  sigma <- compound_symmetric_sigma(spec$n_within_cells, sd = sd, r = r)
+  between_labels <- make_cell_labels("b", spec$n_between_cells)
+  within_labels <- make_cell_labels("w", spec$n_within_cells)
+  rownames(means) <- between_labels
+  colnames(means) <- within_labels
+
+  subject_rows <- vector("list", spec$n_between_cells)
+  y_rows <- vector("list", spec$n_between_cells)
+  id_offset <- 0L
+
+  for (i in seq_len(spec$n_between_cells)) {
+    n_i <- spec$cell_n[[i]]
+    y <- MASS::mvrnorm(
+      n = n_i,
+      mu = means[i, ],
+      Sigma = sigma,
+      empirical = empirical
+    )
+    if (spec$n_within_cells == 1L) {
+      y <- matrix(y, nrow = n_i, ncol = 1L)
+    } else if (n_i == 1L) {
+      y <- matrix(y, nrow = 1L)
+    }
+    colnames(y) <- within_labels
+
+    b <- spec$between_cells[i, spec$between, drop = FALSE]
+    subject_rows[[i]] <- dplyr::bind_cols(
+      tibble::tibble(id = seq_len(n_i) + id_offset),
+      b[rep(1L, n_i), , drop = FALSE]
+    )
+    y_rows[[i]] <- y
+    id_offset <- id_offset + n_i
+  }
+
+  subjects <- dplyr::bind_rows(subject_rows)
+  y_mat <- do.call(rbind, y_rows)
+  wide <- dplyr::bind_cols(subjects, tibble::as_tibble(y_mat))
+
+  if (!length(spec$within)) {
+    out <- wide |>
+      dplyr::rename(value = dplyr::all_of(within_labels[1L]))
+  } else {
+    within_map <- dplyr::bind_cols(
+      tibble::tibble(.within_cell = within_labels),
+      spec$within_cells[, spec$within, drop = FALSE]
+    )
+    out <- wide |>
+      tidyr::pivot_longer(
+        cols = dplyr::all_of(within_labels),
+        names_to = ".within_cell",
+        values_to = "value"
+      ) |>
+      dplyr::left_join(within_map, by = ".within_cell") |>
+      dplyr::select(-".within_cell")
+  }
+
+  out$id <- factor(out$id)
+  for (nm in spec$factor_names) {
+    out[[nm]] <- factor(out[[nm]], levels = levels(spec$levels[[nm]]))
+  }
+  tibble::as_tibble(out)
+}
+
+
+#' @keywords internal
+#' @noRd
 minimum_calibration_n <- function(spec) {
   if (spec$n_within_cells > 1L) spec$n_within_cells + 1L else 2L
 }
@@ -1227,12 +1869,150 @@ fit_design_model <- function(data, spec) {
 
 #' @keywords internal
 #' @noRd
-fit_design_term <- function(data, spec, term, alpha) {
-  fit <- tryCatch(fit_design_model(data, spec), error = function(e) NULL)
-  if (is.null(fit)) return(NA)
-  stats <- tryCatch(extract_term_stats(fit, term), error = function(e) NULL)
+fit_design_term <- function(data, spec, term, alpha, ss_type = "III") {
+  stats <- tryCatch(
+    fit_design_term_stats(data, spec, term, ss_type = ss_type),
+    error = function(e) NULL
+  )
   if (is.null(stats) || !is.finite(stats$p_value)) return(NA)
   isTRUE(stats$p_value < alpha)
+}
+
+
+#' @keywords internal
+#' @noRd
+fit_design_term_stats <- function(data, spec, term, ss_type = "III") {
+  ss_type <- validate_ss_type(ss_type)
+  if (identical(ss_type, "I")) {
+    fit <- fit_design_model(data, spec)
+    return(extract_term_stats(fit, term))
+  }
+  fit_car_term_stats(data, spec, term, ss_type = ss_type)
+}
+
+
+#' @keywords internal
+#' @noRd
+fit_car_term_stats <- function(data, spec, term, ss_type) {
+  data <- set_sum_contrasts(data, spec)
+  type <- switch(ss_type, II = 2, III = 3)
+  if (!length(spec$within)) {
+    fixed <- paste(spec$factor_names, collapse = " * ")
+    formula <- stats::as.formula(paste("value ~", fixed))
+    fit <- stats::lm(formula, data = data)
+    tab <- as.data.frame(car::Anova(fit, type = type))
+    rows <- car_between_rows(tab)
+  } else {
+    wide_setup <- repeated_measures_wide_data(data, spec)
+    fit <- stats::lm(wide_setup$formula, data = wide_setup$wide)
+    idesign <- stats::reformulate(paste(spec$within, collapse = " * "))
+    av <- car::Anova(
+      fit,
+      idata = wide_setup$idata,
+      idesign = idesign,
+      type = type,
+      icontrasts = c("contr.sum", "contr.poly")
+    )
+    tab <- as.data.frame.matrix(
+      suppressWarnings(summary(av, multivariate = FALSE))$univariate.tests
+    )
+    rows <- car_repeated_rows(tab)
+  }
+
+  idx <- which(rows$term == term)
+  if (!length(idx)) {
+    stop("Term '", term, "' was not found in the fitted ANOVA table.",
+         call. = FALSE)
+  }
+  row <- rows[idx[[1L]], , drop = FALSE]
+  if (!is.finite(row$f_value) || !is.finite(row$den_df)) {
+    stop("Term '", term, "' does not have a finite F test in the fitted ANOVA.",
+         call. = FALSE)
+  }
+  pes <- row$f_value * row$num_df / (row$f_value * row$num_df + row$den_df)
+  list(
+    num_df = as.numeric(row$num_df),
+    den_df = as.numeric(row$den_df),
+    pes = as.numeric(pes),
+    p_value = as.numeric(row$p_value)
+  )
+}
+
+
+#' @keywords internal
+#' @noRd
+car_between_rows <- function(tab) {
+  row_terms <- trimws(rownames(tab))
+  residual_idx <- which(row_terms == "Residuals")
+  den_df <- if (length(residual_idx)) {
+    as.numeric(tab[residual_idx[[1L]], "Df"])
+  } else {
+    NA_real_
+  }
+  keep <- row_terms != "Residuals" & row_terms != "(Intercept)" & nzchar(row_terms)
+  tibble::tibble(
+    term = row_terms[keep],
+    num_df = as.numeric(tab[keep, "Df"]),
+    den_df = den_df,
+    f_value = as.numeric(tab[keep, "F value"]),
+    p_value = as.numeric(tab[keep, "Pr(>F)"])
+  )
+}
+
+
+#' @keywords internal
+#' @noRd
+car_repeated_rows <- function(tab) {
+  row_terms <- trimws(rownames(tab))
+  keep <- row_terms != "(Intercept)" & nzchar(row_terms)
+  tibble::tibble(
+    term = row_terms[keep],
+    num_df = as.numeric(tab[keep, "num Df"]),
+    den_df = as.numeric(tab[keep, "den Df"]),
+    f_value = as.numeric(tab[keep, "F value"]),
+    p_value = as.numeric(tab[keep, "Pr(>F)"])
+  )
+}
+
+
+#' @keywords internal
+#' @noRd
+repeated_measures_wide_data <- function(data, spec) {
+  within_labels <- make_cell_labels("w", spec$n_within_cells)
+  within_keys <- interaction_key(spec$within_cells, spec$within)
+  data$.within_key <- interaction_key(data, spec$within)
+  data$.within_cell <- within_labels[match(data$.within_key, within_keys)]
+  data$.within_key <- NULL
+
+  id_cols <- c("id", spec$between)
+  wide <- data |>
+    dplyr::select(dplyr::all_of(c(id_cols, ".within_cell", "value"))) |>
+    tidyr::pivot_wider(
+      names_from = ".within_cell",
+      values_from = "value"
+    )
+  for (nm in spec$between) {
+    wide[[nm]] <- factor(wide[[nm]], levels = levels(spec$levels[[nm]]))
+    stats::contrasts(wide[[nm]]) <- stats::contr.sum(nlevels(wide[[nm]]))
+  }
+
+  response <- paste0("cbind(", paste(within_labels, collapse = ", "), ")")
+  rhs <- if (length(spec$between)) {
+    paste(spec$between, collapse = " * ")
+  } else {
+    "1"
+  }
+  idata <- spec$within_cells[, spec$within, drop = FALSE]
+  for (nm in spec$within) {
+    idata[[nm]] <- factor(idata[[nm]], levels = levels(spec$levels[[nm]]))
+    stats::contrasts(idata[[nm]]) <- stats::contr.sum(nlevels(idata[[nm]]))
+  }
+
+  list(
+    wide = wide,
+    idata = as.data.frame(idata),
+    formula = stats::as.formula(paste(response, "~", rhs))
+  )
 }
 
 

@@ -88,14 +88,15 @@ sample size per between-subject cell, so <code>n = 13</code> gives total
 <span>  power <span class="op">=</span> <span class="fl">0.80</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">1000</span>, <span class="co"># use 5000+ for a more precise estimate</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span> <span class="co"># for reproducibility</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;anovapowersim_curve&gt;</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; &lt;anovapowersim_curve&gt;</span></span>
 <span><span class="co">#&gt;   term:          'cond:stim'</span></span>
 <span><span class="co">#&gt;   target power:  0.800</span></span>
 <span><span class="co">#&gt;   alpha:         0.05</span></span>
 <span><span class="co">#&gt;   effect size:   pes = 0.14</span></span>
 <span><span class="co">#&gt;   n values:      5 per-cell sample sizes visited</span></span>
 <span><span class="co">#&gt;   sims per cell size: 1000</span></span>
+<span><span class="co">#&gt;   SS type:       III</span></span>
 <span><span class="co">#&gt;   n needed for between-subjects cell: 13</span></span>
 <span><span class="co">#&gt;   total N needed: 26</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -104,7 +105,7 @@ sample size per between-subject cell, so <code>n = 13</code> gives total
 <span><span class="co">#&gt;          12      24   1000      3     66 10.744      0.767     0.783</span></span>
 <span><span class="co">#&gt;          13      26   1000      3     72 11.721      0.808     0.808</span></span>
 <span><span class="co">#&gt;          15      30   1000      3     84 13.674      0.872     0.882</span></span>
-<span><span class="co">#&gt;          20      40   1000      3    114 18.558      0.958     0.951</span></span></code></pre></div>
+<span><span class="co">#&gt;          20      40   1000      3    114 18.558      0.958     0.951</span></span></code></pre>
 <p>Note: here we use 1000 simulations for a quick example, but the
 package defaults to 10000 simulations for more precise estimates.</p>
 <p>The output table uses compact column names: <code>n_per_cell</code>
@@ -119,7 +120,7 @@ calculation, and <code>power_sim</code> is the simulation estimate.</p>
 <p>You can add factors and levels as needed, and specify any term of
 interest. For, example if we want to add a between condition with 3
 levels, and we are interested in the 3-way interaction, we can do:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/power_n.html">power_n</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span>, age <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, <span class="co"># cond has 2 levels, age has 3 levels</span></span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, <span class="co"># stim has 4 levels</span></span>
@@ -140,7 +141,7 @@ sizes. <code><a href="../reference/power_curve.html">power_curve()</a></code> si
 sample sizes, which you can specify with <code>n_range</code>. The
 result is a tidy data frame that you can plot with
 <code><a href="../reference/plot_power_curve.html">plot_power_curve()</a></code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/power_curve.html">power_curve</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
@@ -150,14 +151,15 @@ result is a tidy data frame that you can plot with
 <span>  n_sims <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">pc</span></span>
-<span><span class="co">#&gt; &lt;anovapowersim_curve&gt;</span></span>
+<span><span class="va">pc</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; &lt;anovapowersim_curve&gt;</span></span>
 <span><span class="co">#&gt;   term:          'cond:stim'</span></span>
 <span><span class="co">#&gt;   target power:  &lt;not specified&gt;</span></span>
 <span><span class="co">#&gt;   alpha:         0.05</span></span>
 <span><span class="co">#&gt;   effect size:   pes = 0.14</span></span>
 <span><span class="co">#&gt;   n values:      4 per-cell sample sizes visited</span></span>
 <span><span class="co">#&gt;   sims per cell size: 1000</span></span>
+<span><span class="co">#&gt;   SS type:       III</span></span>
 <span><span class="co">#&gt;   n needed for between-subjects cell: &lt;not reached&gt;</span></span>
 <span><span class="co">#&gt;   total N needed: &lt;not reached&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -165,12 +167,7 @@ result is a tidy data frame that you can plot with
 <span><span class="co">#&gt;          16      32   1000      1     30 4.884      0.571     0.557</span></span>
 <span><span class="co">#&gt;          20      40   1000      1     38 6.186      0.679     0.666</span></span>
 <span><span class="co">#&gt;          23      46   1000      1     44 7.163      0.745     0.735</span></span>
-<span><span class="co">#&gt;          28      56   1000      1     54 8.791      0.829     0.831</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_power_curve.html">plot_power_curve</a></span><span class="op">(</span></span>
-<span>  <span class="va">pc</span>,</span>
-<span>  power_lines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.80</span>, <span class="fl">.90</span><span class="op">)</span> <span class="co"># adds horizontal lines at 80% and 90% power</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt;          28      56   1000      1     54 8.791      0.829     0.831</span></span></code></pre>
 <p><img src="anovapowersim_files/figure-html/plot-fixed-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level2">
@@ -184,7 +181,7 @@ do not set <code>cores</code>, <code>anovapowersim</code> uses one fewer
 than the number of available cores and prints a message with the chosen
 count. Set <code>cores</code> explicitly when you want a fixed number of
 cores.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/power_curve.html">power_curve</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
@@ -208,7 +205,7 @@ convention.</p>
 <p>Set <code>gpower = TRUE</code> when you want the G*Power-style
 convention (when using the ’as in Cohen (1988) option for
 within-subjects designs) <code>lambda = total_n * f^2</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/power_n.html">power_n</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
@@ -219,8 +216,8 @@ within-subjects designs) <code>lambda = total_n * f^2</code>.</p>
 <span>  n_sims <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
 <span>  gpower <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;anovapowersim_curve&gt;</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; &lt;anovapowersim_curve&gt;</span></span>
 <span><span class="co">#&gt;   term:          'cond:stim'</span></span>
 <span><span class="co">#&gt;   target power:  0.800</span></span>
 <span><span class="co">#&gt;   alpha:         0.05</span></span>
@@ -228,6 +225,7 @@ within-subjects designs) <code>lambda = total_n * f^2</code>.</p>
 <span><span class="co">#&gt;   n values:      7 per-cell sample sizes visited</span></span>
 <span><span class="co">#&gt;   sims per cell size: 1000</span></span>
 <span><span class="co">#&gt;   G*Power convention: TRUE</span></span>
+<span><span class="co">#&gt;   SS type:       III</span></span>
 <span><span class="co">#&gt;   n needed for between-subjects cell: 35</span></span>
 <span><span class="co">#&gt;   total N needed: 70</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -238,7 +236,7 @@ within-subjects designs) <code>lambda = total_n * f^2</code>.</p>
 <span><span class="co">#&gt;          34      68   1000      3    198 11.070      0.798     0.796</span></span>
 <span><span class="co">#&gt;          35      70   1000      3    204 11.395      0.811     0.821</span></span>
 <span><span class="co">#&gt;          42      84   1000      3    246 13.674      0.883     0.876</span></span>
-<span><span class="co">#&gt;          56     112   1000      3    330 18.233      0.959     0.967</span></span></code></pre></div>
+<span><span class="co">#&gt;          56     112   1000      3    330 18.233      0.959     0.967</span></span></code></pre>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

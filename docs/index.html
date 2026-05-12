@@ -63,9 +63,8 @@
 <span>  alpha <span class="op">=</span> <span class="fl">.05</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>, <span class="co"># simulations will be run in parallel for speed</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span> <span class="co"># for reproducibility</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co">#&gt;&lt;anovapowersim_curve&gt;</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre class="text"><code><span><span class="co">#&gt;&lt;anovapowersim_curve&gt;</span></span>
 <span><span class="co">#&gt;  term:          'group:stim:cond'</span></span>
 <span><span class="co">#&gt;  target power:  0.800</span></span>
 <span><span class="co">#&gt;  alpha:         0.05</span></span>
@@ -82,12 +81,12 @@
 <span><span class="co">#&gt;         29      58   5000      2    112  9.739      0.793     0.796</span></span>
 <span><span class="co">#&gt;         30      60   5000      2    116 10.087      0.808     0.817</span></span>
 <span><span class="co">#&gt;         36      72   5000      2    140 12.174      0.881     0.886</span></span>
-<span><span class="co">#&gt;         48      96   5000      2    188 16.348      0.958     0.961</span></span></code></pre></div>
+<span><span class="co">#&gt;         48      96   5000      2    188 16.348      0.958     0.961</span></span></code></pre>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p><code>anovapowersim</code> is currently in development. You can install it from GitHub using the <code>devtools</code> package:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install devtools if you haven't already</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
 <span></span>
@@ -104,10 +103,10 @@
 </h2>
 <p><code>anovapowersim</code> is designed to be simple and easy to use first, which means it has some limitations for now. It does not support:</p>
 <ul>
-<li>Unbalanced designs</li>
 <li>Covariates (ANCOVAs)</li>
+<li>Means-based simulations for unbalanced designs</li>
 <li>Nonsphericity corrections (though this might change)</li>
-<li>Specific interaction shapes</li>
+<li>Specific interaction shapes (based on means)</li>
 <li>Simple main effects/pairwise comparisons</li>
 </ul>
 </div>

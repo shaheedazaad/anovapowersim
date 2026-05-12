@@ -12,9 +12,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
-  fig.height = 4,
-  cache = TRUE,
-  cache.path = "anovapowersim_cache/"
+  fig.height = 4
 )
 ```
 
@@ -27,6 +25,23 @@ simulates datasets, refits the ANOVA with `stats::aov()`, and estimates power.
 library(anovapowersim)
 ```
 
+```{r load-precomputed-results, include=FALSE}
+vignette_results_path <- system.file(
+  "extdata",
+  "anovapowersim-vignette-results.rds",
+  package = "anovapowersim"
+)
+if (!nzchar(vignette_results_path)) {
+  vignette_results_path <- file.path(
+    "..",
+    "inst",
+    "extdata",
+    "anovapowersim-vignette-results.rds"
+  )
+}
+vignette_results <- readRDS(vignette_results_path)
+```
+
 ## Search for the required sample size
 
 The easiest way to get your required sample size is to use `power_n()` to
@@ -37,7 +52,7 @@ This example is a 2 x 2 mixed design with one between-subjects factor
 
 We specify that we are interested in the `cond:stim` interaction, and that we want to have 80% power to detect a partial eta squared of 0.14. `power_n()` will search for the required sample size per between-subject cell, so `n = 13` gives total `N = 26`.
 
-```{r adaptive}
+```{r adaptive-code, eval=FALSE}
 power_n(
   between = c(cond = 2), # cond has 2 levels
   within = c(stim = 4), # stim has 4 levels
@@ -48,6 +63,10 @@ power_n(
   n_sims = 1000, # use 5000+ for a more precise estimate
   seed = 123 # for reproducibility
 )
+```
+
+```{r adaptive-output, echo=FALSE}
+vignette_results$adaptive
 ```
 
 Note: here we use 1000 simulations for a quick example, but the package defaults to 10000 simulations for more precise estimates.
@@ -79,7 +98,7 @@ power_n(
 
 You might want to see how power changes across a range of sample sizes. `power_curve()` simulates power across a range of sample sizes, which you can specify with `n_range`. The result is a tidy data frame that you can plot with `plot_power_curve()`.
 
-```{r curve-fixed}
+```{r curve-fixed-code, eval=FALSE}
 pc <- power_curve(
   between = c(cond = 2),
   within = c(stim = 2),
@@ -92,7 +111,12 @@ pc <- power_curve(
 pc
 ```
 
-```{r plot-fixed}
+```{r curve-fixed-output, echo=FALSE}
+pc <- vignette_results$curve
+pc
+```
+
+```{r plot-fixed, echo=FALSE}
 plot_power_curve(
   pc,
   power_lines = c(.80, .90) # adds horizontal lines at 80% and 90% power
@@ -132,7 +156,7 @@ noncentrality convention.
 Set `gpower = TRUE` when you want the G\*Power-style convention (when using the 'as in Cohen (1988) option for within-subjects designs)
 `lambda = total_n * f^2`. 
 
-```{r gpower-adaptive}
+```{r gpower-adaptive-code, eval=FALSE}
 power_n(
   between = c(cond = 2),
   within = c(stim = 4),
@@ -144,4 +168,8 @@ power_n(
   seed = 123,
   gpower = TRUE
 )
+```
+
+```{r gpower-adaptive-output, echo=FALSE}
+vignette_results$gpower_adaptive
 ```

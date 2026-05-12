@@ -61,6 +61,7 @@ the requested partial eta squared, simulates datasets, refits
 <span>  <span class="va">n_range</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  ss_type <span class="op">=</span> <span class="st">"III"</span>,</span>
 <span>  gpower <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  progress <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -105,6 +106,12 @@ pure within-subject designs, this is the total sample size.</p></dd>
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
 <dd><p>Significance threshold.</p></dd>
+
+
+<dt id="arg-ss-type">ss_type<a class="anchor" aria-label="anchor" href="#arg-ss-type"></a></dt>
+<dd><p>Sums-of-squares type for the tested ANOVA term. <code>"III"</code> is
+the default for order-invariant tests in unbalanced designs. Use <code>"I"</code> to
+reproduce sequential <code><a href="https://rdrr.io/r/stats/aov.html" class="external-link">stats::aov()</a></code> tests.</p></dd>
 
 
 <dt id="arg-gpower">gpower<a class="anchor" aria-label="anchor" href="#arg-gpower"></a></dt>

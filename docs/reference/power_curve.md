@@ -19,6 +19,7 @@ power_curve(
   n_range,
   n_sims = 10000,
   alpha = 0.05,
+  ss_type = "III",
   gpower = FALSE,
   progress = interactive(),
   parallel = FALSE,
@@ -62,6 +63,13 @@ power_curve(
 - alpha:
 
   Significance threshold.
+
+- ss_type:
+
+  Sums-of-squares type for the tested ANOVA term. `"III"` is the default
+  for order-invariant tests in unbalanced designs. Use `"I"` to
+  reproduce sequential
+  [`stats::aov()`](https://rdrr.io/r/stats/aov.html) tests.
 
 - gpower:
 

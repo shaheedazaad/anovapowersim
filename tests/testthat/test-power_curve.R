@@ -23,6 +23,33 @@ test_that("power_curve simulates a balanced mixed design", {
   expect_false(any(hidden_columns %in% names(pc$results)))
   expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
   expect_equal(pc$target_pes, 0.20721)
+  expect_equal(pc$ss_type, "III")
+})
+
+test_that("ss_type is validated and stored", {
+  pc <- quiet_power_curve(
+    between = c(color = 2),
+    within = c(age = 2),
+    term = "color:age",
+    target_pes = 0.1,
+    n_range = 8,
+    n_sims = 5,
+    ss_type = "I",
+    seed = 11
+  )
+  expect_equal(pc$ss_type, "I")
+
+  expect_error(
+    quiet_power_curve(
+      between = c(color = 2),
+      term = "color",
+      target_pes = 0.1,
+      n_range = 8,
+      n_sims = 5,
+      ss_type = "IV"
+    ),
+    "`ss_type`"
+  )
 })
 
 test_that("printed output uses concise public labels", {
@@ -702,6 +729,24 @@ test_that("power_n supports parallel simulations within each searched n", {
 
   expect_s3_class(pc, "anovapowersim_curve")
   expect_true(nrow(pc$results) >= 1L)
+  expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
+})
+
+test_that("parallel power_n returns finite simulation power for mixed interactions", {
+  pc <- quiet_power_n(
+    between = c(group = 2),
+    within = c(stim = 2, cond = 3),
+    term = "group:stim:cond",
+    target_pes = 0.08,
+    power = 0.80,
+    n_sims = 10,
+    n_max = 30,
+    parallel = TRUE,
+    cores = min(2L, as.integer(future::availableCores()[[1L]])),
+    seed = 123
+  )
+
+  expect_true(all(!is.na(pc$results$power_sim)))
   expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
 })
 

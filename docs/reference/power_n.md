@@ -16,6 +16,7 @@ power_n(
   power = 0.8,
   n_sims = 10000,
   alpha = 0.05,
+  ss_type = "III",
   n_start = NULL,
   n_max = 1000,
   tol = 0.01,
@@ -61,6 +62,13 @@ power_n(
 - alpha:
 
   Significance threshold.
+
+- ss_type:
+
+  Sums-of-squares type for the tested ANOVA term. `"III"` is the default
+  for order-invariant tests in unbalanced designs. Use `"I"` to
+  reproduce sequential
+  [`stats::aov()`](https://rdrr.io/r/stats/aov.html) tests.
 
 - n_start:
 

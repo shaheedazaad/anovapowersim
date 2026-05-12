@@ -38,23 +38,25 @@ power_n(
   n_sims = 1000, # use 5000+ for a more precise estimate
   seed = 123 # for reproducibility
 )
-#> <anovapowersim_curve>
-#>   term:          'cond:stim'
-#>   target power:  0.800
-#>   alpha:         0.05
-#>   effect size:   pes = 0.14
-#>   n values:      5 per-cell sample sizes visited
-#>   sims per cell size: 1000
-#>   n needed for between-subjects cell: 13
-#>   total N needed: 26
-#> 
-#>  n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
-#>          10      20   1000      3     54  8.791      0.665     0.665
-#>          12      24   1000      3     66 10.744      0.767     0.783
-#>          13      26   1000      3     72 11.721      0.808     0.808
-#>          15      30   1000      3     84 13.674      0.872     0.882
-#>          20      40   1000      3    114 18.558      0.958     0.951
 ```
+
+    #> <anovapowersim_curve>
+    #>   term:          'cond:stim'
+    #>   target power:  0.800
+    #>   alpha:         0.05
+    #>   effect size:   pes = 0.14
+    #>   n values:      5 per-cell sample sizes visited
+    #>   sims per cell size: 1000
+    #>   SS type:       III
+    #>   n needed for between-subjects cell: 13
+    #>   total N needed: 26
+    #> 
+    #>  n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
+    #>          10      20   1000      3     54  8.791      0.665     0.665
+    #>          12      24   1000      3     66 10.744      0.767     0.783
+    #>          13      26   1000      3     72 11.721      0.808     0.808
+    #>          15      30   1000      3     84 13.674      0.872     0.882
+    #>          20      40   1000      3    114 18.558      0.958     0.951
 
 Note: here we use 1000 simulations for a quick example, but the package
 defaults to 10000 simulations for more precise estimates.
@@ -105,30 +107,24 @@ pc <- power_curve(
   seed = 123
 )
 pc
-#> <anovapowersim_curve>
-#>   term:          'cond:stim'
-#>   target power:  <not specified>
-#>   alpha:         0.05
-#>   effect size:   pes = 0.14
-#>   n values:      4 per-cell sample sizes visited
-#>   sims per cell size: 1000
-#>   n needed for between-subjects cell: <not reached>
-#>   total N needed: <not reached>
-#> 
-#>  n_per_cell total_n n_sims num_df den_df   ncp power_calc power_sim
-#>          16      32   1000      1     30 4.884      0.571     0.557
-#>          20      40   1000      1     38 6.186      0.679     0.666
-#>          23      46   1000      1     44 7.163      0.745     0.735
-#>          28      56   1000      1     54 8.791      0.829     0.831
 ```
 
-``` r
-
-plot_power_curve(
-  pc,
-  power_lines = c(.80, .90) # adds horizontal lines at 80% and 90% power
-)
-```
+    #> <anovapowersim_curve>
+    #>   term:          'cond:stim'
+    #>   target power:  <not specified>
+    #>   alpha:         0.05
+    #>   effect size:   pes = 0.14
+    #>   n values:      4 per-cell sample sizes visited
+    #>   sims per cell size: 1000
+    #>   SS type:       III
+    #>   n needed for between-subjects cell: <not reached>
+    #>   total N needed: <not reached>
+    #> 
+    #>  n_per_cell total_n n_sims num_df den_df   ncp power_calc power_sim
+    #>          16      32   1000      1     30 4.884      0.571     0.557
+    #>          20      40   1000      1     38 6.186      0.679     0.666
+    #>          23      46   1000      1     44 7.163      0.745     0.735
+    #>          28      56   1000      1     54 8.791      0.829     0.831
 
 ![](anovapowersim_files/figure-html/plot-fixed-1.png)
 
@@ -181,23 +177,25 @@ power_n(
   seed = 123,
   gpower = TRUE
 )
-#> <anovapowersim_curve>
-#>   term:          'cond:stim'
-#>   target power:  0.800
-#>   alpha:         0.05
-#>   effect size:   pes = 0.14
-#>   n values:      7 per-cell sample sizes visited
-#>   sims per cell size: 1000
-#>   G*Power convention: TRUE
-#>   n needed for between-subjects cell: 35
-#>   total N needed: 70
-#> 
-#>  n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
-#>          28      56   1000      3    162  9.116      0.706     0.695
-#>          31      62   1000      3    180 10.093      0.755     0.734
-#>          33      66   1000      3    192 10.744      0.784     0.780
-#>          34      68   1000      3    198 11.070      0.798     0.796
-#>          35      70   1000      3    204 11.395      0.811     0.821
-#>          42      84   1000      3    246 13.674      0.883     0.876
-#>          56     112   1000      3    330 18.233      0.959     0.967
 ```
+
+    #> <anovapowersim_curve>
+    #>   term:          'cond:stim'
+    #>   target power:  0.800
+    #>   alpha:         0.05
+    #>   effect size:   pes = 0.14
+    #>   n values:      7 per-cell sample sizes visited
+    #>   sims per cell size: 1000
+    #>   G*Power convention: TRUE
+    #>   SS type:       III
+    #>   n needed for between-subjects cell: 35
+    #>   total N needed: 70
+    #> 
+    #>  n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
+    #>          28      56   1000      3    162  9.116      0.706     0.695
+    #>          31      62   1000      3    180 10.093      0.755     0.734
+    #>          33      66   1000      3    192 10.744      0.784     0.780
+    #>          34      68   1000      3    198 11.070      0.798     0.796
+    #>          35      70   1000      3    204 11.395      0.811     0.821
+    #>          42      84   1000      3    246 13.674      0.883     0.876
+    #>          56     112   1000      3    330 18.233      0.959     0.967
