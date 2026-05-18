@@ -35,14 +35,15 @@ horizontal reference at requested power values and, when auto-search was
 used, a vertical marker at the estimated required total sample size.
 }
 \examples{
-\dontrun{
+\donttest{
 pc <- power_curve(
   between = c(group = 2),
   within = c(time = 2),
   term = "group:time",
   target_pes = 0.2,
-  n_range = c(10, 20, 30),
-  n_sims = 200
+  n_range = c(20, 30),
+  n_sims = 1000,
+  seed = 123
 )
 plot_power_curve(pc)
 }

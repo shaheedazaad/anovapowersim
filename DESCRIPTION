@@ -3,8 +3,7 @@ Title: Simple Power Simulations for ANOVAs
 Version: 1.0.0
 Authors@R:
     person("Shaheed", "Azaad", email = "sazaad@uni-muenster.de", role = c("aut", "cre"))
-Description: Simulation-based a priori power analysis for balanced ANOVA
-    designs using target partial eta squared values.
+Description: A-priori power simulations and power-calculations for within, between and mixed ANOVAs based on target (partial) eta-squared values. Supports complex designs with more than two factors and their interactions with a single function call.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
