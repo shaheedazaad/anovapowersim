@@ -54,12 +54,12 @@ m <- design_term_means(d, term = "group:time", target_pes = 0.2, n = 20)
 sim <- simulate_design_dataset(d, n = 20, means = m)
 head(sim)
 #> # A tibble: 6 × 4
-#>   id    group    value time 
-#>   <fct> <fct>    <dbl> <fct>
-#> 1 1     group1 -1.44   time1
-#> 2 1     group1  0.0702 time2
-#> 3 2     group1 -0.660  time1
-#> 4 2     group1 -1.30   time2
-#> 5 3     group1 -0.724  time1
-#> 6 3     group1  1.35   time2
+#>   id    group   value time 
+#>   <fct> <fct>   <dbl> <fct>
+#> 1 1     group1  0.372 time1
+#> 2 1     group1 -0.104 time2
+#> 3 2     group1  0.911 time1
+#> 4 2     group1 -0.440 time2
+#> 5 3     group1  0.539 time1
+#> 6 3     group1  1.08  time2
 ```

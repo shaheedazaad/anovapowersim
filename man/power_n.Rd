@@ -15,7 +15,7 @@ power_n(
   ss_type = "III",
   n_start = NULL,
   n_max = 1000,
-  tol = 0.01,
+  tol = 0.03,
   gpower = FALSE,
   progress = interactive(),
   parallel = FALSE,
@@ -53,7 +53,8 @@ the requested design.}
 
 \item{n_max}{Maximum sample size per between-subject cell.}
 
-\item{tol}{Stop when estimated power is within \code{tol} of \code{power}.}
+\item{tol}{Acceptable precision above target power. Search stops when
+simulated power is at least \code{power} and no more than \code{power + tol}.}
 
 \item{gpower}{Logical; if \code{TRUE}, calibrate means to the G*Power-style
 noncentrality convention \code{lambda = total_n * f^2}. The default \code{FALSE}
@@ -73,13 +74,19 @@ cores, with a minimum of one.}
 }
 \value{
 An \code{anovapowersim_curve} object with \code{n_needed} and
-\code{total_n_needed}.
+\code{total_n_needed}. For \code{power_n()}, \code{n_needed} is always an explicitly
+simulated \code{n_per_cell} value, never an interpolated sample size. If the
+search reaches target power but no simulated value lands inside
+\verb{[power, power + tol]}, \code{power_n()} reports the smallest explicitly
+simulated value at or above target power and warns that the requested
+precision band was not reached.
 }
 \description{
 Adaptive simulation search for the per-between-cell sample size needed to
 reach a requested power for a balanced factorial ANOVA design. The search
 doubles upward from \code{n_start} until it brackets the target or reaches
-\code{n_max}, then bisects the bracket.
+\code{n_max}, then refines the bracket using interpolation with midpoint
+bisection as a fallback.
 }
 \section{Examples}{
 
@@ -96,4 +103,3 @@ doubles upward from \code{n_start} until it brackets the target or reaches
 )
 }\if{html}{\out{</div>}}
 }
-

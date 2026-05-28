@@ -3,7 +3,8 @@
 Adaptive simulation search for the per-between-cell sample size needed
 to reach a requested power for a balanced factorial ANOVA design. The
 search doubles upward from `n_start` until it brackets the target or
-reaches `n_max`, then bisects the bracket.
+reaches `n_max`, then refines the bracket using interpolation with
+midpoint bisection as a fallback.
 
 ## Usage
 
@@ -19,7 +20,7 @@ power_n(
   ss_type = "III",
   n_start = NULL,
   n_max = 1000,
-  tol = 0.01,
+  tol = 0.03,
   gpower = FALSE,
   progress = interactive(),
   parallel = FALSE,
@@ -82,7 +83,8 @@ power_n(
 
 - tol:
 
-  Stop when estimated power is within `tol` of `power`.
+  Acceptable precision above target power. Search stops when simulated
+  power is at least `power` and no more than `power + tol`.
 
 - gpower:
 
@@ -113,6 +115,12 @@ power_n(
 ## Value
 
 An `anovapowersim_curve` object with `n_needed` and `total_n_needed`.
+For `power_n()`, `n_needed` is always an explicitly simulated
+`n_per_cell` value, never an interpolated sample size. If the search
+reaches target power but no simulated value lands inside
+`[power, power + tol]`, `power_n()` reports the smallest explicitly
+simulated value at or above target power and warns that the requested
+precision band was not reached.
 
 ## Examples
 

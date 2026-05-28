@@ -158,7 +158,8 @@ power_curve <- function(between = NULL,
 #' Adaptive simulation search for the per-between-cell sample size needed to
 #' reach a requested power for a balanced factorial ANOVA design. The search
 #' doubles upward from `n_start` until it brackets the target or reaches
-#' `n_max`, then bisects the bracket.
+#' `n_max`, then refines the bracket using interpolation with midpoint
+#' bisection as a fallback.
 #'
 #' @inheritParams power_curve
 #' @param power Desired target power.
@@ -166,10 +167,16 @@ power_curve <- function(between = NULL,
 #'   starts at the smallest value that can support empirical calibration for
 #'   the requested design.
 #' @param n_max Maximum sample size per between-subject cell.
-#' @param tol Stop when estimated power is within `tol` of `power`.
+#' @param tol Acceptable precision above target power. Search stops when
+#'   simulated power is at least `power` and no more than `power + tol`.
 #'
 #' @return An `anovapowersim_curve` object with `n_needed` and
-#'   `total_n_needed`.
+#'   `total_n_needed`. For `power_n()`, `n_needed` is always an explicitly
+#'   simulated `n_per_cell` value, never an interpolated sample size. If the
+#'   search reaches target power but no simulated value lands inside
+#'   `[power, power + tol]`, `power_n()` reports the smallest explicitly
+#'   simulated value at or above target power and warns that the requested
+#'   precision band was not reached.
 #'
 #' @section Examples:
 #' ```{r, eval = FALSE}
@@ -196,7 +203,7 @@ power_n <- function(between = NULL,
                     ss_type = "III",
                     n_start = NULL,
                     n_max = 1000,
-                    tol = 0.01,
+                    tol = 0.03,
                     gpower = FALSE,
                     progress = interactive(),
                     parallel = FALSE,
@@ -305,6 +312,12 @@ power_n <- function(between = NULL,
   warn_power_disagreement(curve, setup$n_sims)
 
   n_needed <- estimate_design_n_needed(curve, target = power)
+  warn_precision_band_not_reached(
+    curve = curve,
+    target = power,
+    tol = tol,
+    n_needed = n_needed
+  )
   total_n_needed <- if (is.na(n_needed)) {
     NA_integer_
   } else {
@@ -1263,7 +1276,9 @@ adaptive_design_search <- function(run_one, target, n_start, n_max, tol,
   visited <- list()
   n <- max(1L, as.integer(n_start))
   lo <- NULL
+  lo_p <- NA_real_
   hi <- NULL
+  hi_p <- NA_real_
 
   repeat {
     row <- run_one(n)
@@ -1272,29 +1287,54 @@ adaptive_design_search <- function(run_one, target, n_start, n_max, tol,
     p <- row$power_sim
     if (!is.na(p) && p >= target) {
       hi <- n
+      hi_p <- p
+      if (power_is_in_precision_band(p, target, tol)) break
       break
     }
     if (n >= n_max) {
-      hi <- n
       break
     }
-    lo <- n
+    if (!is.na(p)) {
+      lo <- n
+      lo_p <- p
+    }
     n <- min(n_max, max(n + 1L, n * 2L))
   }
 
-  if (!is.null(lo) && !is.null(hi)) {
+  if (!is.null(lo) && !is.null(hi) &&
+      !power_is_in_precision_band(hi_p, target, tol)) {
     lo_n <- lo
     hi_n <- hi
     iter <- 0L
     while (hi_n > lo_n + 1L && iter < max_iter) {
-      mid <- as.integer(floor((lo_n + hi_n) / 2L))
-      row <- run_one(mid)
+      visited_n <- vapply(
+        visited,
+        function(x) as.integer(x$n_per_cell[[1L]]),
+        integer(1L)
+      )
+      next_n <- next_adaptive_n(
+        lo_n = lo_n,
+        lo_p = lo_p,
+        hi_n = hi_n,
+        hi_p = hi_p,
+        target = target,
+        visited_n = visited_n
+      )
+      if (is.na(next_n)) break
+
+      row <- run_one(next_n)
       tick_progress_bar(progress_bar)
       visited[[length(visited) + 1L]] <- row
       p <- row$power_sim
       if (is.na(p)) break
-      if (abs(p - target) <= tol) break
-      if (p < target) lo_n <- mid else hi_n <- mid
+      if (p >= target) {
+        hi_n <- next_n
+        hi_p <- p
+        if (power_is_in_precision_band(p, target, tol)) break
+      } else {
+        lo_n <- next_n
+        lo_p <- p
+      }
       iter <- iter + 1L
     }
   }
@@ -1311,15 +1351,79 @@ estimate_design_n_needed <- function(curve, target) {
   curve <- dplyr::arrange(curve, .data$n_per_cell)
   above <- which(curve$power_sim >= target)
   if (length(above) == 0L) return(NA_integer_)
-  j <- above[1L]
-  if (j == 1L) return(as.integer(curve$n_per_cell[[1L]]))
-  x1 <- curve$n_per_cell[[j - 1L]]
-  y1 <- curve$power_sim[[j - 1L]]
-  x2 <- curve$n_per_cell[[j]]
-  y2 <- curve$power_sim[[j]]
-  if (is.na(y1) || is.na(y2) || y2 <= y1) return(as.integer(x2))
-  frac <- (target - y1) / (y2 - y1)
-  as.integer(ceiling(x1 + frac * (x2 - x1)))
+  as.integer(curve$n_per_cell[[above[1L]]])
+}
+
+
+#' @keywords internal
+#' @noRd
+power_is_in_precision_band <- function(power_sim, target, tol) {
+  is.finite(power_sim) && power_sim >= target && power_sim <= target + tol
+}
+
+
+#' @keywords internal
+#' @noRd
+next_adaptive_n <- function(lo_n, lo_p, hi_n, hi_p, target, visited_n) {
+  candidates <- unsimulated_bracket_n(lo_n, hi_n, visited_n)
+  if (!length(candidates)) return(NA_integer_)
+
+  interp <- NA_integer_
+  if (is.finite(lo_p) && is.finite(hi_p) && hi_p > lo_p) {
+    frac <- (target - lo_p) / (hi_p - lo_p)
+    raw_interp <- lo_n + frac * (hi_n - lo_n)
+    interp <- as.integer(ceiling(raw_interp - sqrt(.Machine$double.eps)))
+    interp <- min(max(interp, lo_n + 1L), hi_n - 1L)
+  }
+  if (!is.na(interp)) {
+    return(as.integer(candidates[which.min(abs(candidates - interp))]))
+  }
+
+  mid <- as.integer(floor((lo_n + hi_n) / 2L))
+  as.integer(candidates[which.min(abs(candidates - mid))])
+}
+
+
+#' @keywords internal
+#' @noRd
+unsimulated_bracket_n <- function(lo_n, hi_n, visited_n) {
+  if (hi_n <= lo_n + 1L) return(integer())
+  candidates <- seq.int(lo_n + 1L, hi_n - 1L)
+  candidates[!(candidates %in% visited_n)]
+}
+
+
+#' @keywords internal
+#' @noRd
+warn_precision_band_not_reached <- function(curve, target, tol, n_needed) {
+  if (is.na(n_needed)) return(invisible(NULL))
+  if (any(vapply(
+    curve$power_sim,
+    power_is_in_precision_band,
+    logical(1L),
+    target = target,
+    tol = tol
+  ))) {
+    return(invisible(NULL))
+  }
+
+  reported <- curve[curve$n_per_cell == n_needed, , drop = FALSE]
+  if (!nrow(reported)) return(invisible(NULL))
+  warning(
+    sprintf(
+      paste(
+        "Requested precision band was not reached for target power %.3f",
+        "with tolerance %.3f; reporting the closest explicitly simulated",
+        "n_per_cell at or above target power: %d (power_sim = %.3f)."
+      ),
+      target,
+      tol,
+      as.integer(reported$n_per_cell[[1L]]),
+      reported$power_sim[[1L]]
+    ),
+    call. = FALSE
+  )
+  invisible(NULL)
 }
 
 

@@ -101,6 +101,134 @@ test_that("power disagreement warning suggests the right next step", {
   )
 })
 
+make_power_search_runner <- function(powers) {
+  env <- new.env(parent = emptyenv())
+  env$visited <- integer()
+  env$run_one <- function(n) {
+    env$visited <- c(env$visited, as.integer(n))
+    key <- as.character(n)
+    if (!key %in% names(powers)) stop("Unexpected n: ", n, call. = FALSE)
+    tibble::tibble(
+      n_per_cell = as.integer(n),
+      total_n = as.integer(n),
+      n_sims = 1L,
+      num_df = 1,
+      den_df = 1,
+      ncp = NA_real_,
+      power_calc = NA_real_,
+      power_sim = powers[[key]]
+    )
+  }
+  env
+}
+
+test_that("adaptive search uses one-sided precision above target", {
+  below_close <- make_power_search_runner(c(`10` = 0.79, `20` = 0.82))
+  below_curve <- anovapowersim:::adaptive_design_search(
+    run_one = below_close$run_one,
+    target = 0.80,
+    n_start = 10,
+    n_max = 20,
+    tol = 0.03
+  )
+
+  expect_equal(below_close$visited, c(10L, 20L))
+  expect_equal(below_curve$n_per_cell, c(10L, 20L))
+
+  in_band <- make_power_search_runner(c(`10` = 0.82))
+  in_band_curve <- anovapowersim:::adaptive_design_search(
+    run_one = in_band$run_one,
+    target = 0.80,
+    n_start = 10,
+    n_max = 20,
+    tol = 0.03
+  )
+
+  expect_equal(in_band$visited, 10L)
+  expect_equal(in_band_curve$n_per_cell, 10L)
+})
+
+test_that("adaptive search simulates interpolated candidates after overshoot", {
+  runner <- make_power_search_runner(c(`10` = 0.70, `14` = 0.82, `20` = 0.95))
+  curve <- anovapowersim:::adaptive_design_search(
+    run_one = runner$run_one,
+    target = 0.80,
+    n_start = 10,
+    n_max = 20,
+    tol = 0.03
+  )
+
+  expect_equal(runner$visited, c(10L, 20L, 14L))
+  expect_equal(curve$n_per_cell, c(10L, 14L, 20L))
+  expect_equal(anovapowersim:::estimate_design_n_needed(curve, 0.80), 14L)
+})
+
+test_that("adaptive search warns when no simulated value reaches precision band", {
+  runner <- make_power_search_runner(c(`10` = 0.70, `11` = 0.86, `12` = 0.95))
+  curve <- anovapowersim:::adaptive_design_search(
+    run_one = runner$run_one,
+    target = 0.80,
+    n_start = 10,
+    n_max = 12,
+    tol = 0.03
+  )
+  n_needed <- anovapowersim:::estimate_design_n_needed(curve, 0.80)
+
+  expect_equal(runner$visited, c(10L, 12L, 11L))
+  expect_equal(n_needed, 11L)
+  expect_warning(
+    anovapowersim:::warn_precision_band_not_reached(
+      curve = curve,
+      target = 0.80,
+      tol = 0.03,
+      n_needed = n_needed
+    ),
+    "Requested precision band was not reached.*0.800.*0.030.*11.*0.860"
+  )
+})
+
+test_that("estimate_design_n_needed reports only simulated sample sizes", {
+  interpolated_curve <- tibble::tibble(
+    n_per_cell = c(10L, 20L),
+    power_sim = c(0.70, 0.90)
+  )
+  precision_curve <- tibble::tibble(
+    n_per_cell = c(8L, 12L, 16L),
+    power_sim = c(0.78, 0.81, 0.84)
+  )
+  overshoot_curve <- tibble::tibble(
+    n_per_cell = c(8L, 12L),
+    power_sim = c(0.78, 0.94)
+  )
+  unreached_curve <- tibble::tibble(
+    n_per_cell = c(8L, 12L),
+    power_sim = c(0.70, 0.79)
+  )
+
+  expect_equal(
+    anovapowersim:::estimate_design_n_needed(interpolated_curve, 0.80),
+    20L
+  )
+  expect_equal(
+    anovapowersim:::estimate_design_n_needed(precision_curve, 0.80),
+    12L
+  )
+  expect_equal(
+    anovapowersim:::estimate_design_n_needed(overshoot_curve, 0.80),
+    12L
+  )
+  expect_true(is.na(
+    anovapowersim:::estimate_design_n_needed(unreached_curve, 0.80)
+  ))
+})
+
+test_that("power_n default tolerance is one-sided above target", {
+  expect_equal(formals(power_n)$tol, 0.03)
+  expect_false(anovapowersim:::power_is_in_precision_band(0.79, 0.80, 0.03))
+  expect_true(anovapowersim:::power_is_in_precision_band(0.82, 0.80, 0.03))
+  expect_false(anovapowersim:::power_is_in_precision_band(0.84, 0.80, 0.03))
+})
+
 test_that("design components are available for direct simulation", {
   d <- balanced_anova_design(
     between = c(group = 2),
@@ -690,6 +818,7 @@ test_that("power_n adaptively searches for required n", {
   expect_true(nrow(pc$results) >= 1L)
   expect_equal(pc$power, 0.8)
   expect_true(is.na(pc$n_needed) || pc$n_needed <= 40L)
+  expect_true(is.na(pc$n_needed) || pc$n_needed %in% pc$results$n_per_cell)
 })
 
 test_that("power_n is reproducible with a seed", {
