@@ -50,7 +50,7 @@ search for the sample size needed to reach the requested `power`.
 This example is a 2 x 2 mixed design with one between-subjects factor
 (`cond`) and one within-subject factor (`stim`).
 
-We specify that we are interested in the `cond:stim` interaction, and that we want to have 80% power to detect a partial eta squared of 0.14. `power_n()` will search for the required sample size per between-subject cell, so `n = 13` gives total `N = 26`.
+We specify that we are interested in the `cond:stim` interaction, and that we want to have 90% power to detect a partial eta squared of 0.14. `power_n()` will search for the required sample size per between-subject cell, so `n = 17` gives total `N = 34`.
 
 ```{r adaptive-code, eval=FALSE}
 power_n(
@@ -59,7 +59,7 @@ power_n(
   term = "cond:stim",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000, # use 5000+ for a more precise estimate
   seed = 123 # for reproducibility
 )
@@ -88,7 +88,7 @@ power_n(
   term = "cond:stim:age",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000, # use 5000+ for a more precise estimate
   seed = 123 # for reproducibility
 )
@@ -163,7 +163,7 @@ power_n(
   term = "cond:stim",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000,
   seed = 123,
   gpower = TRUE

@@ -14,7 +14,7 @@ power_n(
   within = NULL,
   term,
   target_pes,
-  power = 0.8,
+  power = 0.9,
   n_sims = 10000,
   alpha = 0.05,
   ss_type = "III",
@@ -83,8 +83,9 @@ power_n(
 
 - tol:
 
-  Acceptable precision above target power. Search stops when simulated
-  power is at least `power` and no more than `power + tol`.
+  Acceptable precision above target power. If no simulated value at or
+  above `power` is also no more than `power + tol`, `power_n()` warns
+  that the requested precision band was not reached.
 
 - gpower:
 
@@ -130,7 +131,7 @@ precision band was not reached.
       term = "cond:stim",
       target_pes = 0.14,
       alpha = 0.05,
-      power = 0.80,
+      power = 0.90,
       n_sims = 1000, # use 5000+ for a more precise estimate
       seed = 123 # for reproducibility
     )

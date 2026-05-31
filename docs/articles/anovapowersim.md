@@ -21,10 +21,10 @@ This example is a 2 x 2 mixed design with one between-subjects factor
 (`cond`) and one within-subject factor (`stim`).
 
 We specify that we are interested in the `cond:stim` interaction, and
-that we want to have 80% power to detect a partial eta squared of 0.14.
+that we want to have 90% power to detect a partial eta squared of 0.14.
 [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
 will search for the required sample size per between-subject cell, so
-`n = 13` gives total `N = 26`.
+`n = 17` gives total `N = 34`.
 
 ``` r
 
@@ -34,7 +34,7 @@ power_n(
   term = "cond:stim",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000, # use 5000+ for a more precise estimate
   seed = 123 # for reproducibility
 )
@@ -42,21 +42,22 @@ power_n(
 
     #> <anovapowersim_curve>
     #>   term:          'cond:stim'
-    #>   target power:  0.800
+    #>   target power:  0.900
     #>   alpha:         0.05
     #>   effect size:   pes = 0.14
-    #>   n values:      5 per-cell sample sizes visited
+    #>   n values:      6 per-cell sample sizes visited
     #>   sims per cell size: 1000
     #>   SS type:       III
-    #>   n needed for between-subjects cell: 13
-    #>   total N needed: 26
+    #>   n needed for between-subjects cell: 17
+    #>   total N needed: 34
     #> 
     #>  n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
-    #>          10      20   1000      3     54  8.791      0.665     0.665
-    #>          12      24   1000      3     66 10.744      0.767     0.783
-    #>          13      26   1000      3     72 11.721      0.808     0.808
-    #>          15      30   1000      3     84 13.674      0.872     0.882
-    #>          20      40   1000      3    114 18.558      0.958     0.951
+    #>          13      26   1000      3     72 11.721      0.808     0.795
+    #>          16      32   1000      3     90 14.651      0.897     0.885
+    #>          17      34   1000      3     96 15.628      0.917     0.912
+    #>          18      36   1000      3    102 16.605      0.934     0.936
+    #>          20      40   1000      3    114 18.558      0.958     0.946
+    #>          26      52   1000      3    150 24.419      0.991     0.991
 
 Note: here we use 1000 simulations for a quick example, but the package
 defaults to 10000 simulations for more precise estimates.
@@ -81,7 +82,7 @@ power_n(
   term = "cond:stim:age",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000, # use 5000+ for a more precise estimate
   seed = 123 # for reproducibility
 )
@@ -172,7 +173,7 @@ power_n(
   term = "cond:stim",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000,
   seed = 123,
   gpower = TRUE
@@ -181,21 +182,20 @@ power_n(
 
     #> <anovapowersim_curve>
     #>   term:          'cond:stim'
-    #>   target power:  0.800
+    #>   target power:  0.900
     #>   alpha:         0.05
     #>   effect size:   pes = 0.14
-    #>   n values:      7 per-cell sample sizes visited
+    #>   n values:      6 per-cell sample sizes visited
     #>   sims per cell size: 1000
     #>   G*Power convention: TRUE
     #>   SS type:       III
-    #>   n needed for between-subjects cell: 35
-    #>   total N needed: 70
+    #>   n needed for between-subjects cell: 45
+    #>   total N needed: 90
     #> 
     #>  n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
-    #>          28      56   1000      3    162  9.116      0.706     0.695
-    #>          31      62   1000      3    180 10.093      0.755     0.734
-    #>          33      66   1000      3    192 10.744      0.784     0.780
-    #>          34      68   1000      3    198 11.070      0.798     0.796
-    #>          35      70   1000      3    204 11.395      0.811     0.821
-    #>          42      84   1000      3    246 13.674      0.883     0.876
-    #>          56     112   1000      3    330 18.233      0.959     0.967
+    #>          36      72   1000      3    210 11.721      0.823     0.829
+    #>          44      88   1000      3    258 14.326      0.899     0.889
+    #>          45      90   1000      3    264 14.651      0.906     0.907
+    #>          47      94   1000      3    276 15.302      0.919     0.919
+    #>          52     104   1000      3    306 16.930      0.944     0.936
+    #>          72     144   1000      3    426 23.442      0.989     0.990

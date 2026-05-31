@@ -15,7 +15,7 @@ bisection as a fallback."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">anovapowersim</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@ bisection as a fallback.</p>
 <span>  within <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">term</span>,</span>
 <span>  <span class="va">target_pes</span>,</span>
-<span>  power <span class="op">=</span> <span class="fl">0.8</span>,</span>
+<span>  power <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  ss_type <span class="op">=</span> <span class="st">"III"</span>,</span>
@@ -124,8 +124,9 @@ the requested design.</p></dd>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
-<dd><p>Acceptable precision above target power. Search stops when
-simulated power is at least <code>power</code> and no more than <code>power + tol</code>.</p></dd>
+<dd><p>Acceptable precision above target power. If no simulated value at
+or above <code>power</code> is also no more than <code>power + tol</code>, <code>power_n()</code> warns that
+the requested precision band was not reached.</p></dd>
 
 
 <dt id="arg-gpower">gpower<a class="anchor" aria-label="anchor" href="#arg-gpower"></a></dt>
@@ -175,7 +176,7 @@ precision band was not reached.</p>
 <span>  term <span class="op">=</span> <span class="st">"cond:stim"</span>,</span>
 <span>  target_pes <span class="op">=</span> <span class="fl">0.14</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  power <span class="op">=</span> <span class="fl">0.80</span>,</span>
+<span>  power <span class="op">=</span> <span class="fl">0.90</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">1000</span>, <span class="co"># use 5000+ for a more precise estimate</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span> <span class="co"># for reproducibility</span></span>
 <span><span class="op">)</span></span></code></pre><p></p></div>

@@ -167,8 +167,9 @@ power_curve <- function(between = NULL,
 #'   starts at the smallest value that can support empirical calibration for
 #'   the requested design.
 #' @param n_max Maximum sample size per between-subject cell.
-#' @param tol Acceptable precision above target power. Search stops when
-#'   simulated power is at least `power` and no more than `power + tol`.
+#' @param tol Acceptable precision above target power. If no simulated value at
+#'   or above `power` is also no more than `power + tol`, `power_n()` warns that
+#'   the requested precision band was not reached.
 #'
 #' @return An `anovapowersim_curve` object with `n_needed` and
 #'   `total_n_needed`. For `power_n()`, `n_needed` is always an explicitly
@@ -186,7 +187,7 @@ power_curve <- function(between = NULL,
 #'   term = "cond:stim",
 #'   target_pes = 0.14,
 #'   alpha = 0.05,
-#'   power = 0.80,
+#'   power = 0.90,
 #'   n_sims = 1000, # use 5000+ for a more precise estimate
 #'   seed = 123 # for reproducibility
 #' )
@@ -197,7 +198,7 @@ power_n <- function(between = NULL,
                     within = NULL,
                     term,
                     target_pes,
-                    power = 0.80,
+                    power = 0.90,
                     n_sims = 10000,
                     alpha = 0.05,
                     ss_type = "III",
@@ -227,6 +228,11 @@ power_n <- function(between = NULL,
     cores = cores
   )
   assert_unit_interval(power, "power")
+  if (is.finite(power) && power < 0.90) {
+    warning("Power greater than or equal to .90 is recommended.",
+            call. = FALSE,
+            immediate. = TRUE)
+  }
   message_long_serial_run(setup$n_sims, setup$parallel)
   if (!is.numeric(n_max) || length(n_max) != 1L ||
       n_max < 1 || n_max != as.integer(n_max)) {
@@ -925,6 +931,18 @@ prepare_power_curve_inputs <- function(between, within, term, target_pes,
   term <- resolve_design_term(term, spec)
   ss_type <- validate_ss_type(ss_type)
   assert_unit_interval(target_pes, "target_pes")
+  if (target_pes == 0.06) {
+    warning(
+      paste(
+        "It looks like you are using a rule-of-thumb \"medium\" effect size.",
+        "This might overestimate the true effect size, rendering your study",
+        "underpowered. Consider basing your power calculations on previous",
+        "research or empirically-derived guidelines."
+      ),
+      call. = FALSE,
+      immediate. = TRUE
+    )
+  }
   assert_unit_interval(alpha, "alpha")
   if (!is.numeric(n_sims) || length(n_sims) != 1L || n_sims < 1) {
     stop("`n_sims` must be a positive integer.", call. = FALSE)
@@ -1288,7 +1306,6 @@ adaptive_design_search <- function(run_one, target, n_start, n_max, tol,
     if (!is.na(p) && p >= target) {
       hi <- n
       hi_p <- p
-      if (power_is_in_precision_band(p, target, tol)) break
       break
     }
     if (n >= n_max) {
@@ -1301,8 +1318,7 @@ adaptive_design_search <- function(run_one, target, n_start, n_max, tol,
     n <- min(n_max, max(n + 1L, n * 2L))
   }
 
-  if (!is.null(lo) && !is.null(hi) &&
-      !power_is_in_precision_band(hi_p, target, tol)) {
+  if (!is.null(lo) && !is.null(hi)) {
     lo_n <- lo
     hi_n <- hi
     iter <- 0L
@@ -1330,7 +1346,6 @@ adaptive_design_search <- function(run_one, target, n_start, n_max, tol,
       if (p >= target) {
         hi_n <- next_n
         hi_p <- p
-        if (power_is_in_precision_band(p, target, tol)) break
       } else {
         lo_n <- next_n
         lo_p <- p

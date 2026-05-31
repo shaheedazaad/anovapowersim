@@ -1,6 +1,14 @@
 # Changelog
 
+## anovapowersim 1.1.0
+
+- Added a tolerance argument to
+  [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
+  for more precise control over the adaptive search.
+
 ## anovapowersim 1.0.0
+
+CRAN release: 2026-05-28
 
 - First official release
 - Fixed a bug where adaptive search for purely between-subjects designs

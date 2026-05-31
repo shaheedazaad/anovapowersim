@@ -13,6 +13,7 @@ Getting a priori power for a 2 × 2 × 3 mixed interaction effect is as
 simple as running the following:
 
 ``` r
+install.packages("anovapowersim")
 
 library(anovapowersim)
 
@@ -22,7 +23,7 @@ power_n(
   term = "group:stim:cond", # three-way interaction term
   target_pes = 0.08, # target effect size
   n_sims = 5000, # increase to 10000+ for more precise estimates
-  power = .80,
+  power = .90,
   alpha = .05,
   parallel = TRUE, # simulations will be run in parallel for speed
   seed = 123 # for reproducibility
@@ -32,22 +33,24 @@ power_n(
 ``` text
 #><anovapowersim_curve>
 #>  term:          'group:stim:cond'
-#>  target power:  0.800
+#>  target power:  0.900
 #>  alpha:         0.05
 #>  effect size:   pes = 0.08
-#>  n values:      7 per-cell sample sizes visited
+#>  n values:      8 per-cell sample sizes visited
 #>  sims per cell size: 5000
-#>  n needed for between-subjects cell: 30
-#>  total N needed: 60
+#>  SS type:       III
+#>  n needed for between-subjects cell: 38
+#>  total N needed: 76
 #>
 #> n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
-#>         24      48   5000      2     92  8.000      0.702     0.702
-#>         27      54   5000      2    104  9.043      0.760     0.758
-#>         28      56   5000      2    108  9.391      0.777     0.787
-#>         29      58   5000      2    112  9.739      0.793     0.796
-#>         30      60   5000      2    116 10.087      0.808     0.817
-#>         36      72   5000      2    140 12.174      0.881     0.886
-#>         48      96   5000      2    188 16.348      0.958     0.961
+#>         31      62   5000      2    120 10.435      0.823     0.825
+#>         37      74   5000      2    144 12.522      0.890     0.885
+#>         38      76   5000      2    148 12.870      0.899     0.903
+#>         39      78   5000      2    152 13.217      0.907     0.901
+#>         40      80   5000      2    156 13.565      0.915     0.918
+#>         41      82   5000      2    160 13.913      0.922     0.916
+#>         46      92   5000      2    180 15.652      0.949     0.947
+#>         62     124   5000      2    244 21.217      0.989     0.988
 ```
 
 ## Installation

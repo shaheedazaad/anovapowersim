@@ -1,6 +1,6 @@
 Package: anovapowersim
 Title: Simple Power Simulations for ANOVAs
-Version: 1.0.0
+Version: 1.1.0
 Authors@R:
     person("Shaheed", "Azaad", email = "sazaad@uni-muenster.de", role = c("aut", "cre"))
 Description: A-priori power simulations and power-calculations for within, between and mixed ANOVAs based on target (partial) eta-squared values. Supports complex designs with more than two factors and their interactions with a single function call.

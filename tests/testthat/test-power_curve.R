@@ -1,6 +1,132 @@
 quiet_power_curve <- function(...) suppressWarnings(power_curve(...))
 quiet_power_n <- function(...) suppressWarnings(power_n(...))
 
+capture_warning_messages <- function(expr) {
+  warnings <- character()
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  warnings
+}
+
+test_that("power_n defaults to 90 percent power", {
+  expect_equal(formals(power_n)$power, 0.90)
+})
+
+test_that("power_n warns when requested power is below 90 percent", {
+  expect_warning(
+    expect_error(
+      power_n(
+        between = c(group = 2),
+        within = c(time = 2),
+        term = "group:time",
+        target_pes = 0.1,
+        power = 0.80,
+        n_sims = 1,
+        n_max = 1,
+        progress = FALSE
+      )
+    ),
+    "Power greater than or equal to .90 is recommended.",
+    fixed = TRUE
+  )
+
+  warnings <- capture_warning_messages(
+    expect_error(
+      power_n(
+        between = c(group = 2),
+        within = c(time = 2),
+        term = "group:time",
+        target_pes = 0.1,
+        power = 0.90,
+        n_sims = 1,
+        n_max = 1,
+        progress = FALSE
+      )
+    )
+  )
+  expect_false(any(grepl("Power greater than or equal to .90", warnings,
+                         fixed = TRUE)))
+})
+
+test_that("rule-of-thumb medium partial eta squared warns at call time", {
+  medium_message <- paste(
+    "It looks like you are using a rule-of-thumb \"medium\" effect size.",
+    "This might overestimate the true effect size, rendering your study",
+    "underpowered. Consider basing your power calculations on previous",
+    "research or empirically-derived guidelines."
+  )
+
+  expect_warning(
+    expect_error(
+      power_curve(
+        between = c(group = 2),
+        within = c(time = 2),
+        term = "group:time",
+        target_pes = 0.06,
+        n_range = 0,
+        n_sims = 1,
+        progress = FALSE
+      )
+    ),
+    medium_message,
+    fixed = TRUE
+  )
+  expect_warning(
+    expect_error(
+      power_n(
+        between = c(group = 2),
+        within = c(time = 2),
+        term = "group:time",
+        target_pes = 0.06,
+        n_sims = 1,
+        n_max = 1,
+        progress = FALSE
+      )
+    ),
+    medium_message,
+    fixed = TRUE
+  )
+
+  for (nearby_pes in c(0.059, 0.061)) {
+    curve_warnings <- capture_warning_messages(
+      expect_error(
+        power_curve(
+          between = c(group = 2),
+          within = c(time = 2),
+          term = "group:time",
+          target_pes = nearby_pes,
+          n_range = 0,
+          n_sims = 1,
+          progress = FALSE
+        )
+      )
+    )
+    n_warnings <- capture_warning_messages(
+      expect_error(
+        power_n(
+          between = c(group = 2),
+          within = c(time = 2),
+          term = "group:time",
+          target_pes = nearby_pes,
+          n_sims = 1,
+          n_max = 1,
+          progress = FALSE
+        )
+      )
+    )
+
+    expect_false(any(grepl("rule-of-thumb \"medium\" effect size",
+                           curve_warnings, fixed = TRUE)))
+    expect_false(any(grepl("rule-of-thumb \"medium\" effect size",
+                           n_warnings, fixed = TRUE)))
+  }
+})
+
 test_that("power_curve simulates a balanced mixed design", {
   set.seed(1)
   pc <- quiet_power_curve(
@@ -122,8 +248,33 @@ make_power_search_runner <- function(powers) {
   env
 }
 
+make_formula_power_search_runner <- function(power_fn) {
+  env <- new.env(parent = emptyenv())
+  env$visited <- integer()
+  env$run_one <- function(n) {
+    env$visited <- c(env$visited, as.integer(n))
+    tibble::tibble(
+      n_per_cell = as.integer(n),
+      total_n = as.integer(n),
+      n_sims = 1L,
+      num_df = 1,
+      den_df = 1,
+      ncp = NA_real_,
+      power_calc = NA_real_,
+      power_sim = power_fn(n)
+    )
+  }
+  env
+}
+
 test_that("adaptive search uses one-sided precision above target", {
-  below_close <- make_power_search_runner(c(`10` = 0.79, `20` = 0.82))
+  below_close <- make_power_search_runner(c(
+    `10` = 0.79,
+    `12` = 0.79,
+    `13` = 0.79,
+    `14` = 0.81,
+    `20` = 0.82
+  ))
   below_curve <- anovapowersim:::adaptive_design_search(
     run_one = below_close$run_one,
     target = 0.80,
@@ -132,8 +283,10 @@ test_that("adaptive search uses one-sided precision above target", {
     tol = 0.03
   )
 
-  expect_equal(below_close$visited, c(10L, 20L))
-  expect_equal(below_curve$n_per_cell, c(10L, 20L))
+  expect_equal(below_close$visited, c(10L, 20L, 14L, 12L, 13L))
+  expect_equal(below_curve$n_per_cell, c(10L, 12L, 13L, 14L, 20L))
+  expect_equal(anovapowersim:::estimate_design_n_needed(below_curve, 0.80),
+               14L)
 
   in_band <- make_power_search_runner(c(`10` = 0.82))
   in_band_curve <- anovapowersim:::adaptive_design_search(
@@ -149,7 +302,12 @@ test_that("adaptive search uses one-sided precision above target", {
 })
 
 test_that("adaptive search simulates interpolated candidates after overshoot", {
-  runner <- make_power_search_runner(c(`10` = 0.70, `14` = 0.82, `20` = 0.95))
+  runner <- make_power_search_runner(c(
+    `10` = 0.70,
+    `13` = 0.79,
+    `14` = 0.82,
+    `20` = 0.95
+  ))
   curve <- anovapowersim:::adaptive_design_search(
     run_one = runner$run_one,
     target = 0.80,
@@ -158,9 +316,25 @@ test_that("adaptive search simulates interpolated candidates after overshoot", {
     tol = 0.03
   )
 
-  expect_equal(runner$visited, c(10L, 20L, 14L))
-  expect_equal(curve$n_per_cell, c(10L, 14L, 20L))
+  expect_equal(runner$visited, c(10L, 20L, 14L, 13L))
+  expect_equal(curve$n_per_cell, c(10L, 13L, 14L, 20L))
   expect_equal(anovapowersim:::estimate_design_n_needed(curve, 0.80), 14L)
+})
+
+test_that("adaptive search narrows the bracket without exhaustive scanning", {
+  runner <- make_formula_power_search_runner(function(n) n / 1000)
+  curve <- anovapowersim:::adaptive_design_search(
+    run_one = runner$run_one,
+    target = 0.90,
+    n_start = 100,
+    n_max = 1000,
+    tol = 0.03
+  )
+
+  expect_equal(runner$visited, c(100L, 200L, 400L, 800L, 1000L, 900L, 899L))
+  expect_equal(anovapowersim:::estimate_design_n_needed(curve, 0.90), 900L)
+  expect_true(all(c(899L, 900L) %in% curve$n_per_cell))
+  expect_lt(length(runner$visited), length(800:1000))
 })
 
 test_that("adaptive search warns when no simulated value reaches precision band", {

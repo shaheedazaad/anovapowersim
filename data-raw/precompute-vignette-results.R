@@ -10,7 +10,7 @@ adaptive <- power_n(
   term = "cond:stim",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000,
   seed = 123,
   progress = FALSE
@@ -33,7 +33,7 @@ gpower_adaptive <- power_n(
   term = "cond:stim",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000,
   seed = 123,
   gpower = TRUE,

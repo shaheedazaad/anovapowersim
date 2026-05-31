@@ -9,7 +9,7 @@ power_n(
   within = NULL,
   term,
   target_pes,
-  power = 0.8,
+  power = 0.9,
   n_sims = 10000,
   alpha = 0.05,
   ss_type = "III",
@@ -53,8 +53,9 @@ the requested design.}
 
 \item{n_max}{Maximum sample size per between-subject cell.}
 
-\item{tol}{Acceptable precision above target power. Search stops when
-simulated power is at least \code{power} and no more than \code{power + tol}.}
+\item{tol}{Acceptable precision above target power. If no simulated value at
+or above \code{power} is also no more than \code{power + tol}, \code{power_n()} warns that
+the requested precision band was not reached.}
 
 \item{gpower}{Logical; if \code{TRUE}, calibrate means to the G*Power-style
 noncentrality convention \code{lambda = total_n * f^2}. The default \code{FALSE}
@@ -97,9 +98,10 @@ bisection as a fallback.
   term = "cond:stim",
   target_pes = 0.14,
   alpha = 0.05,
-  power = 0.80,
+  power = 0.90,
   n_sims = 1000, # use 5000+ for a more precise estimate
   seed = 123 # for reproducibility
 )
 }\if{html}{\out{</div>}}
 }
+

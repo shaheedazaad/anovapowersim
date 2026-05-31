@@ -1,3 +1,7 @@
+# anovapowersim 1.1.0
+
+* Added a tolerance argument to `power_n()` for more precise control over the adaptive search.
+
 # anovapowersim 1.0.0
 
 * First official release
