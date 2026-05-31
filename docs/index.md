@@ -13,7 +13,6 @@ Getting a priori power for a 2 × 2 × 3 mixed interaction effect is as
 simple as running the following:
 
 ``` r
-install.packages("anovapowersim")
 
 library(anovapowersim)
 
@@ -55,16 +54,11 @@ power_n(
 
 ## Installation
 
-`anovapowersim` is currently in development. You can install it from
-GitHub using the `devtools` package:
+`anovapowersim` can be installed from CRAN:
 
 ``` r
 
-# Install devtools if you haven't already
-install.packages("devtools")
-
-# Install anovapowersim from GitHub
-devtools::install_github("shaheedazaad/anovapowersim")
+install.packages("anovapowersim")
 ```
 
 ## Citation

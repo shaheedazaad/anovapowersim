@@ -2,6 +2,8 @@
 
 ## anovapowersim 1.1.0
 
+CRAN release: 2026-05-31
+
 - Added a tolerance argument to
   [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
   for more precise control over the adaptive search.
