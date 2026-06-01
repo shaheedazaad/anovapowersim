@@ -7,15 +7,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/shaheedazaad/anovapowersim/blob/HEAD/DESCRIPTION)
+[`inst/CITATION`](https://github.com/shaheedazaad/anovapowersim/blob/HEAD/inst/CITATION)
 
-Azaad S (2026). *anovapowersim: Simple Power Simulations for ANOVAs*. R
-package version 1.1.0, <https://shaheedazaad.github.io/anovapowersim/>.
+Azaad, S. (2026). A priori power analysis for ANOVA interaction effects
+with the anovapowersim R package:a short introduction.
+https://doi.org/10.31234/osf.io/86rsy_v1.
 
-    @Manual{,
-      title = {anovapowersim: Simple Power Simulations for ANOVAs},
+    @Misc{,
+      title = {A priori power analysis for ANOVA interaction effects with the anovapowersim R package:a short introduction},
       author = {Shaheed Azaad},
       year = {2026},
-      note = {R package version 1.1.0},
-      url = {https://shaheedazaad.github.io/anovapowersim/},
+      doi = {10.31234/osf.io/86rsy_v1},
+      url = {https://doi.org/10.31234/osf.io/86rsy_v1},
     }

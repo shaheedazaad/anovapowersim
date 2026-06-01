@@ -2,7 +2,8 @@ url: https://shaheedazaad.github.io/anovapowersim/
 
 template:
   bootstrap: 5
-
+  light-switch: true
+  
 home:
   title: anovapowersim — Simple power simulations for ANOVAs
   description: 
@@ -10,7 +11,7 @@ home:
 navbar:
   structure:
     left:  [intro, reference, articles, news]
-    right: [github]
+    right: [github, lightwitch]
   components:
     intro:
       text: Get started
