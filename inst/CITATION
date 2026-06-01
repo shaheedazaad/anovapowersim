@@ -1,9 +1,9 @@
 bibentry(
   bibtype = "Misc",
-  title = "A priori power analysis for ANOVA interaction effects with the anovapowersim R package:a short introduction",
+  title = "A priori power analysis for ANOVA interaction effects with the anovapowersim R package: a short introduction",
   author = person("Shaheed", "Azaad"),
   year = "2026",
   doi = "10.31234/osf.io/86rsy_v1",
   url = "https://doi.org/10.31234/osf.io/86rsy_v1",
-  textVersion = "Azaad, S. (2026). A priori power analysis for ANOVA interaction effects with the anovapowersim R package:a short introduction. https://doi.org/10.31234/osf.io/86rsy_v1."
+  textVersion = "Azaad, S. (2026). A priori power analysis for ANOVA interaction effects with the anovapowersim R package: a short introduction. https://doi.org/10.31234/osf.io/86rsy_v1."
 )

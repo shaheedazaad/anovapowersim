@@ -66,7 +66,7 @@ install.packages("anovapowersim")
 ## Citation
 
 Azaad, S. (2026). A priori power analysis for ANOVA interaction effects
-with the anovapowersim R package:a short introduction.
+with the anovapowersim R package: a short introduction.
 <https://doi.org/10.31234/osf.io/86rsy_v1>.
 
 ## Limitations
