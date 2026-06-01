@@ -127,6 +127,14 @@ pc
     #>          23      46   1000      1     44 7.163      0.745     0.735
     #>          28      56   1000      1     54 8.791      0.829     0.831
 
+``` r
+
+plot_power_curve(
+  pc,
+  power_lines = c(.80, .90) # adds horizontal lines at 80% and 90% power
+)
+```
+
 ![](anovapowersim_files/figure-html/plot-fixed-1.png)
 
 ## Advanced options

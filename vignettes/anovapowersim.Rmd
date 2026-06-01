@@ -116,7 +116,7 @@ pc <- vignette_results$curve
 pc
 ```
 
-```{r plot-fixed, echo=FALSE}
+```{r plot-fixed}
 plot_power_curve(
   pc,
   power_lines = c(.80, .90) # adds horizontal lines at 80% and 90% power

@@ -169,6 +169,11 @@ result is a tidy data frame that you can plot with
 <span><span class="co">#&gt;          20      40   1000      1     38 6.186      0.679     0.666</span></span>
 <span><span class="co">#&gt;          23      46   1000      1     44 7.163      0.745     0.735</span></span>
 <span><span class="co">#&gt;          28      56   1000      1     54 8.791      0.829     0.831</span></span></code></pre>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_power_curve.html">plot_power_curve</a></span><span class="op">(</span></span>
+<span>  <span class="va">pc</span>,</span>
+<span>  power_lines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.80</span>, <span class="fl">.90</span><span class="op">)</span> <span class="co"># adds horizontal lines at 80% and 90% power</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="anovapowersim_files/figure-html/plot-fixed-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level2">
@@ -182,7 +187,7 @@ do not set <code>cores</code>, <code>anovapowersim</code> uses one fewer
 than the number of available cores and prints a message with the chosen
 count. Set <code>cores</code> explicitly when you want a fixed number of
 cores.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/power_curve.html">power_curve</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
@@ -206,7 +211,7 @@ convention.</p>
 <p>Set <code>gpower = TRUE</code> when you want the G*Power-style
 convention (when using the ’as in Cohen (1988) option for
 within-subjects designs) <code>lambda = total_n * f^2</code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/power_n.html">power_n</a></span><span class="op">(</span></span>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
