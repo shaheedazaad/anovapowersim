@@ -14,7 +14,7 @@ power_n(
   alpha = 0.05,
   ss_type = "III",
   n_start = NULL,
-  n_max = 1000,
+  n_max = 5000,
   tol = 0.03,
   gpower = FALSE,
   progress = interactive(),

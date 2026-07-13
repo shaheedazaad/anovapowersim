@@ -63,6 +63,22 @@ power_n(
 install.packages("anovapowersim")
 ```
 
+You can install the development version from GitHub:
+
+``` r
+
+install.packages("pak")
+pak::pak("shaheedazaad/anovapowersim")
+```
+
+Or, with `remotes`:
+
+``` r
+
+install.packages("remotes")
+remotes::install_github("shaheedazaad/anovapowersim")
+```
+
 ## Citation
 
 Azaad, S. (2026). A priori power analysis for ANOVA interaction effects

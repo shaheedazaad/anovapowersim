@@ -1,5 +1,12 @@
 # Changelog
 
+## anovapowersim (development version)
+
+- Added
+  [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
+  for analytic, simulation-free sample-size searches in balanced ANOVA
+  designs.
+
 ## anovapowersim 1.1.0
 
 CRAN release: 2026-05-31

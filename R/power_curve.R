@@ -203,7 +203,7 @@ power_n <- function(between = NULL,
                     alpha = 0.05,
                     ss_type = "III",
                     n_start = NULL,
-                    n_max = 1000,
+                    n_max = 5000,
                     tol = 0.03,
                     gpower = FALSE,
                     progress = interactive(),
@@ -318,6 +318,11 @@ power_n <- function(between = NULL,
   warn_power_disagreement(curve, setup$n_sims)
 
   n_needed <- estimate_design_n_needed(curve, target = power)
+  warn_target_power_not_reached(
+    n_needed = n_needed,
+    target = power,
+    n_max = n_max
+  )
   warn_precision_band_not_reached(
     curve = curve,
     target = power,

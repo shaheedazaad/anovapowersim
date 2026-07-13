@@ -63,6 +63,22 @@ power_n(
 install.packages("anovapowersim")
 ```
 
+You can install the development version from GitHub:
+
+``` r
+
+install.packages("pak")
+pak::pak("shaheedazaad/anovapowersim")
+```
+
+Or, with `remotes`:
+
+``` r
+
+install.packages("remotes")
+remotes::install_github("shaheedazaad/anovapowersim")
+```
+
 ## Citation
 
 Azaad, S. (2026). A priori power analysis for ANOVA interaction effects
@@ -96,6 +112,8 @@ Functions for power analysis and simulation.
   : Simulate ANOVA power from a balanced factorial design
 - [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
   : Search for the sample size needed for target ANOVA power
+- [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
+  : Calculate the sample size needed for target ANOVA power
 - [`plot_power_curve()`](https://shaheedazaad.github.io/anovapowersim/reference/plot_power_curve.md)
   : Plot a simulation-based power curve
 - [`print(`*`<anovapowersim_curve>`*`)`](https://shaheedazaad.github.io/anovapowersim/reference/print.anovapowersim_curve.md)

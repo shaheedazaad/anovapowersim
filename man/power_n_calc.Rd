@@ -12,7 +12,7 @@ power_n_calc(
   power = 0.9,
   alpha = 0.05,
   n_start = NULL,
-  n_max = 1000,
+  n_max = 5000,
   gpower = FALSE
 )
 }
@@ -58,6 +58,14 @@ a requested power for a balanced factorial ANOVA design. Unlike
 call \code{car}; numerator degrees of freedom, denominator degrees of freedom,
 noncentrality, and power are computed analytically from the balanced design.
 }
+\section{Lifecycle}{
+
+\ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
+
+\code{power_n_calc()} is experimental while the analytic search API and reporting
+format are refined.
+}
+
 \examples{
 power_n_calc(
   between = c(cond = 2),

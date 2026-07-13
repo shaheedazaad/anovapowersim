@@ -6,6 +6,12 @@
 #' call `car`; numerator degrees of freedom, denominator degrees of freedom,
 #' noncentrality, and power are computed analytically from the balanced design.
 #'
+#' @section Lifecycle:
+#' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
+#'
+#' `power_n_calc()` is experimental while the analytic search API and reporting
+#' format are refined.
+#'
 #' @param between Named integer vector of between-subject factor level counts,
 #'   e.g. `c(group = 2)`. Use `NULL` for no between-subject factors.
 #' @param within Named integer vector of within-subject factor level counts,
@@ -48,7 +54,7 @@ power_n_calc <- function(between = NULL,
                          power = 0.90,
                          alpha = 0.05,
                          n_start = NULL,
-                         n_max = 1000,
+                         n_max = 5000,
                          gpower = FALSE) {
   setup <- prepare_power_n_calc_inputs(
     between = between,
@@ -62,18 +68,23 @@ power_n_calc <- function(between = NULL,
     gpower = gpower
   )
 
-  ns <- seq.int(setup$n_start, setup$n_max)
-  curve <- dplyr::bind_rows(lapply(
-    ns,
-    analytic_power_row,
+  curve <- analytic_power_search(
     spec = setup$spec,
     term = setup$term,
     target_pes = target_pes,
+    target_power = power,
     alpha = alpha,
+    n_start = setup$n_start,
+    n_max = setup$n_max,
     gpower = setup$gpower
-  ))
+  )
 
   n_needed <- estimate_calc_n_needed(curve, target = power)
+  warn_target_power_not_reached(
+    n_needed = n_needed,
+    target = power,
+    n_max = setup$n_max
+  )
   total_n_needed <- if (is.na(n_needed)) {
     NA_integer_
   } else {
@@ -236,4 +247,57 @@ estimate_calc_n_needed <- function(curve, target) {
   above <- which(curve$power_calc >= target)
   if (length(above) == 0L) return(NA_integer_)
   as.integer(curve$n_per_cell[[above[1L]]])
+}
+
+
+#' @keywords internal
+#' @noRd
+analytic_power_search <- function(spec, term, target_pes, target_power, alpha,
+                                  n_start, n_max, gpower) {
+  visited <- list()
+
+  run_one <- function(n) {
+    key <- as.character(n)
+    if (!is.null(visited[[key]])) return(visited[[key]])
+    row <- analytic_power_row(
+      n = n,
+      spec = spec,
+      term = term,
+      target_pes = target_pes,
+      alpha = alpha,
+      gpower = gpower
+    )
+    visited[[key]] <<- row
+    row
+  }
+
+  lo <- NA_integer_
+  hi <- NA_integer_
+  n <- as.integer(n_start)
+  repeat {
+    row <- run_one(n)
+    if (is.finite(row$power_calc) && row$power_calc >= target_power) {
+      hi <- n
+      break
+    }
+    lo <- n
+    if (n >= n_max) break
+    n <- min(n_max, max(n + 1L, n * 2L))
+  }
+
+  if (!is.na(hi) && !is.na(lo)) {
+    while (hi > lo + 1L) {
+      mid <- as.integer(floor((lo + hi) / 2L))
+      row <- run_one(mid)
+      if (is.finite(row$power_calc) && row$power_calc >= target_power) {
+        hi <- mid
+      } else {
+        lo <- mid
+      }
+    }
+  }
+
+  dplyr::bind_rows(visited) |>
+    dplyr::arrange(.data$n_per_cell) |>
+    dplyr::distinct(.data$n_per_cell, .keep_all = TRUE)
 }

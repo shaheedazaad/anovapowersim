@@ -8,6 +8,8 @@ Functions for power analysis and simulation.
   : Simulate ANOVA power from a balanced factorial design
 - [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
   : Search for the sample size needed for target ANOVA power
+- [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
+  : Calculate the sample size needed for target ANOVA power
 - [`plot_power_curve()`](https://shaheedazaad.github.io/anovapowersim/reference/plot_power_curve.md)
   : Plot a simulation-based power curve
 - [`print(`*`<anovapowersim_curve>`*`)`](https://shaheedazaad.github.io/anovapowersim/reference/print.anovapowersim_curve.md)

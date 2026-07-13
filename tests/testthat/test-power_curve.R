@@ -16,11 +16,13 @@ capture_warning_messages <- function(expr) {
 
 test_that("power_n defaults to 90 percent power", {
   expect_equal(formals(power_n)$power, 0.90)
+  expect_equal(formals(power_n)$n_max, 5000)
 })
 
 test_that("power_n_calc is exported and defaults to 90 percent power", {
   expect_true("power_n_calc" %in% getNamespaceExports("anovapowersim"))
   expect_equal(formals(power_n_calc)$power, 0.90)
+  expect_equal(formals(power_n_calc)$n_max, 5000)
 })
 
 test_that("power_n warns when requested power is below 90 percent", {
@@ -67,7 +69,7 @@ test_that("power_n_calc warns when requested power is below 90 percent", {
       term = "group:time",
       target_pes = 0.1,
       power = 0.80,
-      n_max = 3
+      n_max = 5000
     ),
     "Power greater than or equal to .90 is recommended.",
     fixed = TRUE
@@ -318,19 +320,68 @@ test_that("power_n_calc reports the smallest calculated n meeting target", {
   expect_equal(pc$total_n_needed, pc$n_needed * 2L)
 })
 
-test_that("power_n_calc reports unreached target when n_max is too small", {
+test_that("power_n_calc does not exhaustively visit n_max after finding target", {
   pc <- quiet_power_n_calc(
-    between = c(group = 2),
-    within = c(time = 2),
-    term = "group:time",
-    target_pes = 0.01,
-    power = 0.99,
-    n_max = 4
+    between = c(cond = 2),
+    within = c(stim = 4),
+    term = "cond:stim",
+    target_pes = 0.14,
+    power = 0.90
+  )
+  previous <- anovapowersim:::analytic_power_row(
+    n = pc$n_needed - 1L,
+    spec = pc$design,
+    term = pc$term,
+    target_pes = pc$target_pes,
+    alpha = pc$alpha,
+    gpower = pc$gpower
+  )
+
+  expect_equal(pc$n_needed, 17L)
+  expect_equal(pc$total_n_needed, 34L)
+  expect_lt(nrow(pc$results), 20L)
+  expect_false(1000L %in% pc$results$n_per_cell)
+  expect_lt(previous$power_calc, pc$power)
+})
+
+test_that("power_n_calc reports unreached target when n_max is too small", {
+  expect_warning(
+    pc <- power_n_calc(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.01,
+      power = 0.99,
+      n_max = 4
+    ),
+    "Target power 0.990 was not reached by `n_max = 4`. Increase `n_max`",
+    fixed = TRUE
   )
 
   expect_true(is.na(pc$n_needed))
   expect_true(is.na(pc$total_n_needed))
   expect_true(all(pc$results$power_calc < pc$power))
+})
+
+test_that("power_n warns when target power is not reached by n_max", {
+  expect_warning(
+    pc <- power_n(
+      between = c(group = 2),
+      term = "group",
+      target_pes = 1e-6,
+      power = 0.99,
+      n_sims = 10,
+      n_start = 2,
+      n_max = 2,
+      progress = FALSE,
+      seed = 202
+    ),
+    "Target power 0.990 was not reached by `n_max = 2`. Increase `n_max`",
+    fixed = TRUE
+  )
+
+  expect_true(is.na(pc$n_needed))
+  expect_true(is.na(pc$total_n_needed))
 })
 
 test_that("power_n_calc computes analytic dfs for common balanced designs", {
