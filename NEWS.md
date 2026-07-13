@@ -1,3 +1,8 @@
+# anovapowersim (development version)
+
+* Added `power_n_calc()` for analytic, simulation-free sample-size searches in
+  balanced ANOVA designs.
+
 # anovapowersim 1.1.0
 
 * Added a tolerance argument to `power_n()` for more precise control over the adaptive search.

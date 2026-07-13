@@ -1,5 +1,6 @@
 quiet_power_curve <- function(...) suppressWarnings(power_curve(...))
 quiet_power_n <- function(...) suppressWarnings(power_n(...))
+quiet_power_n_calc <- function(...) suppressWarnings(power_n_calc(...))
 
 capture_warning_messages <- function(expr) {
   warnings <- character()
@@ -15,6 +16,11 @@ capture_warning_messages <- function(expr) {
 
 test_that("power_n defaults to 90 percent power", {
   expect_equal(formals(power_n)$power, 0.90)
+})
+
+test_that("power_n_calc is exported and defaults to 90 percent power", {
+  expect_true("power_n_calc" %in% getNamespaceExports("anovapowersim"))
+  expect_equal(formals(power_n_calc)$power, 0.90)
 })
 
 test_that("power_n warns when requested power is below 90 percent", {
@@ -51,6 +57,21 @@ test_that("power_n warns when requested power is below 90 percent", {
   )
   expect_false(any(grepl("Power greater than or equal to .90", warnings,
                          fixed = TRUE)))
+})
+
+test_that("power_n_calc warns when requested power is below 90 percent", {
+  expect_warning(
+    power_n_calc(
+      between = c(group = 2),
+      within = c(time = 2),
+      term = "group:time",
+      target_pes = 0.1,
+      power = 0.80,
+      n_max = 3
+    ),
+    "Power greater than or equal to .90 is recommended.",
+    fixed = TRUE
+  )
 })
 
 test_that("rule-of-thumb medium partial eta squared warns at call time", {
@@ -91,6 +112,20 @@ test_that("rule-of-thumb medium partial eta squared warns at call time", {
     medium_message,
     fixed = TRUE
   )
+  expect_warning(
+    expect_error(
+      power_n_calc(
+        between = c(group = 2),
+        within = c(time = 2),
+        term = "group:time",
+        target_pes = 0.06,
+        n_start = 1,
+        n_max = 1
+      )
+    ),
+    medium_message,
+    fixed = TRUE
+  )
 
   for (nearby_pes in c(0.059, 0.061)) {
     curve_warnings <- capture_warning_messages(
@@ -119,11 +154,25 @@ test_that("rule-of-thumb medium partial eta squared warns at call time", {
         )
       )
     )
+    n_calc_warnings <- capture_warning_messages(
+      expect_error(
+        power_n_calc(
+          between = c(group = 2),
+          within = c(time = 2),
+          term = "group:time",
+          target_pes = nearby_pes,
+          n_start = 1,
+          n_max = 1
+        )
+      )
+    )
 
     expect_false(any(grepl("rule-of-thumb \"medium\" effect size",
                            curve_warnings, fixed = TRUE)))
     expect_false(any(grepl("rule-of-thumb \"medium\" effect size",
                            n_warnings, fixed = TRUE)))
+    expect_false(any(grepl("rule-of-thumb \"medium\" effect size",
+                           n_calc_warnings, fixed = TRUE)))
   }
 })
 
@@ -208,6 +257,181 @@ test_that("printed output uses concise public labels", {
   )
   printed_gpower <- capture.output(print(pc_gpower))
   expect_true(any(grepl("G\\*Power convention: TRUE", printed_gpower)))
+})
+
+test_that("power_n_calc returns analytic-only result columns", {
+  pc <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.2,
+    power = 0.90,
+    n_max = 40
+  )
+
+  expect_s3_class(pc, "anovapowersim_curve")
+  expect_true(all(c(
+    "n_per_cell", "total_n", "n_sims", "num_df", "den_df", "ncp",
+    "power_calc", "power_sim"
+  ) %in% names(pc$results)))
+  expect_true(all(is.na(pc$results$n_sims)))
+  expect_true(all(is.na(pc$results$power_sim)))
+  expect_true(all(is.finite(pc$results$power_calc)))
+  expect_true(is.na(pc$n_sims))
+  expect_null(pc$ss_type)
+})
+
+test_that("power_n_calc print output does not report simulations", {
+  pc <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.2,
+    n_max = 20
+  )
+  printed <- capture.output(print(pc))
+  summarized <- capture.output(summary(pc))
+
+  expect_false(any(grepl("sims per cell size", printed, fixed = TRUE)))
+  expect_true(any(grepl("calculation:   analytic only", printed,
+                       fixed = TRUE)))
+  expect_true(any(grepl("analytic power summary", summarized,
+                       fixed = TRUE)))
+})
+
+test_that("power_n_calc reports the smallest calculated n meeting target", {
+  pc <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.2,
+    power = 0.90,
+    n_max = 80
+  )
+
+  expect_false(is.na(pc$n_needed))
+  expect_equal(pc$n_needed, min(pc$results$n_per_cell[
+    pc$results$power_calc >= pc$power
+  ]))
+  previous <- pc$results[pc$results$n_per_cell < pc$n_needed, , drop = FALSE]
+  expect_true(nrow(previous) == 0L || all(previous$power_calc < pc$power))
+  expect_equal(pc$total_n_needed, pc$n_needed * 2L)
+})
+
+test_that("power_n_calc reports unreached target when n_max is too small", {
+  pc <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.01,
+    power = 0.99,
+    n_max = 4
+  )
+
+  expect_true(is.na(pc$n_needed))
+  expect_true(is.na(pc$total_n_needed))
+  expect_true(all(pc$results$power_calc < pc$power))
+})
+
+test_that("power_n_calc computes analytic dfs for common balanced designs", {
+  between_pc <- quiet_power_n_calc(
+    between = c(group = 3),
+    term = "group",
+    target_pes = 0.2,
+    n_start = 8,
+    n_max = 8
+  )
+  expect_equal(between_pc$results$num_df, 2)
+  expect_equal(between_pc$results$den_df, 21)
+
+  within_pc <- quiet_power_n_calc(
+    within = c(time = 4),
+    term = "time",
+    target_pes = 0.2,
+    n_start = 8,
+    n_max = 8
+  )
+  expect_equal(within_pc$results$total_n, 8L)
+  expect_equal(within_pc$results$num_df, 3)
+  expect_equal(within_pc$results$den_df, 21)
+
+  mixed_pc <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "group:time",
+    target_pes = 0.2,
+    n_start = 8,
+    n_max = 8
+  )
+  expect_equal(mixed_pc$results$total_n, 16L)
+  expect_equal(mixed_pc$results$num_df, 2)
+  expect_equal(mixed_pc$results$den_df, 28)
+})
+
+test_that("power_n_calc G*Power convention changes ncp and remains finite", {
+  base <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2, condition = 3),
+    term = "group:time",
+    target_pes = 0.15,
+    n_start = 16,
+    n_max = 16
+  )
+  gp <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2, condition = 3),
+    term = "group:time",
+    target_pes = 0.15,
+    n_start = 16,
+    n_max = 16,
+    gpower = TRUE
+  )
+
+  expect_true(gp$gpower)
+  expect_false(isTRUE(all.equal(base$results$ncp, gp$results$ncp)))
+  expect_equal(gp$results$ncp, 32 * 0.15 / (1 - 0.15), tolerance = 1e-12)
+  expect_true(is.finite(gp$results$power_calc))
+})
+
+test_that("power_n_calc matches car-backed calculated power for balanced designs", {
+  compare_at_n <- function(between = NULL, within = NULL, term, n) {
+    calc <- quiet_power_n_calc(
+      between = between,
+      within = within,
+      term = term,
+      target_pes = 0.15,
+      power = 0.90,
+      n_start = n,
+      n_max = n
+    )
+    car_backed <- quiet_power_n(
+      between = between,
+      within = within,
+      term = term,
+      target_pes = 0.15,
+      power = 0.90,
+      n_sims = 1,
+      n_start = n,
+      n_max = n,
+      seed = 123
+    )
+
+    expect_equal(calc$results$num_df, car_backed$results$num_df)
+    expect_equal(calc$results$den_df, car_backed$results$den_df)
+    expect_equal(calc$results$ncp, car_backed$results$ncp, tolerance = 0.001)
+    expect_equal(round(calc$results$power_calc, 3),
+                 car_backed$results$power_calc,
+                 tolerance = 1e-12)
+  }
+
+  compare_at_n(between = c(group = 3), term = "group", n = 8)
+  compare_at_n(within = c(time = 2), term = "time", n = 8)
+  compare_at_n(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    n = 8
+  )
 })
 
 test_that("power disagreement warning suggests the right next step", {

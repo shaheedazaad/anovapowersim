@@ -10,6 +10,7 @@
 #' @return Invisibly returns `x`.
 #' @export
 print.anovapowersim_curve <- function(x, ...) {
+  calc_only <- is_calculation_only_curve(x)
   cat("<anovapowersim_curve>\n")
   cat("  term:          '", x$term, "'\n", sep = "")
   cat("  target power:  ",
@@ -28,7 +29,11 @@ print.anovapowersim_curve <- function(x, ...) {
   } else {
     cat("  n values:      ", nrow(x$results), " per-cell sample sizes visited\n", sep = "")
   }
-  cat("  sims per cell size: ", x$n_sims, "\n", sep = "")
+  if (calc_only) {
+    cat("  calculation:   analytic only\n", sep = "")
+  } else {
+    cat("  sims per cell size: ", x$n_sims, "\n", sep = "")
+  }
   if (isTRUE(x$gpower)) {
     cat("  G*Power convention: TRUE\n", sep = "")
   }
@@ -64,6 +69,7 @@ print.anovapowersim_curve <- function(x, ...) {
 #'   (tibble), invisibly; printed to console as well.
 #' @export
 summary.anovapowersim_curve <- function(object, ...) {
+  calc_only <- is_calculation_only_curve(object)
   header <- c(
     term         = object$term,
     target_power = if (is.null(object$power) || !is.finite(object$power)) {
@@ -75,7 +81,8 @@ summary.anovapowersim_curve <- function(object, ...) {
                        !is.finite(object$scale_factor)) {
       "<not recorded>"
     } else sprintf("%.3f", object$scale_factor),
-    n_sims       = as.character(object$n_sims),
+    calculation  = if (calc_only) "analytic only" else "simulation",
+    n_sims       = if (calc_only) "<not run>" else as.character(object$n_sims),
     n_needed_between_subjects_cell =
       if (is.na(object$n_needed)) "<not reached>"
       else as.character(object$n_needed),
@@ -89,7 +96,11 @@ summary.anovapowersim_curve <- function(object, ...) {
     header <- append(header, c(ss_type = object$ss_type), after = 4L)
   }
   out <- list(header = header, curve = object$results)
-  cat("anovapowersim power simulation summary\n")
+  cat(if (calc_only) {
+    "anovapowersim analytic power summary\n"
+  } else {
+    "anovapowersim power simulation summary\n"
+  })
   cat("----------------------------------\n")
   for (nm in names(header)) {
     cat(sprintf("  %-13s %s\n", paste0(nm, ":"), header[[nm]]))
@@ -109,4 +120,11 @@ format_power_results <- function(x) {
     x[[nm]] <- ifelse(is.na(x[[nm]]), NA_character_, sprintf("%.3f", x[[nm]]))
   }
   x
+}
+
+
+#' @keywords internal
+#' @noRd
+is_calculation_only_curve <- function(x) {
+  is.null(x$n_sims) || length(x$n_sims) != 1L || is.na(x$n_sims)
 }

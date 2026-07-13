@@ -30,6 +30,7 @@ reference:
     contents:
       - power_curve
       - power_n
+      - power_n_calc
       - plot_power_curve
       - print.anovapowersim_curve
       - summary.anovapowersim_curve
