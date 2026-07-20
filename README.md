@@ -79,7 +79,7 @@ Azaad, S. (2026). A priori power analysis for ANOVA interaction effects with the
 
 - Covariates (ANCOVAs)
 - Means-based simulations for unbalanced designs
-- Nonsphericity corrections (though this might change)
+- Nonsphericity corrections (though this available in the development version's `power_n_calc()` function).
 - Specific interaction shapes (based on means)
 - Simple main effects/pairwise comparisons
 

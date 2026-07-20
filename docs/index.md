@@ -92,7 +92,10 @@ means it has some limitations for now. It does not support:
 
 - Covariates (ANCOVAs)
 - Means-based simulations for unbalanced designs
-- Nonsphericity corrections (though this might change)
+- Nonsphericity corrections (though this available in the development
+  version’s
+  [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
+  function).
 - Specific interaction shapes (based on means)
 - Simple main effects/pairwise comparisons
 

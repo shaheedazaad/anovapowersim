@@ -6,6 +6,10 @@
   [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
   for analytic, simulation-free sample-size searches in balanced ANOVA
   designs.
+- Added an `epsilon` argument to
+  [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
+  for analytic nonsphericity corrections on terms containing
+  within-subject factors.
 
 ## anovapowersim 1.1.0
 

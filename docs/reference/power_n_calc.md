@@ -20,7 +20,8 @@ power_n_calc(
   alpha = 0.05,
   n_start = NULL,
   n_max = 5000,
-  gpower = FALSE
+  gpower = FALSE,
+  epsilon = 1
 )
 ```
 
@@ -70,14 +71,26 @@ power_n_calc(
   `lambda = total_n * f^2`. The default `FALSE` uses
   `lambda = den_df * f^2`.
 
+- epsilon:
+
+  Population nonsphericity correction for the within-subject component
+  of `term`. Must lie between the theoretical lower bound
+  `1 / within_term_df` and `1`. The default `1` assumes sphericity.
+  Values below `1` multiply the numerator degrees of freedom,
+  denominator degrees of freedom, and noncentrality parameter.
+  Nonsphericity corrections do not apply to purely between-subject
+  terms.
+
 ## Value
 
 An `anovapowersim_curve` object with `n_needed` and `total_n_needed`.
 The `$results` tibble contains `n_per_cell`, `total_n`, `n_sims`,
 numerator and denominator degrees of freedom (`num_df`, `den_df`), the
-noncentrality parameter (`ncp`), calculated power (`power_calc`), and
-simulated power (`power_sim`). For `power_n_calc()`, `n_sims` and
-`power_sim` are always `NA`.
+nonsphericity correction (`epsilon`), the noncentrality parameter
+(`ncp`), calculated power (`power_calc`), and simulated power
+(`power_sim`). For `power_n_calc()`, `n_sims` and `power_sim` are always
+`NA`. When `epsilon < 1`, `num_df` and `den_df` are the corrected
+degrees of freedom used in the power calculation.
 
 ## Lifecycle
 
@@ -94,7 +107,8 @@ power_n_calc(
   within = c(stim = 4),
   term = "cond:stim",
   target_pes = 0.14,
-  power = 0.90
+  power = 0.90,
+  epsilon = 0.70
 )
 #> <anovapowersim_curve>
 #>   term:          'cond:stim'
@@ -103,17 +117,18 @@ power_n_calc(
 #>   effect size:   pes = 0.14
 #>   n values:      9 per-cell sample sizes visited
 #>   calculation:   analytic only
-#>   n needed for between-subjects cell: 17
-#>   total N needed: 34
+#>   epsilon:       0.7
+#>   n needed for between-subjects cell: 21
+#>   total N needed: 42
 #> 
-#>  n_per_cell total_n n_sims num_df den_df    ncp power_calc power_sim
-#>           2       4     NA      3      6  0.977      0.085      <NA>
-#>           4       8     NA      3     18  2.930      0.223      <NA>
-#>           8      16     NA      3     42  6.837      0.535      <NA>
-#>          16      32     NA      3     90 14.651      0.897      <NA>
-#>          17      34     NA      3     96 15.628      0.917      <NA>
-#>          18      36     NA      3    102 16.605      0.934      <NA>
-#>          20      40     NA      3    114 18.558      0.958      <NA>
-#>          24      48     NA      3    138 22.465      0.984      <NA>
-#>          32      64     NA      3    186 30.279      0.998      <NA>
+#>  n_per_cell total_n n_sims epsilon num_df den_df    ncp power_calc power_sim
+#>           2       4     NA     0.7    2.1    4.2  0.684      0.077      <NA>
+#>           4       8     NA     0.7    2.1   12.6  2.051      0.185      <NA>
+#>           8      16     NA     0.7    2.1   29.4  4.786      0.436      <NA>
+#>          16      32     NA     0.7    2.1   63.0 10.256      0.799      <NA>
+#>          20      40     NA     0.7    2.1   79.8 12.991      0.892      <NA>
+#>          21      42     NA     0.7    2.1   84.0 13.674      0.908      <NA>
+#>          22      44     NA     0.7    2.1   88.2 14.358      0.922      <NA>
+#>          24      48     NA     0.7    2.1   96.6 15.726      0.945      <NA>
+#>          32      64     NA     0.7    2.1  130.2 21.195      0.987      <NA>
 ```
