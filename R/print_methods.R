@@ -37,6 +37,9 @@ print.anovapowersim_curve <- function(x, ...) {
   if (isTRUE(x$gpower)) {
     cat("  G*Power convention: TRUE\n", sep = "")
   }
+  if (!is.null(x$epsilon) && is.finite(x$epsilon) && x$epsilon < 1) {
+    cat("  epsilon:       ", format(x$epsilon), "\n", sep = "")
+  }
   if (!is.null(x$ss_type)) {
     cat("  SS type:       ", x$ss_type, "\n", sep = "")
   }
@@ -91,6 +94,14 @@ summary.anovapowersim_curve <- function(object, ...) {
   )
   if (isTRUE(object$gpower)) {
     header <- append(header, c(gpower_convention = "TRUE"), after = 4L)
+  }
+  if (!is.null(object$epsilon) && is.finite(object$epsilon) &&
+      object$epsilon < 1) {
+    header <- append(
+      header,
+      c(epsilon = sprintf("%.4f", object$epsilon)),
+      after = 4L
+    )
   }
   if (!is.null(object$ss_type)) {
     header <- append(header, c(ss_type = object$ss_type), after = 4L)

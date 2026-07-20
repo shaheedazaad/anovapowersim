@@ -23,6 +23,7 @@ test_that("power_n_calc is exported and defaults to 90 percent power", {
   expect_true("power_n_calc" %in% getNamespaceExports("anovapowersim"))
   expect_equal(formals(power_n_calc)$power, 0.90)
   expect_equal(formals(power_n_calc)$n_max, 5000)
+  expect_equal(formals(power_n_calc)$epsilon, 1)
 })
 
 test_that("power_n warns when requested power is below 90 percent", {
@@ -417,6 +418,115 @@ test_that("power_n_calc computes analytic dfs for common balanced designs", {
   expect_equal(mixed_pc$results$total_n, 16L)
   expect_equal(mixed_pc$results$num_df, 2)
   expect_equal(mixed_pc$results$den_df, 28)
+})
+
+test_that("power_n_calc applies epsilon to dfs, ncp, and power", {
+  epsilon <- 0.5
+  target_pes <- 0.15
+  f2 <- target_pes / (1 - target_pes)
+
+  pc <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "group:time",
+    target_pes = target_pes,
+    n_start = 8,
+    n_max = 8,
+    epsilon = epsilon
+  )
+  expected_ncp <- epsilon * 28 * f2
+  expected_power <- stats::pf(
+    stats::qf(0.95, df1 = 1, df2 = 14),
+    df1 = 1,
+    df2 = 14,
+    ncp = expected_ncp,
+    lower.tail = FALSE
+  )
+
+  expect_equal(pc$epsilon, epsilon)
+  expect_equal(pc$results$epsilon, epsilon)
+  expect_equal(pc$results$num_df, 1)
+  expect_equal(pc$results$den_df, 14)
+  expect_equal(pc$results$ncp, expected_ncp, tolerance = 1e-12)
+  expect_equal(pc$results$power_calc, expected_power, tolerance = 1e-12)
+
+  gp <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 3),
+    term = "group:time",
+    target_pes = target_pes,
+    n_start = 8,
+    n_max = 8,
+    gpower = TRUE,
+    epsilon = epsilon
+  )
+  expect_equal(gp$results$ncp, epsilon * 16 * f2, tolerance = 1e-12)
+})
+
+test_that("power_n_calc validates epsilon for the tested term", {
+  common_args <- list(
+    within = c(time = 4),
+    term = "time",
+    target_pes = 0.2,
+    n_start = 8,
+    n_max = 8
+  )
+
+  for (bad_epsilon in list(0, 1.1, NA_real_, Inf, c(0.5, 0.6), "0.5")) {
+    expect_error(
+      do.call(quiet_power_n_calc, c(common_args, list(epsilon = bad_epsilon))),
+      "`epsilon` must be a single finite number"
+    )
+  }
+
+  expect_error(
+    quiet_power_n_calc(
+      between = c(group = 2),
+      term = "group",
+      target_pes = 0.2,
+      n_start = 8,
+      n_max = 8,
+      epsilon = 0.8
+    ),
+    "purely between-subject term"
+  )
+  expect_error(
+    quiet_power_n_calc(
+      within = c(time = 2),
+      term = "time",
+      target_pes = 0.2,
+      n_start = 8,
+      n_max = 8,
+      epsilon = 0.9
+    ),
+    "must be at least 1"
+  )
+  expect_error(
+    do.call(quiet_power_n_calc, c(common_args, list(epsilon = 0.3))),
+    "must be at least"
+  )
+
+  at_lower_bound <- do.call(
+    quiet_power_n_calc,
+    c(common_args, list(epsilon = 1 / 3))
+  )
+  expect_equal(at_lower_bound$epsilon, 1 / 3)
+})
+
+test_that("power_n_calc reports a non-unit epsilon", {
+  pc <- quiet_power_n_calc(
+    within = c(time = 4),
+    term = "time",
+    target_pes = 0.2,
+    n_start = 8,
+    n_max = 8,
+    epsilon = 0.7
+  )
+  printed <- capture.output(print(pc))
+  summarized <- capture.output(summary(pc))
+
+  expect_true(any(grepl("epsilon:       0.7", printed, fixed = TRUE)))
+  expect_true(any(grepl("epsilon:      0.7000", summarized, fixed = TRUE)))
 })
 
 test_that("power_n_calc G*Power convention changes ncp and remains finite", {

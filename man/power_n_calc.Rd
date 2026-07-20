@@ -13,7 +13,8 @@ power_n_calc(
   alpha = 0.05,
   n_start = NULL,
   n_max = 5000,
-  gpower = FALSE
+  gpower = FALSE,
+  epsilon = 1
 )
 }
 \arguments{
@@ -42,14 +43,23 @@ starts from the smallest analytically valid value.}
 \item{gpower}{Logical; if \code{TRUE}, use the G*Power-style noncentrality
 convention \code{lambda = total_n * f^2}. The default \code{FALSE} uses
 \code{lambda = den_df * f^2}.}
+
+\item{epsilon}{Population nonsphericity correction for the within-subject
+component of \code{term}. Must lie between the theoretical lower bound
+\code{1 / within_term_df} and \code{1}. The default \code{1} assumes sphericity. Values
+below \code{1} multiply the numerator degrees of freedom, denominator degrees
+of freedom, and noncentrality parameter. Nonsphericity corrections do not
+apply to purely between-subject terms.}
 }
 \value{
 An \code{anovapowersim_curve} object with \code{n_needed} and
 \code{total_n_needed}. The \verb{$results} tibble contains \code{n_per_cell}, \code{total_n},
 \code{n_sims}, numerator and denominator degrees of freedom (\code{num_df},
-\code{den_df}), the noncentrality parameter (\code{ncp}), calculated power
-(\code{power_calc}), and simulated power (\code{power_sim}). For \code{power_n_calc()},
-\code{n_sims} and \code{power_sim} are always \code{NA}.
+\code{den_df}), the nonsphericity correction (\code{epsilon}), the noncentrality
+parameter (\code{ncp}), calculated power (\code{power_calc}), and simulated power
+(\code{power_sim}). For \code{power_n_calc()}, \code{n_sims} and \code{power_sim} are always
+\code{NA}. When \code{epsilon < 1}, \code{num_df} and \code{den_df} are the corrected degrees
+of freedom used in the power calculation.
 }
 \description{
 Calculation-only search for the per-between-cell sample size needed to reach
@@ -72,7 +82,8 @@ power_n_calc(
   within = c(stim = 4),
   term = "cond:stim",
   target_pes = 0.14,
-  power = 0.90
+  power = 0.90,
+  epsilon = 0.70
 )
 
 }
