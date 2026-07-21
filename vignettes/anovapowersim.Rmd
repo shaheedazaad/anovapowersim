@@ -16,10 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-`anovapowersim` simulates power for balanced factorial ANOVA
-designs. Specify the factors/levels, the term of interest, and a target partial
-eta squared. `anovapowersim` generates default term-specific cell means,
-simulates datasets, refits the ANOVA with `stats::aov()`, and estimates power.
+`anovapowersim` primarily simulates power for balanced factorial ANOVA designs.
+Specify the factors/levels, the term of interest, and a target partial eta
+squared. `anovapowersim` generates default term-specific cell means, simulates
+datasets, refits the ANOVA, and estimates power. An experimental interface for
+one fixed unbalanced design is described below.
 
 ```{r setup, message=FALSE}
 library(anovapowersim)
@@ -77,6 +78,132 @@ are the ANOVA degrees of freedom, `ncp` is the noncentrality parameter,
 `power_calc` is the noncentral F power calculation, and `power_sim` is the
 simulation estimate.
 
+## Fixed-sample achieved power and sensitivity
+
+`power_achieved()` and `power_sensitivity()` are experimental and available
+only in the development version of `anovapowersim`. Their APIs and reporting
+formats may change.
+
+When sample size is already fixed, `power_achieved()` estimates simulated
+power for a specified partial eta squared. The `n` argument is subjects per
+between-subject cell, or total N for a purely within-subject design.
+
+```{r achieved-power, eval=FALSE}
+power_achieved(
+  between = c(cond = 2),
+  within = c(stim = 2),
+  term = "cond:stim",
+  target_pes = 0.14,
+  n = 20,
+  n_sims = 1000,
+  seed = 123
+)
+```
+
+Use `power_sensitivity()` when the effect size is unknown. It searches for the
+smallest explicitly simulated partial eta squared that reaches the requested
+power at the fixed sample size.
+
+```{r sensitivity, eval=FALSE}
+power_sensitivity(
+  between = c(cond = 2),
+  within = c(stim = 2),
+  term = "cond:stim",
+  n = 20,
+  power = 0.90,
+  n_sims = 1000,
+  pes_tol = 0.001,
+  seed = 123
+)
+```
+
+When you want to skip simulations, use `power_achieved_calc()` and
+`power_sensitivity_calc()`. These experimental functions use calculated
+noncentral-F power and accept a planned nonsphericity correction through
+`epsilon`.
+
+```{r fixed-sample-calculations, eval=FALSE}
+power_achieved_calc(
+  between = c(cond = 2),
+  within = c(stim = 3),
+  term = "cond:stim",
+  target_pes = 0.14,
+  n = 20,
+  gpower = TRUE,
+  epsilon = 0.80
+)
+
+power_sensitivity_calc(
+  between = c(cond = 2),
+  within = c(stim = 3),
+  term = "cond:stim",
+  n = 20,
+  power = 0.90,
+  gpower = TRUE,
+  epsilon = 0.80
+)
+```
+
+## Power for unbalanced designs
+
+`power_unbalanced()` is an experimental, development-version-only function for
+the less common case where the exact allocation, population means, and
+standard deviations are already known. It simulates that one fixed design; it
+does not search over sample sizes and does not return calculated power.
+
+Define every cell in the complete factorial design with `cell_design()`. The
+factor values identify the cell, `n` is the number of subjects in its
+between-subject group, `m` is its population mean, and `sd` is its marginal
+population standard deviation. For repeated-measures designs, the same `n`
+must therefore appear on every within-subject row belonging to a given
+between-subject group.
+
+```{r unbalanced-design, eval=FALSE}
+unbalanced_design <- cell_design(
+  group = "control",   time = "pre",  n = 22, m = 10.0, sd = 2.0,
+  group = "control",   time = "post", n = 22, m = 11.0, sd = 2.2,
+  group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
+  group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8
+)
+```
+
+Here, the means define the complete effect pattern, including any main effects
+and interactions. The standard deviations can differ across groups and
+within-subject cells. Name the repeated-measures factors in `within`; all other
+factors are treated as between-subject factors.
+
+For a within-subject design, use `unbalanced_covariance()` to define the
+correlations among repeated measurements. It deliberately has no standard
+deviation argument: `power_unbalanced()` combines the correlations with the
+cell-specific `sd` values above to construct the covariance matrix separately
+for each between-subject group. With one within-subject factor, correlation
+pair names use its level names, such as `"pre:post"`. With multiple within-
+subject factors, join the level combinations with underscores, as described in
+the nonsphericity section below.
+
+```{r unbalanced-power, eval=FALSE}
+power_unbalanced(
+  design = unbalanced_design,
+  within = "time",
+  term = "group:time",
+  covariance = unbalanced_covariance(
+    default_correlation = 0.5,
+    correlations = c("pre:post" = 0.7)
+  ),
+  n_sims = 5000,
+  parallel = TRUE,
+  seed = 123
+)
+```
+
+The result reports simulated power, the partial eta squared from a
+deterministic reference dataset matching the supplied design assumptions, and
+the mean, median, and 95% interval of partial eta squared across successful
+simulations. Because power in an unbalanced design depends on the allocation,
+means, variances, covariance structure, tested term, and sums-of-squares type,
+these effect-size summaries describe this exact design rather than a separate
+target effect size.
+
 ### Adding factors and levels
 
 You can add factors and levels as needed, and specify any term of interest. For, example if we want to add a between condition with 3 levels, and we are interested in the 3-way interaction, we can do:
@@ -122,6 +249,69 @@ plot_power_curve(
   power_lines = c(.80, .90) # adds horizontal lines at 80% and 90% power
 )
 ```
+
+## Nonspherical designs
+
+By default, the balanced simulation functions `power_n()`, `power_curve()`,
+`power_achieved()`, and `power_sensitivity()` use a standard deviation of 1 for
+every within-subject cell and a correlation of 0.5 between every pair. All four
+accept a `within_covariance()` object when repeated measurements have different
+standard deviations or correlations. The simulation-free `_calc()` functions
+instead accept a planned `epsilon` value.
+
+`power_unbalanced()` is the exception: its standard deviations are supplied in
+`cell_design()`, so its `covariance` argument accepts an
+`unbalanced_covariance()` object containing correlations only.
+
+The within-subject cell names combine factor levels with underscores. For
+`within = c(time = 3, condition = 2)`, the cells are
+`time1_condition1`, `time1_condition2`, `time2_condition1`,
+`time2_condition2`, `time3_condition1`, and `time3_condition2`. Correlation
+names join a pair of cells with `:`.
+
+Define the covariance assumptions separately so they remain easy to read and
+check:
+
+```{r covariance-specification, eval=FALSE}
+covariance <- within_covariance(
+  default_sd = 1,
+  default_correlation = 0.5,
+  standard_deviations = c(
+    "time3_condition2" = 1.2
+  ),
+  correlations = c(
+    "time1_condition1:time1_condition2" = 0.6,
+    "time2_condition1:time2_condition2" = 0.7
+  )
+)
+```
+
+Unlisted measurements use `default_sd`, and unlisted pairs use
+`default_correlation`. Feed the resulting specification into `power_n()`:
+
+```{r nonspherical-power, eval=FALSE}
+power_n(
+  within = c(time = 3, condition = 2),
+  term = "time:condition",
+  target_pes = 0.14,
+  power = 0.90,
+  n_sims = 1000,
+  covariance = covariance,
+  seed = 123
+)
+```
+
+The custom covariance structure is used to calibrate the target effect and to
+generate every simulated dataset. For the tested term, the package also
+projects the covariance matrix into the term's within-subject contrast space
+and calculates a population Greenhouse--Geisser epsilon. `power_calc` applies
+that epsilon to its numerator degrees of freedom, denominator degrees of
+freedom, and noncentrality parameter. This is equivalent to supplying the
+derived value explicitly as `power_n_calc(epsilon = ...)`.
+
+`power_sim` reflects the custom data-generating covariance, but its simulated
+ANOVA currently uses the ordinary univariate p-value rather than a
+sample-estimated Greenhouse--Geisser or Huynh--Feldt correction.
 
 ## Advanced options
 

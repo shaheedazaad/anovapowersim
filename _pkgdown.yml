@@ -30,16 +30,30 @@ reference:
     contents:
       - power_curve
       - power_n
+      - power_achieved
+      - power_achieved_calc
+      - power_sensitivity
+      - power_sensitivity_calc
+      - power_unbalanced
       - power_n_calc
       - plot_power_curve
       - print.anovapowersim_curve
       - summary.anovapowersim_curve
+      - print.anovapowersim_achieved_power
+      - summary.anovapowersim_achieved_power
+      - print.anovapowersim_sensitivity
+      - summary.anovapowersim_sensitivity
+      - print.anovapowersim_unbalanced_power
+      - summary.anovapowersim_unbalanced_power
 
   - title: Design components
     desc: >
       Component functions for power analyses.
     contents:
       - balanced_anova_design
+      - within_covariance
+      - cell_design
+      - unbalanced_covariance
       - design_term_means
       - simulate_design_dataset
       - compute_scale_factor

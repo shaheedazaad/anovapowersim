@@ -1,12 +1,12 @@
 # Simulate ANOVA power from a balanced factorial design
 
-Simulation-based power estimation for balanced factorial designs under
-sphericity. Users specify the between- and within-subject factors, the
-ANOVA term to test, a target partial eta squared, and explicit sample
-sizes. The function creates a default contrast pattern for the target
-term, scales it to the requested partial eta squared, simulates
-datasets, refits [`stats::aov()`](https://rdrr.io/r/stats/aov.html), and
-estimates power by counting `p < alpha`.
+Simulation-based power estimation for balanced factorial designs. Users
+specify the between- and within-subject factors, the ANOVA term to test,
+a target partial eta squared, and explicit sample sizes. The function
+creates a default contrast pattern for the target term, scales it to the
+requested partial eta squared, simulates datasets, refits
+[`stats::aov()`](https://rdrr.io/r/stats/aov.html), and estimates power
+by counting `p < alpha`.
 
 ## Usage
 
@@ -24,7 +24,8 @@ power_curve(
   progress = interactive(),
   parallel = FALSE,
   cores = NULL,
-  seed = NULL
+  seed = NULL,
+  covariance = NULL
 )
 ```
 
@@ -70,6 +71,10 @@ power_curve(
   for order-invariant tests in unbalanced designs. Use `"I"` to
   reproduce sequential
   [`stats::aov()`](https://rdrr.io/r/stats/aov.html) tests.
+  Greenhouse–Geisser-corrected simulated p-values (see `covariance`) are
+  only available for `"III"` and `"II"`; under `"I"`, simulated p-values
+  always use the uncorrected univariate test, and a warning is issued if
+  the supplied covariance yields a population epsilon below `1`.
 
 - gpower:
 
@@ -97,12 +102,33 @@ power_curve(
 
   Optional integer seed for reproducibility.
 
+- covariance:
+
+  Optional within-subject covariance specification from
+  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+  or a numeric covariance matrix. The default `NULL` uses standard
+  deviations of `1` and a compound-symmetric correlation of `0.5`. A
+  supplied matrix must have one row and column per within-subject cell;
+  named matrices are reordered to the design's cell order. For terms
+  containing within-subject factors, the matrix is also used to derive a
+  term-specific population Greenhouse–Geisser epsilon for `power_calc`.
+  If that population epsilon is below `1`, `power_sim` is also based on
+  each simulated dataset's Greenhouse–Geisser-corrected p-value (from
+  [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html)) rather than
+  the uncorrected univariate test, so `power_sim` and `power_calc`
+  estimate the same corrected test.
+
 ## Value
 
 An `anovapowersim_curve` object. The `$results` tibble contains
-`n_per_cell`, `total_n`, `n_sims`, numerator and denominator degrees of
-freedom (`num_df`, `den_df`), the noncentrality parameter (`ncp`),
-calculated power (`power_calc`), and simulated power (`power_sim`).
+`n_per_cell`, `total_n`, `n_sims`, the population nonsphericity
+correction (`epsilon`), numerator and denominator degrees of freedom
+(`num_df`, `den_df`), the noncentrality parameter (`ncp`), calculated
+power (`power_calc`), and simulated power (`power_sim`). When
+`epsilon < 1`, the reported degrees of freedom and noncentrality are the
+corrected values used for `power_calc`, and `power_sim` (for `ss_type`
+`"III"`/`"II"`) is based on the Greenhouse–Geisser-corrected simulated
+p-value rather than the uncorrected univariate test.
 
 ## Examples
 

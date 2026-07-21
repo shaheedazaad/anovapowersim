@@ -3,11 +3,13 @@
 a requested power for a balanced factorial ANOVA design. Unlike
 power_n(), this function does not run simulations, fit ANOVA models, or
 call car; numerator degrees of freedom, denominator degrees of freedom,
-noncentrality, and power are computed analytically from the balanced design."><meta property="og:description" content="Calculation-only search for the per-between-cell sample size needed to reach
+noncentrality, and calculated power are obtained directly from the balanced
+design."><meta property="og:description" content="Calculation-only search for the per-between-cell sample size needed to reach
 a requested power for a balanced factorial ANOVA design. Unlike
 power_n(), this function does not run simulations, fit ANOVA models, or
 call car; numerator degrees of freedom, denominator degrees of freedom,
-noncentrality, and power are computed analytically from the balanced design."></head><body>
+noncentrality, and calculated power are obtained directly from the balanced
+design."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -45,7 +47,8 @@ noncentrality, and power are computed analytically from the balanced design."></
 a requested power for a balanced factorial ANOVA design. Unlike
 <code><a href="power_n.html">power_n()</a></code>, this function does not run simulations, fit ANOVA models, or
 call <code>car</code>; numerator degrees of freedom, denominator degrees of freedom,
-noncentrality, and power are computed analytically from the balanced design.</p>
+noncentrality, and calculated power are obtained directly from the balanced
+design.</p>
     </div>
 
     <div class="section level2">
@@ -99,7 +102,8 @@ resolves to <code>"group:time"</code> when that is the design's factor order.</p
 
 <dt id="arg-n-start">n_start<a class="anchor" aria-label="anchor" href="#arg-n-start"></a></dt>
 <dd><p>Starting sample size per between-subject cell. If <code>NULL</code>,
-starts from the smallest analytically valid value.</p></dd>
+starts from the smallest value with valid calculated-power degrees of
+freedom.</p></dd>
 
 
 <dt id="arg-n-max">n_max<a class="anchor" aria-label="anchor" href="#arg-n-max"></a></dt>
@@ -137,8 +141,8 @@ of freedom used in the power calculation.</p>
 
 
 <p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a></p>
-<p><code>power_n_calc()</code> is experimental while the analytic search API and reporting
-format are refined.</p>
+<p><code>power_n_calc()</code> is experimental while the calculated-power search API and
+reporting format are refined.</p>
     </div>
 
     <div class="section level2">
@@ -157,7 +161,7 @@ format are refined.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   alpha:         0.05</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   effect size:   pes = 0.14</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   n values:      9 per-cell sample sizes visited</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   calculation:   analytic only</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   calculation:   calculated power only</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   epsilon:       0.7</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   n needed for between-subjects cell: 21</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   total N needed: 42</span>

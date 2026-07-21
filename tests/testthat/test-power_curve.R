@@ -262,7 +262,7 @@ test_that("printed output uses concise public labels", {
   expect_true(any(grepl("G\\*Power convention: TRUE", printed_gpower)))
 })
 
-test_that("power_n_calc returns analytic-only result columns", {
+test_that("power_n_calc returns calculated-power-only result columns", {
   pc <- quiet_power_n_calc(
     between = c(group = 2),
     within = c(time = 2),
@@ -296,9 +296,9 @@ test_that("power_n_calc print output does not report simulations", {
   summarized <- capture.output(summary(pc))
 
   expect_false(any(grepl("sims per cell size", printed, fixed = TRUE)))
-  expect_true(any(grepl("calculation:   analytic only", printed,
+  expect_true(any(grepl("calculation:   calculated power only", printed,
                        fixed = TRUE)))
-  expect_true(any(grepl("analytic power summary", summarized,
+  expect_true(any(grepl("calculated-power summary", summarized,
                        fixed = TRUE)))
 })
 
@@ -385,7 +385,7 @@ test_that("power_n warns when target power is not reached by n_max", {
   expect_true(is.na(pc$total_n_needed))
 })
 
-test_that("power_n_calc computes analytic dfs for common balanced designs", {
+test_that("power_n_calc computes calculated-power dfs for common balanced designs", {
   between_pc <- quiet_power_n_calc(
     between = c(group = 3),
     term = "group",

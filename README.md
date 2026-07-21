@@ -24,6 +24,91 @@ power_n(
 )
 ```
 
+In the development version, the experimental `power_achieved()` function
+estimates power for a chosen effect size at a fixed sample size, while the
+experimental `power_sensitivity()` function finds the minimum detectable
+partial eta squared. These functions are not yet available in the CRAN release.
+
+``` r
+power_achieved(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  target_pes = 0.08,
+  n = 30,
+  seed = 123
+)
+
+power_sensitivity(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  n = 30,
+  power = 0.90,
+  seed = 123
+)
+```
+
+To skip simulations, use the experimental calculation-only counterparts. They
+use calculated noncentral-F power and support `gpower` and planned
+nonsphericity through `epsilon`:
+
+``` r
+power_achieved_calc(
+  between = c(group = 2),
+  within = c(time = 3),
+  term = "group:time",
+  target_pes = 0.08,
+  n = 30,
+  gpower = TRUE,
+  epsilon = 0.80
+)
+
+power_sensitivity_calc(
+  between = c(group = 2),
+  within = c(time = 3),
+  term = "group:time",
+  n = 30,
+  power = 0.90,
+  gpower = TRUE,
+  epsilon = 0.80
+)
+```
+
+## Power for unbalanced designs
+
+The experimental, development-version-only `power_unbalanced()` function
+simulates one exact unbalanced allocation from population cell means and
+standard deviations. For repeated measures, `unbalanced_covariance()` supplies
+correlations only; each cell's standard deviation remains defined in
+`cell_design()`.
+
+``` r
+design <- cell_design(
+  group = "control",   time = "pre",  n = 22, m = 10.0, sd = 2.0,
+  group = "control",   time = "post", n = 22, m = 11.0, sd = 2.2,
+  group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
+  group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8
+)
+
+power_unbalanced(
+  design = design,
+  within = "time",
+  term = "group:time",
+  covariance = unbalanced_covariance(
+    correlations = c("pre:post" = 0.7)
+  ),
+  n_sims = 5000,
+  parallel = TRUE,
+  seed = 123
+)
+```
+
+This function is simulation-only. It reports simulated power and reference
+and simulation-based partial eta-squared summaries for the exact design; it
+does not return calculated power or extrapolate how the cell sizes should
+scale.
+
 ```text
 #><anovapowersim_curve>
 #>  term:          'group:stim:cond'
@@ -78,8 +163,12 @@ Azaad, S. (2026). A priori power analysis for ANOVA interaction effects with the
 `anovapowersim` is designed to be simple and easy to use first, which means it has some limitations for now. It does not support:
 
 - Covariates (ANCOVAs)
-- Means-based simulations for unbalanced designs
-- Nonsphericity corrections (though this available in the development version's `power_n_calc()` function).
+- Sample-size searches or power curves for unbalanced designs
+- Sample-estimated Greenhouse-Geisser or Huynh-Feldt corrections in power
+  simulations. Custom nonspherical covariance structures and their derived
+  population Greenhouse-Geisser corrections are supported by `power_n()`,
+  `power_curve()`, `power_achieved()`, and `power_sensitivity()`, and planned
+  epsilon corrections are supported by the calculation-only functions.
 - Specific interaction shapes (based on means)
 - Simple main effects/pairwise comparisons
 

@@ -17,7 +17,8 @@ power_curve(
   progress = interactive(),
   parallel = FALSE,
   cores = NULL,
-  seed = NULL
+  seed = NULL,
+  covariance = NULL
 )
 }
 \arguments{
@@ -43,7 +44,11 @@ pure within-subject designs, this is the total sample size.}
 
 \item{ss_type}{Sums-of-squares type for the tested ANOVA term. \code{"III"} is
 the default for order-invariant tests in unbalanced designs. Use \code{"I"} to
-reproduce sequential \code{stats::aov()} tests.}
+reproduce sequential \code{stats::aov()} tests. Greenhouse--Geisser-corrected
+simulated p-values (see \code{covariance}) are only available for \code{"III"} and
+\code{"II"}; under \code{"I"}, simulated p-values always use the uncorrected
+univariate test, and a warning is issued if the supplied covariance
+yields a population epsilon below \code{1}.}
 
 \item{gpower}{Logical; if \code{TRUE}, calibrate means to the G*Power-style
 noncentrality convention \code{lambda = total_n * f^2}. The default \code{FALSE}
@@ -60,20 +65,37 @@ the \code{future} ecosystem.}
 cores, with a minimum of one.}
 
 \item{seed}{Optional integer seed for reproducibility.}
+
+\item{covariance}{Optional within-subject covariance specification from
+\code{\link[=within_covariance]{within_covariance()}} or a numeric covariance matrix. The default \code{NULL}
+uses standard deviations of \code{1} and a compound-symmetric correlation of
+\code{0.5}. A supplied matrix must have one row and column per within-subject
+cell; named matrices are reordered to the design's cell order. For terms
+containing within-subject factors, the matrix is also used to derive a
+term-specific population Greenhouse--Geisser epsilon for \code{power_calc}. If
+that population epsilon is below \code{1}, \code{power_sim} is also based on each
+simulated dataset's Greenhouse--Geisser-corrected p-value (from
+\code{car::Anova()}) rather than the uncorrected univariate test, so \code{power_sim}
+and \code{power_calc} estimate the same corrected test.}
 }
 \value{
 An \code{anovapowersim_curve} object. The \verb{$results} tibble contains
-\code{n_per_cell}, \code{total_n}, \code{n_sims}, numerator and denominator degrees of
-freedom (\code{num_df}, \code{den_df}), the noncentrality parameter (\code{ncp}),
-calculated power (\code{power_calc}), and simulated power (\code{power_sim}).
+\code{n_per_cell}, \code{total_n}, \code{n_sims}, the population nonsphericity correction
+(\code{epsilon}), numerator and denominator degrees of freedom (\code{num_df},
+\code{den_df}), the noncentrality parameter (\code{ncp}), calculated power
+(\code{power_calc}), and simulated power (\code{power_sim}). When \code{epsilon < 1}, the
+reported degrees of freedom and noncentrality are the corrected values
+used for \code{power_calc}, and \code{power_sim} (for \code{ss_type} \code{"III"}/\code{"II"}) is
+based on the Greenhouse--Geisser-corrected simulated p-value rather than
+the uncorrected univariate test.
 }
 \description{
-Simulation-based power estimation for balanced factorial designs under
-sphericity. Users specify the between- and within-subject factors, the ANOVA
-term to test, a target partial eta squared, and explicit sample sizes. The
-function creates a default contrast pattern for the target term, scales it to
-the requested partial eta squared, simulates datasets, refits
-\code{stats::aov()}, and estimates power by counting \code{p < alpha}.
+Simulation-based power estimation for balanced factorial designs. Users
+specify the between- and within-subject factors, the ANOVA term to test, a
+target partial eta squared, and explicit sample sizes. The function creates
+a default contrast pattern for the target term, scales it to the requested
+partial eta squared, simulates datasets, refits \code{stats::aov()}, and estimates
+power by counting \code{p < alpha}.
 }
 \section{Examples}{
 

@@ -9,14 +9,18 @@
 Simulation-based power analysis for balanced factorial ANOVA designs. Given
 between- and within-subject factor structures, a target partial eta squared,
 and sample sizes, \code{anovapowersim} generates default term-specific cell means,
-simulates datasets under sphericity, refits the ANOVA with \pkg{stats}, and
-returns tidy power estimates and a \code{ggplot2} power curve.
+simulates datasets using default or custom within-subject covariance
+structures, refits the ANOVA with \pkg{stats}, and returns tidy power
+estimates and a \code{ggplot2} power curve.
 }
 \details{
-The primary entry point is \code{\link[=power_curve]{power_curve()}}. It accepts a design
-specification, a term name, a target partial eta squared, and sample sizes.
-It returns an object of class \code{anovapowersim_curve} that can be printed,
-summarised, or plotted with \code{\link[=plot_power_curve]{plot_power_curve()}}.
+The main entry points are \code{\link[=power_n]{power_n()}} for required sample size,
+\code{\link[=power_achieved]{power_achieved()}} for achieved power, \code{\link[=power_sensitivity]{power_sensitivity()}} for a minimum
+detectable effect size, and \code{\link[=power_curve]{power_curve()}} for power across explicit sample
+sizes. \code{\link[=power_unbalanced]{power_unbalanced()}} provides experimental means-based simulation for
+one fixed unbalanced design. Experimental calculation-only counterparts are
+provided by \code{\link[=power_n_calc]{power_n_calc()}}, \code{\link[=power_achieved_calc]{power_achieved_calc()}}, and
+\code{\link[=power_sensitivity_calc]{power_sensitivity_calc()}}.
 
 The lower-level building blocks are also exported so users can compose
 custom simulations:
@@ -24,6 +28,9 @@ custom simulations:
 \item \code{\link[=balanced_anova_design]{balanced_anova_design()}}
 \item \code{\link[=design_term_means]{design_term_means()}}
 \item \code{\link[=simulate_design_dataset]{simulate_design_dataset()}}
+\item \code{\link[=within_covariance]{within_covariance()}}
+\item \code{\link[=cell_design]{cell_design()}}
+\item \code{\link[=unbalanced_covariance]{unbalanced_covariance()}}
 \item \code{\link[=compute_scale_factor]{compute_scale_factor()}}
 }
 }

@@ -20,7 +20,8 @@ power_n(
   progress = interactive(),
   parallel = FALSE,
   cores = NULL,
-  seed = NULL
+  seed = NULL,
+  covariance = NULL
 )
 }
 \arguments{
@@ -45,7 +46,11 @@ resolves to \code{"group:time"} when that is the design's factor order.}
 
 \item{ss_type}{Sums-of-squares type for the tested ANOVA term. \code{"III"} is
 the default for order-invariant tests in unbalanced designs. Use \code{"I"} to
-reproduce sequential \code{stats::aov()} tests.}
+reproduce sequential \code{stats::aov()} tests. Greenhouse--Geisser-corrected
+simulated p-values (see \code{covariance}) are only available for \code{"III"} and
+\code{"II"}; under \code{"I"}, simulated p-values always use the uncorrected
+univariate test, and a warning is issued if the supplied covariance
+yields a population epsilon below \code{1}.}
 
 \item{n_start}{Starting sample size per between-subject cell. If \code{NULL},
 starts at the smallest value that can support empirical calibration for
@@ -72,6 +77,18 @@ the \code{future} ecosystem.}
 cores, with a minimum of one.}
 
 \item{seed}{Optional integer seed for reproducibility.}
+
+\item{covariance}{Optional within-subject covariance specification from
+\code{\link[=within_covariance]{within_covariance()}} or a numeric covariance matrix. The default \code{NULL}
+uses standard deviations of \code{1} and a compound-symmetric correlation of
+\code{0.5}. A supplied matrix must have one row and column per within-subject
+cell; named matrices are reordered to the design's cell order. For terms
+containing within-subject factors, the matrix is also used to derive a
+term-specific population Greenhouse--Geisser epsilon for \code{power_calc}. If
+that population epsilon is below \code{1}, \code{power_sim} is also based on each
+simulated dataset's Greenhouse--Geisser-corrected p-value (from
+\code{car::Anova()}) rather than the uncorrected univariate test, so \code{power_sim}
+and \code{power_calc} estimate the same corrected test.}
 }
 \value{
 An \code{anovapowersim_curve} object with \code{n_needed} and

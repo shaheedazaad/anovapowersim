@@ -5,8 +5,8 @@ reach a requested power for a balanced factorial ANOVA design. Unlike
 [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md),
 this function does not run simulations, fit ANOVA models, or call `car`;
 numerator degrees of freedom, denominator degrees of freedom,
-noncentrality, and power are computed analytically from the balanced
-design.
+noncentrality, and calculated power are obtained directly from the
+balanced design.
 
 ## Usage
 
@@ -59,7 +59,7 @@ power_n_calc(
 - n_start:
 
   Starting sample size per between-subject cell. If `NULL`, starts from
-  the smallest analytically valid value.
+  the smallest value with valid calculated-power degrees of freedom.
 
 - n_max:
 
@@ -96,8 +96,8 @@ degrees of freedom used in the power calculation.
 
 [![\[Experimental\]](https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-`power_n_calc()` is experimental while the analytic search API and
-reporting format are refined.
+`power_n_calc()` is experimental while the calculated-power search API
+and reporting format are refined.
 
 ## Examples
 
@@ -116,7 +116,7 @@ power_n_calc(
 #>   alpha:         0.05
 #>   effect size:   pes = 0.14
 #>   n values:      9 per-cell sample sizes visited
-#>   calculation:   analytic only
+#>   calculation:   calculated power only
 #>   epsilon:       0.7
 #>   n needed for between-subjects cell: 21
 #>   total N needed: 42

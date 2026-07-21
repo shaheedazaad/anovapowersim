@@ -36,7 +36,8 @@ resolves to \code{"group:time"} when that is the design's factor order.}
 \item{alpha}{Significance threshold.}
 
 \item{n_start}{Starting sample size per between-subject cell. If \code{NULL},
-starts from the smallest analytically valid value.}
+starts from the smallest value with valid calculated-power degrees of
+freedom.}
 
 \item{n_max}{Maximum sample size per between-subject cell.}
 
@@ -66,14 +67,15 @@ Calculation-only search for the per-between-cell sample size needed to reach
 a requested power for a balanced factorial ANOVA design. Unlike
 \code{\link[=power_n]{power_n()}}, this function does not run simulations, fit ANOVA models, or
 call \code{car}; numerator degrees of freedom, denominator degrees of freedom,
-noncentrality, and power are computed analytically from the balanced design.
+noncentrality, and calculated power are obtained directly from the balanced
+design.
 }
 \section{Lifecycle}{
 
 \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 
-\code{power_n_calc()} is experimental while the analytic search API and reporting
-format are refined.
+\code{power_n_calc()} is experimental while the calculated-power search API and
+reporting format are refined.
 }
 
 \examples{

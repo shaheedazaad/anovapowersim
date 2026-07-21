@@ -1,11 +1,11 @@
 #' Simulate ANOVA power from a balanced factorial design
 #'
-#' Simulation-based power estimation for balanced factorial designs under
-#' sphericity. Users specify the between- and within-subject factors, the ANOVA
-#' term to test, a target partial eta squared, and explicit sample sizes. The
-#' function creates a default contrast pattern for the target term, scales it to
-#' the requested partial eta squared, simulates datasets, refits
-#' `stats::aov()`, and estimates power by counting `p < alpha`.
+#' Simulation-based power estimation for balanced factorial designs. Users
+#' specify the between- and within-subject factors, the ANOVA term to test, a
+#' target partial eta squared, and explicit sample sizes. The function creates
+#' a default contrast pattern for the target term, scales it to the requested
+#' partial eta squared, simulates datasets, refits `stats::aov()`, and estimates
+#' power by counting `p < alpha`.
 #'
 #' @param between Named integer vector of between-subject factor level counts,
 #'   e.g. `c(group = 2)`. Use `NULL` for no between-subject factors.
@@ -22,7 +22,11 @@
 #' @param alpha Significance threshold.
 #' @param ss_type Sums-of-squares type for the tested ANOVA term. `"III"` is
 #'   the default for order-invariant tests in unbalanced designs. Use `"I"` to
-#'   reproduce sequential `stats::aov()` tests.
+#'   reproduce sequential `stats::aov()` tests. Greenhouse--Geisser-corrected
+#'   simulated p-values (see `covariance`) are only available for `"III"` and
+#'   `"II"`; under `"I"`, simulated p-values always use the uncorrected
+#'   univariate test, and a warning is issued if the supplied covariance
+#'   yields a population epsilon below `1`.
 #' @param gpower Logical; if `TRUE`, calibrate means to the G*Power-style
 #'   noncentrality convention `lambda = total_n * f^2`. The default `FALSE`
 #'   calibrates the empirical reference dataset to `target_pes`, equivalent to
@@ -34,11 +38,27 @@
 #'   `parallel = TRUE`. If `NULL`, uses one fewer than the number of available
 #'   cores, with a minimum of one.
 #' @param seed Optional integer seed for reproducibility.
+#' @param covariance Optional within-subject covariance specification from
+#'   [within_covariance()] or a numeric covariance matrix. The default `NULL`
+#'   uses standard deviations of `1` and a compound-symmetric correlation of
+#'   `0.5`. A supplied matrix must have one row and column per within-subject
+#'   cell; named matrices are reordered to the design's cell order. For terms
+#'   containing within-subject factors, the matrix is also used to derive a
+#'   term-specific population Greenhouse--Geisser epsilon for `power_calc`. If
+#'   that population epsilon is below `1`, `power_sim` is also based on each
+#'   simulated dataset's Greenhouse--Geisser-corrected p-value (from
+#'   `car::Anova()`) rather than the uncorrected univariate test, so `power_sim`
+#'   and `power_calc` estimate the same corrected test.
 #'
 #' @return An `anovapowersim_curve` object. The `$results` tibble contains
-#'   `n_per_cell`, `total_n`, `n_sims`, numerator and denominator degrees of
-#'   freedom (`num_df`, `den_df`), the noncentrality parameter (`ncp`),
-#'   calculated power (`power_calc`), and simulated power (`power_sim`).
+#'   `n_per_cell`, `total_n`, `n_sims`, the population nonsphericity correction
+#'   (`epsilon`), numerator and denominator degrees of freedom (`num_df`,
+#'   `den_df`), the noncentrality parameter (`ncp`), calculated power
+#'   (`power_calc`), and simulated power (`power_sim`). When `epsilon < 1`, the
+#'   reported degrees of freedom and noncentrality are the corrected values
+#'   used for `power_calc`, and `power_sim` (for `ss_type` `"III"`/`"II"`) is
+#'   based on the Greenhouse--Geisser-corrected simulated p-value rather than
+#'   the uncorrected univariate test.
 #'
 #' @section Examples:
 #' ```{r, eval = FALSE}
@@ -78,7 +98,8 @@ power_curve <- function(between = NULL,
                         progress = interactive(),
                         parallel = FALSE,
                         cores = NULL,
-                        seed = NULL) {
+                        seed = NULL,
+                        covariance = NULL) {
   sd <- 1
   r <- 0.5
   setup <- prepare_power_curve_inputs(
@@ -91,6 +112,7 @@ power_curve <- function(between = NULL,
     ss_type = ss_type,
     sd = sd,
     r = r,
+    covariance = covariance,
     gpower = gpower,
     progress = progress,
     parallel = parallel,
@@ -120,6 +142,8 @@ power_curve <- function(between = NULL,
       ss_type = setup$ss_type,
       sd = sd,
       r = r,
+      covariance = setup$covariance,
+      epsilon = setup$epsilon,
       gpower = setup$gpower,
       progress_bar = if (setup$parallel) NULL else progress_bar,
       parallel = setup$parallel,
@@ -144,6 +168,9 @@ power_curve <- function(between = NULL,
       n_needed = NA_integer_,
       total_n_needed = NA_integer_,
       gpower = setup$gpower,
+      epsilon = setup$epsilon,
+      covariance = setup$covariance,
+      custom_covariance = setup$custom_covariance,
       ss_type = setup$ss_type,
       design = setup$spec,
       call = match.call()
@@ -209,7 +236,8 @@ power_n <- function(between = NULL,
                     progress = interactive(),
                     parallel = FALSE,
                     cores = NULL,
-                    seed = NULL) {
+                    seed = NULL,
+                    covariance = NULL) {
   sd <- 1
   r <- 0.5
   setup <- prepare_power_curve_inputs(
@@ -222,6 +250,7 @@ power_n <- function(between = NULL,
     ss_type = ss_type,
     sd = sd,
     r = r,
+    covariance = covariance,
     gpower = gpower,
     progress = progress,
     parallel = parallel,
@@ -253,6 +282,8 @@ power_n <- function(between = NULL,
       ss_type = setup$ss_type,
       sd = sd,
       r = r,
+      covariance = setup$covariance,
+      epsilon = setup$epsilon,
       gpower = setup$gpower,
       n_min = min_n,
       n_max = as.integer(n_max)
@@ -300,6 +331,8 @@ power_n <- function(between = NULL,
       ss_type = setup$ss_type,
       sd = sd,
       r = r,
+      covariance = setup$covariance,
+      epsilon = setup$epsilon,
       gpower = setup$gpower,
       progress_bar = NULL,
       parallel = setup$parallel,
@@ -347,6 +380,9 @@ power_n <- function(between = NULL,
       n_needed = n_needed,
       total_n_needed = total_n_needed,
       gpower = setup$gpower,
+      epsilon = setup$epsilon,
+      covariance = setup$covariance,
+      custom_covariance = setup$custom_covariance,
       ss_type = setup$ss_type,
       design = setup$spec,
       call = match.call()
@@ -410,89 +446,6 @@ cell_counts <- function(...) {
   out <- dplyr::bind_rows(rows)
   out$n <- validate_cell_count_values(out$n, "n")
   tibble::as_tibble(out)
-}
-
-
-#' @keywords internal
-#' @noRd
-power_unbalanced <- function(cell_n,
-                             within = NULL,
-                             term,
-                             target_pes,
-                             n_sims = 10000,
-                             alpha = 0.05,
-                             ss_type = "III",
-                             gpower = FALSE,
-                             progress = interactive(),
-                             parallel = FALSE,
-                             cores = NULL,
-                             seed = NULL) {
-  sd <- 1
-  r <- 0.5
-  spec <- unbalanced_anova_design(cell_n = cell_n, within = within)
-  term <- resolve_design_term(term, spec)
-  ss_type <- validate_ss_type(ss_type)
-  assert_unit_interval(target_pes, "target_pes")
-  assert_unit_interval(alpha, "alpha")
-  if (!is.numeric(n_sims) || length(n_sims) != 1L || n_sims < 1) {
-    stop("`n_sims` must be a positive integer.", call. = FALSE)
-  }
-  if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
-    stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
-  }
-  if (!is.logical(progress) || length(progress) != 1L || is.na(progress)) {
-    stop("`progress` must be TRUE or FALSE.", call. = FALSE)
-  }
-  if (!is.logical(parallel) || length(parallel) != 1L || is.na(parallel)) {
-    stop("`parallel` must be TRUE or FALSE.", call. = FALSE)
-  }
-  cores <- validate_parallel_cores(cores = cores, parallel = parallel)
-  validate_calibration_n(spec$cell_n, spec, "cell_n$n")
-  message_long_serial_run(as.integer(n_sims), parallel)
-  if (!is.null(seed)) set.seed(seed)
-
-  progress_bar <- make_progress_bar(
-    enabled = progress,
-    total = if (parallel) 1L else as.integer(n_sims),
-    label = "Simulating power"
-  )
-  on.exit(close_progress_bar(progress_bar), add = TRUE)
-
-  row <- run_unbalanced_power(
-    spec = spec,
-    term = term,
-    target_pes = target_pes,
-    n_sims = as.integer(n_sims),
-    alpha = alpha,
-    ss_type = ss_type,
-    sd = sd,
-    r = r,
-    gpower = gpower,
-    progress_bar = if (parallel) NULL else progress_bar,
-    parallel = parallel,
-    cores = cores
-  )
-  if (parallel) tick_progress_bar(progress_bar)
-  warn_power_disagreement(row, as.integer(n_sims))
-
-  structure(
-    list(
-      results = row,
-      term = term,
-      power = NA_real_,
-      alpha = alpha,
-      target_pes = target_pes,
-      scale_factor = NA_real_,
-      n_sims = as.integer(n_sims),
-      n_needed = NA_integer_,
-      total_n_needed = NA_integer_,
-      gpower = gpower,
-      ss_type = ss_type,
-      design = spec,
-      call = match.call()
-    ),
-    class = "anovapowersim_curve"
-  )
 }
 
 
@@ -930,26 +883,55 @@ resolve_design_term <- function(term, spec) {
 #' @keywords internal
 #' @noRd
 prepare_power_curve_inputs <- function(between, within, term, target_pes,
-                                       n_sims, alpha, ss_type, sd, r, gpower,
-                                       progress, parallel, cores) {
+                                       n_sims, alpha, ss_type, sd, r,
+                                       covariance = NULL, gpower, progress,
+                                       parallel, cores) {
+  setup <- prepare_balanced_power_inputs(
+    between = between,
+    within = within,
+    term = term,
+    n_sims = n_sims,
+    alpha = alpha,
+    ss_type = ss_type,
+    sd = sd,
+    r = r,
+    covariance = covariance,
+    gpower = gpower,
+    progress = progress,
+    parallel = parallel,
+    cores = cores
+  )
+  validate_target_pes(target_pes)
+  setup
+}
+
+
+#' Prepare inputs shared by balanced simulation-based power functions
+#'
+#' @keywords internal
+#' @noRd
+prepare_balanced_power_inputs <- function(between, within, term, n_sims,
+                                          alpha, ss_type, sd, r,
+                                          covariance = NULL, gpower, progress,
+                                          parallel, cores) {
   spec <- balanced_anova_design(between = between, within = within)
   term <- resolve_design_term(term, spec)
+  resolved_covariance <- resolve_within_covariance(
+    covariance = covariance,
+    spec = spec,
+    sd = sd,
+    r = r
+  )
+  epsilon <- covariance_term_epsilon(
+    covariance = resolved_covariance,
+    spec = spec,
+    term = term
+  )
   ss_type <- validate_ss_type(ss_type)
-  assert_unit_interval(target_pes, "target_pes")
-  if (target_pes == 0.06) {
-    warning(
-      paste(
-        "It looks like you are using a rule-of-thumb \"medium\" effect size.",
-        "This might overestimate the true effect size, rendering your study",
-        "underpowered. Consider basing your power calculations on previous",
-        "research or empirically-derived guidelines."
-      ),
-      call. = FALSE,
-      immediate. = TRUE
-    )
-  }
+  warn_ss_type_i_uncorrected_gg(ss_type = ss_type, epsilon = epsilon)
   assert_unit_interval(alpha, "alpha")
-  if (!is.numeric(n_sims) || length(n_sims) != 1L || n_sims < 1) {
+  if (!is.numeric(n_sims) || length(n_sims) != 1L || !is.finite(n_sims) ||
+      n_sims < 1 || n_sims != as.integer(n_sims)) {
     stop("`n_sims` must be a positive integer.", call. = FALSE)
   }
   if (!is.numeric(sd) || length(sd) != 1L || !is.finite(sd) || sd <= 0) {
@@ -975,11 +957,36 @@ prepare_power_curve_inputs <- function(between, within, term, target_pes,
     term = term,
     n_sims = as.integer(n_sims),
     ss_type = ss_type,
+    covariance = resolved_covariance,
+    custom_covariance = !is.null(covariance),
+    epsilon = epsilon,
     gpower = gpower,
     progress = progress,
     parallel = parallel,
     cores = cores
   )
+}
+
+
+#' Validate a target partial eta squared and issue the established advisory
+#'
+#' @keywords internal
+#' @noRd
+validate_target_pes <- function(target_pes) {
+  assert_unit_interval(target_pes, "target_pes")
+  if (target_pes == 0.06) {
+    warning(
+      paste(
+        "It looks like you are using a rule-of-thumb \"medium\" effect size.",
+        "This might overestimate the true effect size, rendering your study",
+        "underpowered. Consider basing your power calculations on previous",
+        "research or empirically-derived guidelines."
+      ),
+      call. = FALSE,
+      immediate. = TRUE
+    )
+  }
+  invisible(target_pes)
 }
 
 
@@ -1005,6 +1012,27 @@ validate_ss_type <- function(ss_type) {
     stop("`ss_type` must be one of 'III', 'II', or 'I'.", call. = FALSE)
   }
   ss_type
+}
+
+
+#' Warn that ss_type = "I" cannot supply a Greenhouse-Geisser-corrected p-value
+#'
+#' @keywords internal
+#' @noRd
+warn_ss_type_i_uncorrected_gg <- function(ss_type, epsilon) {
+  if (!identical(ss_type, "I") || !isTRUE(epsilon < 1 - 1e-8)) {
+    return(invisible(NULL))
+  }
+  warning(
+    "`ss_type = \"I\"` cannot supply a Greenhouse-Geisser-corrected p-value, ",
+    "so `power_sim` will use the uncorrected univariate test even though ",
+    "`power_calc` is Greenhouse-Geisser-corrected (epsilon = ",
+    signif(epsilon, 3), "). Use `ss_type = \"II\"` or `\"III\"` so that ",
+    "`power_sim` and `power_calc` estimate the same corrected test.",
+    call. = FALSE,
+    immediate. = TRUE
+  )
+  invisible(NULL)
 }
 
 
@@ -1077,15 +1105,18 @@ message_long_serial_run <- function(n_sims, parallel) {
 #' @noRd
 run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
                                   alpha, ss_type, sd, r, gpower,
+                                  covariance = NULL,
+                                  epsilon = 1,
                                   progress_bar = NULL,
                                   parallel = FALSE, cores = NULL) {
-  means <- design_term_means(
-    design = spec,
+  means <- calibrate_design_means(
+    spec = spec,
     term = term,
     target_pes = target_pes,
     n = n,
     sd = sd,
     r = r,
+    covariance = covariance,
     gpower = gpower,
     ss_type = ss_type
   )
@@ -1097,8 +1128,10 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     means = means,
     sd = sd,
     r = r,
+    covariance = covariance,
     alpha = alpha,
     gpower = gpower,
+    epsilon = epsilon,
     ss_type = ss_type
   )
 
@@ -1108,6 +1141,7 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     "validate_ss_type",
     "fit_design_model",
     "fit_car_term_stats",
+    "car_gg_p_values",
     "extract_term_stats",
     "set_sum_contrasts",
     "design_aov_formula",
@@ -1125,6 +1159,7 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
   fit_one_stats <- helpers$fit_design_term_stats
   simulate_one_dataset <- helpers$simulate_balanced_design_data
   tick_progress <- helpers$tick_progress_bar
+  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8)
   simulate_one <- function(i) {
     sim <- simulate_one_dataset(
       spec = spec,
@@ -1132,6 +1167,7 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
       means = means,
       sd = sd,
       r = r,
+      covariance = covariance,
       empirical = FALSE
     )
     tick_progress(progress_bar)
@@ -1139,8 +1175,14 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
       fit_one_stats(sim, spec, term, ss_type = ss_type),
       error = function(e) NULL
     )
-    if (is.null(stats) || !is.finite(stats$p_value)) return(NA)
-    isTRUE(stats$p_value < alpha)
+    if (is.null(stats)) return(NA)
+    p_value <- if (use_gg_correction && is.finite(stats$p_value_gg)) {
+      stats$p_value_gg
+    } else {
+      stats$p_value
+    }
+    if (!is.finite(p_value)) return(NA)
+    isTRUE(p_value < alpha)
   }
 
   successes <- if (parallel) {
@@ -1168,6 +1210,13 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
       call. = FALSE
     )
   }
+  if (failed_count > 0L) {
+    warning(
+      failed_count, " of ", n_sims,
+      " simulated ANOVA fits failed and were excluded from `power_sim`.",
+      call. = FALSE
+    )
+  }
   success_count <- sum(successes, na.rm = TRUE)
   power <- if (valid_count > 0L) success_count / valid_count else NA_real_
 
@@ -1175,6 +1224,7 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     n_per_cell = as.integer(n),
     total_n = as.integer(n * max(1L, spec$n_between_cells)),
     n_sims = n_sims,
+    epsilon = epsilon,
     num_df = sanity$num_df,
     den_df = sanity$den_df,
     ncp = round(sanity$ncp, 3),
@@ -1216,6 +1266,7 @@ run_unbalanced_power <- function(spec, term, target_pes, n_sims, alpha,
     "validate_ss_type",
     "fit_design_model",
     "fit_car_term_stats",
+    "car_gg_p_values",
     "extract_term_stats",
     "set_sum_contrasts",
     "design_aov_formula",
@@ -1272,6 +1323,13 @@ run_unbalanced_power <- function(spec, term, target_pes, n_sims, alpha,
     stop(
       "All simulated ANOVA fits failed. This usually indicates an internal ",
       "model-fitting error rather than zero power.",
+      call. = FALSE
+    )
+  }
+  if (failed_count > 0L) {
+    warning(
+      failed_count, " of ", n_sims,
+      " simulated ANOVA fits failed and were excluded from `power_sim`.",
       call. = FALSE
     )
   }
@@ -1455,14 +1513,20 @@ warn_power_disagreement <- function(results, n_sims, threshold = 0.05) {
   bad <- which(is.finite(diff) & diff > threshold)
   if (!length(bad)) return(invisible(NULL))
 
-  n_label <- if ("n_per_cell" %in% names(results)) "n_per_cell" else "total_n"
-  ns <- paste(results[[n_label]][bad], collapse = ", ")
+  point_label <- if ("target_pes" %in% names(results)) {
+    "target_pes"
+  } else if ("n_per_cell" %in% names(results)) {
+    "n_per_cell"
+  } else {
+    "total_n"
+  }
+  points <- paste(results[[point_label]][bad], collapse = ", ")
   max_diff <- max(diff[bad], na.rm = TRUE)
   msg <- paste0(
     "`power_sim` and `power_calc` differ by more than ",
     threshold * 100,
-    " percentage points for ", n_label, " = ",
-    ns,
+    " percentage points for ", point_label, " = ",
+    points,
     " (largest difference = ",
     sprintf("%.3f", max_diff),
     "). "
@@ -1548,7 +1612,8 @@ default_term_pattern <- function(spec, term) {
 #' @keywords internal
 #' @noRd
 calibrate_design_means <- function(spec, term, target_pes, n, sd, r,
-                                   gpower = FALSE, ss_type = "III") {
+                                   covariance = NULL, gpower = FALSE,
+                                   ss_type = "III") {
   base <- default_term_pattern(spec, term)
   exact <- simulate_balanced_design_data(
     spec = spec,
@@ -1556,6 +1621,7 @@ calibrate_design_means <- function(spec, term, target_pes, n, sd, r,
     means = base,
     sd = sd,
     r = r,
+    covariance = covariance,
     empirical = TRUE
   )
   stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
@@ -1628,13 +1694,16 @@ calibration_pes_for_ncp <- function(target_pes, total_n, num_df, den_df,
 #' @keywords internal
 #' @noRd
 sanity_check_term_effect <- function(spec, term, target_pes, n, means, sd, r,
-                                     alpha, gpower, ss_type = "III") {
+                                     alpha, gpower, covariance = NULL,
+                                     epsilon = 1,
+                                     ss_type = "III") {
   exact <- simulate_balanced_design_data(
     spec = spec,
     n = n,
     means = means,
     sd = sd,
     r = r,
+    covariance = covariance,
     empirical = TRUE
   )
   stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
@@ -1655,18 +1724,20 @@ sanity_check_term_effect <- function(spec, term, target_pes, n, means, sd, r,
       call. = FALSE
     )
   }
-  ncp <- ncp_from_pes(
+  uncorrected_ncp <- ncp_from_pes(
     pes = target_pes,
     total_n = total_n,
     den_df = stats$den_df,
     gpower = gpower
   )
-  stats$ncp <- ncp
+  stats$num_df <- epsilon * stats$num_df
+  stats$den_df <- epsilon * stats$den_df
+  stats$ncp <- epsilon * uncorrected_ncp
   stats$power_calc <- stats::pf(
     stats::qf(1 - alpha, stats$num_df, stats$den_df),
     stats$num_df,
     stats$den_df,
-    ncp = ncp,
+    ncp = stats$ncp,
     lower.tail = FALSE
   )
   stats
@@ -1732,7 +1803,8 @@ ncp_from_pes <- function(pes, total_n, den_df, gpower) {
 #' @keywords internal
 #' @noRd
 estimate_ncp_n_needed <- function(spec, term, target_pes, target_power, alpha,
-                                  ss_type, sd, r, gpower, n_min, n_max) {
+                                  ss_type, sd, r, gpower, n_min, n_max,
+                                  covariance = NULL, epsilon = 1) {
   power_at <- function(n) {
     power_calc_at_n(
       spec = spec,
@@ -1743,6 +1815,8 @@ estimate_ncp_n_needed <- function(spec, term, target_pes, target_power, alpha,
       ss_type = ss_type,
       sd = sd,
       r = r,
+      covariance = covariance,
+      epsilon = epsilon,
       gpower = gpower
     )
   }
@@ -1775,7 +1849,7 @@ estimate_ncp_n_needed <- function(spec, term, target_pes, target_power, alpha,
 #' @keywords internal
 #' @noRd
 power_calc_at_n <- function(spec, term, target_pes, n, alpha, ss_type, sd, r,
-                            gpower) {
+                            gpower, covariance = NULL, epsilon = 1) {
   base <- default_term_pattern(spec, term)
   exact <- simulate_balanced_design_data(
     spec = spec,
@@ -1783,19 +1857,23 @@ power_calc_at_n <- function(spec, term, target_pes, n, alpha, ss_type, sd, r,
     means = base,
     sd = sd,
     r = r,
+    covariance = covariance,
     empirical = TRUE
   )
   term_stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
-  ncp <- ncp_from_pes(
+  uncorrected_ncp <- ncp_from_pes(
     pes = target_pes,
     total_n = n * max(1L, spec$n_between_cells),
     den_df = term_stats$den_df,
     gpower = gpower
   )
+  num_df <- epsilon * term_stats$num_df
+  den_df <- epsilon * term_stats$den_df
+  ncp <- epsilon * uncorrected_ncp
   stats::pf(
-    stats::qf(1 - alpha, term_stats$num_df, term_stats$den_df),
-    term_stats$num_df,
-    term_stats$den_df,
+    stats::qf(1 - alpha, num_df, den_df),
+    num_df,
+    den_df,
     ncp = ncp,
     lower.tail = FALSE
   )
@@ -1805,12 +1883,17 @@ power_calc_at_n <- function(spec, term, target_pes, n, alpha, ss_type, sd, r,
 #' @keywords internal
 #' @noRd
 simulate_balanced_design_data <- function(spec, n, means, sd, r,
-                                          empirical = FALSE) {
+                                          empirical = FALSE,
+                                          covariance = NULL) {
   if (isTRUE(empirical)) {
     validate_calibration_n(n, spec, "n")
   }
 
-  sigma <- compound_symmetric_sigma(spec$n_within_cells, sd = sd, r = r)
+  sigma <- if (is.null(covariance)) {
+    compound_symmetric_sigma(spec$n_within_cells, sd = sd, r = r)
+  } else {
+    covariance
+  }
   between_labels <- make_cell_labels("b", spec$n_between_cells)
   within_labels <- make_cell_labels("w", spec$n_within_cells)
   rownames(means) <- between_labels
@@ -2020,6 +2103,7 @@ fit_design_term_stats <- function(data, spec, term, ss_type = "III") {
 fit_car_term_stats <- function(data, spec, term, ss_type) {
   data <- set_sum_contrasts(data, spec)
   type <- switch(ss_type, II = 2, III = 3)
+  gg_p_values <- NULL
   if (!length(spec$within)) {
     fixed <- paste(spec$factor_names, collapse = " * ")
     formula <- stats::as.formula(paste("value ~", fixed))
@@ -2037,10 +2121,10 @@ fit_car_term_stats <- function(data, spec, term, ss_type) {
       type = type,
       icontrasts = c("contr.sum", "contr.poly")
     )
-    tab <- as.data.frame.matrix(
-      suppressWarnings(summary(av, multivariate = FALSE))$univariate.tests
-    )
+    av_summary <- suppressWarnings(summary(av, multivariate = FALSE))
+    tab <- as.data.frame.matrix(av_summary$univariate.tests)
     rows <- car_repeated_rows(tab)
+    gg_p_values <- car_gg_p_values(av_summary)
   }
 
   idx <- which(rows$term == term)
@@ -2054,12 +2138,33 @@ fit_car_term_stats <- function(data, spec, term, ss_type) {
          call. = FALSE)
   }
   pes <- row$f_value * row$num_df / (row$f_value * row$num_df + row$den_df)
+  p_value_gg <- if (!is.null(gg_p_values) && term %in% names(gg_p_values)) {
+    as.numeric(gg_p_values[[term]])
+  } else {
+    NA_real_
+  }
   list(
     num_df = as.numeric(row$num_df),
     den_df = as.numeric(row$den_df),
     pes = as.numeric(pes),
-    p_value = as.numeric(row$p_value)
+    p_value = as.numeric(row$p_value),
+    p_value_gg = p_value_gg
   )
+}
+
+
+#' Extract Greenhouse--Geisser-adjusted p-values from a car::Anova summary
+#'
+#' @keywords internal
+#' @noRd
+car_gg_p_values <- function(av_summary) {
+  adj <- av_summary$pval.adjustments
+  if (is.null(adj) || !nrow(adj)) {
+    return(stats::setNames(numeric(0), character(0)))
+  }
+  terms <- trimws(rownames(adj))
+  values <- as.numeric(adj[, "Pr(>F[GG])"])
+  stats::setNames(values, terms)
 }
 
 
@@ -2159,7 +2264,8 @@ extract_term_stats <- function(fit, term) {
     num_df = as.numeric(row$num_df),
     den_df = as.numeric(row$den_df),
     pes = as.numeric(pes),
-    p_value = as.numeric(row$p_value)
+    p_value = as.numeric(row$p_value),
+    p_value_gg = NA_real_
   )
 }
 

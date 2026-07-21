@@ -4,13 +4,14 @@
 #' a requested power for a balanced factorial ANOVA design. Unlike
 #' [power_n()], this function does not run simulations, fit ANOVA models, or
 #' call `car`; numerator degrees of freedom, denominator degrees of freedom,
-#' noncentrality, and power are computed analytically from the balanced design.
+#' noncentrality, and calculated power are obtained directly from the balanced
+#' design.
 #'
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `power_n_calc()` is experimental while the analytic search API and reporting
-#' format are refined.
+#' `power_n_calc()` is experimental while the calculated-power search API and
+#' reporting format are refined.
 #'
 #' @param between Named integer vector of between-subject factor level counts,
 #'   e.g. `c(group = 2)`. Use `NULL` for no between-subject factors.
@@ -24,7 +25,8 @@
 #' @param power Desired target power.
 #' @param alpha Significance threshold.
 #' @param n_start Starting sample size per between-subject cell. If `NULL`,
-#'   starts from the smallest analytically valid value.
+#'   starts from the smallest value with valid calculated-power degrees of
+#'   freedom.
 #' @param n_max Maximum sample size per between-subject cell.
 #' @param gpower Logical; if `TRUE`, use the G*Power-style noncentrality
 #'   convention `lambda = total_n * f^2`. The default `FALSE` uses
@@ -172,7 +174,7 @@ prepare_power_n_calc_inputs <- function(between, within, term, target_pes,
   n_max <- as.integer(n_max)
   if (n_start < n_min) {
     stop(
-      "`n_start` is too small for analytic power calculation. ",
+      "`n_start` is too small for calculated power. ",
       "Use `n_start >= ", n_min, "` so the denominator degrees of freedom ",
       "are positive.",
       call. = FALSE

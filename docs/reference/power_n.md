@@ -25,7 +25,8 @@ power_n(
   progress = interactive(),
   parallel = FALSE,
   cores = NULL,
-  seed = NULL
+  seed = NULL,
+  covariance = NULL
 )
 ```
 
@@ -70,6 +71,10 @@ power_n(
   for order-invariant tests in unbalanced designs. Use `"I"` to
   reproduce sequential
   [`stats::aov()`](https://rdrr.io/r/stats/aov.html) tests.
+  Greenhouse–Geisser-corrected simulated p-values (see `covariance`) are
+  only available for `"III"` and `"II"`; under `"I"`, simulated p-values
+  always use the uncorrected univariate test, and a warning is issued if
+  the supplied covariance yields a population epsilon below `1`.
 
 - n_start:
 
@@ -112,6 +117,22 @@ power_n(
 - seed:
 
   Optional integer seed for reproducibility.
+
+- covariance:
+
+  Optional within-subject covariance specification from
+  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+  or a numeric covariance matrix. The default `NULL` uses standard
+  deviations of `1` and a compound-symmetric correlation of `0.5`. A
+  supplied matrix must have one row and column per within-subject cell;
+  named matrices are reordered to the design's cell order. For terms
+  containing within-subject factors, the matrix is also used to derive a
+  term-specific population Greenhouse–Geisser epsilon for `power_calc`.
+  If that population epsilon is below `1`, `power_sim` is also based on
+  each simulated dataset's Greenhouse–Geisser-corrected p-value (from
+  [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html)) rather than
+  the uncorrected univariate test, so `power_sim` and `power_calc`
+  estimate the same corrected test.
 
 ## Value
 

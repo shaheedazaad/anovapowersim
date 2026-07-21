@@ -3,13 +3,17 @@
 #' Simulation-based power analysis for balanced factorial ANOVA designs. Given
 #' between- and within-subject factor structures, a target partial eta squared,
 #' and sample sizes, `anovapowersim` generates default term-specific cell means,
-#' simulates datasets under sphericity, refits the ANOVA with \pkg{stats}, and
-#' returns tidy power estimates and a `ggplot2` power curve.
+#' simulates datasets using default or custom within-subject covariance
+#' structures, refits the ANOVA with \pkg{stats}, and returns tidy power
+#' estimates and a `ggplot2` power curve.
 #'
-#' The primary entry point is [power_curve()]. It accepts a design
-#' specification, a term name, a target partial eta squared, and sample sizes.
-#' It returns an object of class `anovapowersim_curve` that can be printed,
-#' summarised, or plotted with [plot_power_curve()].
+#' The main entry points are [power_n()] for required sample size,
+#' [power_achieved()] for achieved power, [power_sensitivity()] for a minimum
+#' detectable effect size, and [power_curve()] for power across explicit sample
+#' sizes. [power_unbalanced()] provides experimental means-based simulation for
+#' one fixed unbalanced design. Experimental calculation-only counterparts are
+#' provided by [power_n_calc()], [power_achieved_calc()], and
+#' [power_sensitivity_calc()].
 #'
 #' The lower-level building blocks are also exported so users can compose
 #' custom simulations:
@@ -17,6 +21,9 @@
 #' * [balanced_anova_design()]
 #' * [design_term_means()]
 #' * [simulate_design_dataset()]
+#' * [within_covariance()]
+#' * [cell_design()]
+#' * [unbalanced_covariance()]
 #' * [compute_scale_factor()]
 #'
 #' @keywords internal
