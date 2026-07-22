@@ -80,10 +80,10 @@ tutorial](https://shaheedazaad.github.io/anovapowersim/articles/calculated-power
 ### Power for unbalanced designs
 
 [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md)
-simulates one exact allocation from user-defined cell means, standard
-deviations, sample sizes, and within-subject correlations. It is
-simulation-only and does not extrapolate how unequal cell sizes should
-scale. See the [unbalanced-design
+simulates one exact allocation from user-defined cell means and sample
+sizes under a common standard deviation and optional within-subject
+correlations. It is simulation-only and does not extrapolate how unequal
+cell sizes should scale. See the [unbalanced-design
 tutorial](https://shaheedazaad.github.io/anovapowersim/articles/unbalanced-designs.html).
 
 ## Installation
@@ -131,7 +131,15 @@ means it has some limitations for now. It does not support:
 - User-defined cell-mean patterns in the balanced target-PES functions.
   Exact means and specific interaction shapes are supported by
   [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md).
-- Simple main effects/pairwise comparisons
+- Heteroskedastic ANOVA. Simulation functions require one common
+  marginal variance; unequal correlations and Greenhouse–Geisser
+  corrections remain supported for repeated-measures designs.
+
+Simulation functions warn when their default common `sd = 1` or default
+within-subject correlation of `0.5` is used. Covariance specifications
+also warn when only some correlations are defined; the default
+correlation fills only the undefined pairs. - Simple main
+effects/pairwise comparisons
 
 ## Other packages
 

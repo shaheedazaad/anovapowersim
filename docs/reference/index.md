@@ -40,7 +40,7 @@ Fixed-design simulation with explicit sample sizes, means, and SDs.
 - [`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md)
   : Define cells for a means-based unbalanced ANOVA design
 - [`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md)
-  : Specify correlations for a means-based unbalanced design
+  : Specify covariance for a means-based unbalanced design
 
 ## Design components
 

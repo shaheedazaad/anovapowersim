@@ -60,6 +60,30 @@ warn_target_power_not_reached <- function(n_needed, target, n_max) {
 }
 
 
+#' Wilson confidence interval for a binomial proportion
+#'
+#' @keywords internal
+#' @noRd
+binomial_wilson_interval <- function(successes, trials, conf_level = 0.95) {
+  if (trials <= 0L) {
+    return(c(lower = NA_real_, upper = NA_real_))
+  }
+
+  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  proportion <- successes / trials
+  denominator <- 1 + z^2 / trials
+  centre <- (proportion + z^2 / (2 * trials)) / denominator
+  half_width <- z * sqrt(
+    proportion * (1 - proportion) / trials + z^2 / (4 * trials^2)
+  ) / denominator
+
+  c(
+    lower = max(0, centre - half_width),
+    upper = min(1, centre + half_width)
+  )
+}
+
+
 #' Create internal, collision-proof cell labels
 #'
 #' @keywords internal

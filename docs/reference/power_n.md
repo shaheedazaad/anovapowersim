@@ -97,14 +97,10 @@ power_n(
   Logical; if `TRUE`, calibrate means to the G*Power-style noncentrality
   convention `lambda = total_n * f^2`. The default `FALSE` calibrates
   the empirical reference dataset to `target_pes`, equivalent to
-  `lambda = den_df * f^2` for the fitted ANOVA. For a term whose
-  within-subject component has more than one degree of freedom,
-  `gpower`'s `target_pes` does not equal the partial eta squared
-  actually achieved (this mirrors a property of G*Power's own "as in
-  Cohen (1988)" repeated-measures convention, which does not adjust for
-  the number of measurements); a warning is issued in that case. Use the
-  default if you want `target_pes` to match your reported or expected
-  partial eta squared exactly.
+  `lambda = den_df * f^2` for the fitted ANOVA. G*Power's estimates can
+  differ from `target_pes`, especially for small samples or terms with
+  more degrees of freedom; a warning is issued when `gpower = TRUE`. The
+  default `gpower = FALSE` is recommended.
 
 - progress:
 
@@ -130,13 +126,20 @@ power_n(
   Optional within-subject covariance specification from
   [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
   or a numeric covariance matrix. The default `NULL` uses standard
-  deviations of `1` and a compound-symmetric correlation of `0.5`. A
-  supplied matrix must have one row and column per within-subject cell;
-  named matrices are reordered to the design's cell order. For terms
-  containing within-subject factors, the matrix is also used to derive a
-  term-specific population Greenhouse–Geisser epsilon for `power_calc`.
-  If that population epsilon is below `1`, `power_sim` is also based on
-  each simulated dataset's Greenhouse–Geisser-corrected p-value (from
+  deviations of `1` and a compound-symmetric correlation of `0.5` and
+  issues a warning stating those defaults. A
+  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+  specification issues a warning when correlation pairs are omitted: its
+  `default_correlation` applies only to those undefined pairs, while
+  explicitly defined correlations are unchanged. All measurements must
+  have one common marginal variance. A supplied matrix must therefore
+  have equal diagonal entries and one row and column per within-subject
+  cell; named matrices are reordered to the design's cell order. Unequal
+  correlations remain supported. For terms containing within-subject
+  factors, the matrix is also used to derive a term-specific population
+  Greenhouse–Geisser epsilon for `power_calc`. If that population
+  epsilon is below `1`, `power_sim` is also based on each simulated
+  dataset's Greenhouse–Geisser-corrected p-value (from
   [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html)) rather than
   the uncorrected univariate test, so `power_sim` and `power_calc`
   estimate the same corrected test.

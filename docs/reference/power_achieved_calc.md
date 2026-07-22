@@ -57,14 +57,10 @@ power_achieved_calc(
 
   Logical; if `TRUE`, use the G*Power-style noncentrality convention
   `lambda = total_n * f^2`. The default `FALSE` uses
-  `lambda = den_df * f^2`. For a term whose within-subject component has
-  more than one degree of freedom, `gpower`'s `target_pes` does not
-  equal the partial eta squared actually achieved (this mirrors a
-  property of G*Power's own "as in Cohen (1988)" repeated-measures
-  convention, which does not adjust for the number of measurements); a
-  warning is issued in that case. Use the default if you want
-  `target_pes` to match your reported or expected partial eta squared
-  exactly.
+  `lambda = den_df * f^2`. G*Power's estimates can differ from
+  `target_pes`, especially for small samples or terms with more degrees
+  of freedom; a warning is issued when `gpower = TRUE`. The default
+  `gpower = FALSE` is recommended.
 
 - epsilon:
 
@@ -80,8 +76,8 @@ power_achieved_calc(
 
 An `anovapowersim_achieved_power` object. `$achieved_power` and
 `$calculated_power` contain the calculated-power estimate. In
-`$results`, `n_sims` and `power_sim` are `NA` because no simulations are
-run.
+`$results`, simulation-specific result columns are `NA` because no
+simulations are run.
 
 ## Lifecycle
 
@@ -103,7 +99,7 @@ power_achieved_calc(
   gpower = TRUE,
   epsilon = 0.80
 )
-#> Warning: `gpower = TRUE` for term 'group:time' does not calibrate `target_pes` to the partial eta squared you will actually observe in a fitted ANOVA, because its within-subject component has 2 degrees of freedom (more than one). This mirrors a property of G*Power's own 'as in Cohen (1988)' repeated-measures convention, which does not adjust for the number of measurements. Use the default `gpower = FALSE` if you want `target_pes` to match your reported or expected partial eta squared exactly.
+#> Warning: `gpower = TRUE` calibrates means to G*Power's noncentrality convention, so the partial eta squared actually achieved can differ from `target_pes` -- this is more pronounced for small samples and terms with more degrees of freedom. The default `gpower = FALSE` is recommended if you want `target_pes` to match your reported or expected partial eta squared exactly.
 #> <anovapowersim_achieved_power>
 #>   term:             'group:time'
 #>   fixed n per cell: 30
@@ -116,6 +112,8 @@ power_achieved_calc(
 #>   G*Power convention: TRUE
 #>   epsilon:          0.8
 #> 
-#>  n_per_cell total_n n_sims epsilon num_df den_df   ncp power_calc power_sim
-#>          30      60     NA     0.8    1.6   92.8 4.174      0.453      <NA>
+#>  n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df den_df   ncp
+#>          30      60     NA         NA          NA     0.8    1.6   92.8 4.174
+#>  power_calc power_sim
+#>       0.453      <NA>
 ```

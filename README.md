@@ -68,7 +68,8 @@ They also support planned nonsphericity through `epsilon`. See the
 ### Power for unbalanced designs
 
 `power_unbalanced()` simulates one exact allocation from user-defined cell
-means, standard deviations, sample sizes, and within-subject correlations. It
+means and sample sizes under a common standard deviation and optional
+within-subject correlations. It
 is simulation-only and does not extrapolate how unequal cell sizes should
 scale. See the
 [unbalanced-design tutorial](https://shaheedazaad.github.io/anovapowersim/articles/unbalanced-designs.html).
@@ -110,6 +111,14 @@ Azaad, S. (2026). A priori power analysis for ANOVA interaction effects with the
   custom covariance implies `epsilon < 1`; type I tests remain uncorrected.
 - User-defined cell-mean patterns in the balanced target-PES functions. Exact
   means and specific interaction shapes are supported by `power_unbalanced()`.
+- Heteroskedastic ANOVA. Simulation functions require one common marginal
+  variance; unequal correlations and Greenhouse--Geisser corrections remain
+  supported for repeated-measures designs.
+
+Simulation functions warn when their default common `sd = 1` or default
+within-subject correlation of `0.5` is used. Covariance specifications also
+warn when only some correlations are defined; the default correlation fills
+only the undefined pairs.
 - Simple main effects/pairwise comparisons
 
 ## Other packages

@@ -61,6 +61,7 @@ pc <- power_curve(
   n_sims = 1000,
   seed = 123
 )
+#> Warning: No `covariance` was supplied; using one common `sd = 1` and `correlation = 0.5` for every within-subject pair.
 plot_power_curve(pc)
 
 # }

@@ -30,13 +30,10 @@
 #' @param n_max Maximum sample size per between-subject cell.
 #' @param gpower Logical; if `TRUE`, use the G*Power-style noncentrality
 #'   convention `lambda = total_n * f^2`. The default `FALSE` uses
-#'   `lambda = den_df * f^2`. For a term whose within-subject component has
-#'   more than one degree of freedom, `gpower`'s `target_pes` does not equal
-#'   the partial eta squared actually achieved (this mirrors a property of
-#'   G*Power's own "as in Cohen (1988)" repeated-measures convention, which
-#'   does not adjust for the number of measurements); a warning is issued in
-#'   that case. Use the default if you want `target_pes` to match your
-#'   reported or expected partial eta squared exactly.
+#'   `lambda = den_df * f^2`. G*Power's estimates can differ from
+#'   `target_pes`, especially for small samples or terms with more degrees of
+#'   freedom; a warning is issued when `gpower = TRUE`. The default
+#'   `gpower = FALSE` is recommended.
 #' @param epsilon Population nonsphericity correction for the within-subject
 #'   component of `term`. Must lie between the theoretical lower bound
 #'   `1 / within_term_df` and `1`. The default `1` assumes sphericity. Values
@@ -46,12 +43,13 @@
 #'
 #' @return An `anovapowersim_curve` object with `n_needed` and
 #'   `total_n_needed`. The `$results` tibble contains `n_per_cell`, `total_n`,
-#'   `n_sims`, numerator and denominator degrees of freedom (`num_df`,
-#'   `den_df`), the nonsphericity correction (`epsilon`), the noncentrality
-#'   parameter (`ncp`), calculated power (`power_calc`), and simulated power
-#'   (`power_sim`). For `power_n_calc()`, `n_sims` and `power_sim` are always
-#'   `NA`. When `epsilon < 1`, `num_df` and `den_df` are the corrected degrees
-#'   of freedom used in the power calculation.
+#'   `n_sims`, `valid_sims`, `failed_sims`, numerator and denominator degrees
+#'   of freedom (`num_df`, `den_df`), the nonsphericity correction (`epsilon`),
+#'   the noncentrality parameter (`ncp`), calculated power (`power_calc`),
+#'   and simulated power (`power_sim`). For `power_n_calc()`, the
+#'   simulation-specific columns are always `NA`. When `epsilon < 1`, `num_df`
+#'   and `den_df` are the corrected degrees of freedom used in the power
+#'   calculation.
 #'
 #' @examples
 #' power_n_calc(
@@ -163,7 +161,7 @@ prepare_power_n_calc_inputs <- function(between, within, term, target_pes,
   if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
     stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
   }
-  warn_gpower_within_term_df(gpower = gpower, spec = spec, term = term)
+  warn_gpower_within_term_df(gpower = gpower)
   epsilon <- validate_analytic_epsilon(epsilon, spec = spec, term = term)
   if (!is.numeric(n_max) || length(n_max) != 1L ||
       n_max < 1 || n_max != as.integer(n_max)) {
@@ -276,6 +274,8 @@ analytic_power_row <- function(n, spec, term, target_pes, alpha, gpower,
     n_per_cell = as.integer(n),
     total_n = total_n,
     n_sims = NA_integer_,
+    valid_sims = NA_integer_,
+    failed_sims = NA_integer_,
     epsilon = epsilon,
     num_df = num_df,
     den_df = den_df,

@@ -94,14 +94,10 @@ power_sensitivity(
   Logical; if `TRUE`, calibrate means to the G*Power-style noncentrality
   convention `lambda = total_n * f^2`. The default `FALSE` calibrates
   the empirical reference dataset to `target_pes`, equivalent to
-  `lambda = den_df * f^2` for the fitted ANOVA. For a term whose
-  within-subject component has more than one degree of freedom,
-  `gpower`'s `target_pes` does not equal the partial eta squared
-  actually achieved (this mirrors a property of G*Power's own "as in
-  Cohen (1988)" repeated-measures convention, which does not adjust for
-  the number of measurements); a warning is issued in that case. Use the
-  default if you want `target_pes` to match your reported or expected
-  partial eta squared exactly.
+  `lambda = den_df * f^2` for the fitted ANOVA. G*Power's estimates can
+  differ from `target_pes`, especially for small samples or terms with
+  more degrees of freedom; a warning is issued when `gpower = TRUE`. The
+  default `gpower = FALSE` is recommended.
 
 - progress:
 
@@ -127,13 +123,20 @@ power_sensitivity(
   Optional within-subject covariance specification from
   [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
   or a numeric covariance matrix. The default `NULL` uses standard
-  deviations of `1` and a compound-symmetric correlation of `0.5`. A
-  supplied matrix must have one row and column per within-subject cell;
-  named matrices are reordered to the design's cell order. For terms
-  containing within-subject factors, the matrix is also used to derive a
-  term-specific population Greenhouse–Geisser epsilon for `power_calc`.
-  If that population epsilon is below `1`, `power_sim` is also based on
-  each simulated dataset's Greenhouse–Geisser-corrected p-value (from
+  deviations of `1` and a compound-symmetric correlation of `0.5` and
+  issues a warning stating those defaults. A
+  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+  specification issues a warning when correlation pairs are omitted: its
+  `default_correlation` applies only to those undefined pairs, while
+  explicitly defined correlations are unchanged. All measurements must
+  have one common marginal variance. A supplied matrix must therefore
+  have equal diagonal entries and one row and column per within-subject
+  cell; named matrices are reordered to the design's cell order. Unequal
+  correlations remain supported. For terms containing within-subject
+  factors, the matrix is also used to derive a term-specific population
+  Greenhouse–Geisser epsilon for `power_calc`. If that population
+  epsilon is below `1`, `power_sim` is also based on each simulated
+  dataset's Greenhouse–Geisser-corrected p-value (from
   [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html)) rather than
   the uncorrected univariate test, so `power_sim` and `power_calc`
   estimate the same corrected test.
@@ -167,6 +170,7 @@ power_sensitivity(
   pes_tol = 0.01,
   seed = 123
 )
+#> Warning: No `covariance` was supplied; using one common `sd = 1` and `correlation = 0.5` for every within-subject pair.
 #> Warning: `power_sim` and `power_calc` differ by more than 5 percentage points for target_pes = 0.204402088273331 (largest difference = 0.061). Try increasing `n_sims` for a more stable simulation estimate.
 #> <anovapowersim_sensitivity>
 #>   term:             'group:time'
@@ -183,21 +187,21 @@ power_sensitivity(
 #>   simulations/point: 100 
 #>   SS type:          III
 #> 
-#>  target_pes n_per_cell total_n n_sims epsilon num_df den_df    ncp power_calc
-#>    0.000001         20      40    100       1      1     38  0.000      0.050
-#>    0.112774         20      40    100       1      1     38  4.830      0.572
-#>    0.169161         20      40    100       1      1     38  7.737      0.774
-#>    0.197354         20      40    100       1      1     38  9.343      0.846
-#>    0.204402         20      40    100       1      1     38  9.763      0.861
-#>    0.211450         20      40    100       1      1     38 10.190      0.875
-#>    0.225547         20      40    100       1      1     38 11.067      0.900
-#>  power_sim
-#>      0.050
-#>      0.580
-#>      0.780
-#>      0.880
-#>      0.800
-#>      0.920
-#>      0.900
+#>  target_pes n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df
+#>    0.000001         20      40    100        100           0       1      1
+#>    0.112774         20      40    100        100           0       1      1
+#>    0.169161         20      40    100        100           0       1      1
+#>    0.197354         20      40    100        100           0       1      1
+#>    0.204402         20      40    100        100           0       1      1
+#>    0.211450         20      40    100        100           0       1      1
+#>    0.225547         20      40    100        100           0       1      1
+#>  den_df    ncp power_calc power_sim
+#>      38  0.000      0.050     0.050
+#>      38  4.830      0.572     0.580
+#>      38  7.737      0.774     0.780
+#>      38  9.343      0.846     0.880
+#>      38  9.763      0.861     0.800
+#>      38 10.190      0.875     0.920
+#>      38 11.067      0.900     0.900
 # }
 ```

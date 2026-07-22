@@ -52,11 +52,10 @@ design_term_means(
 
   Logical; if `TRUE`, calibrate to the G*Power-style noncentrality
   convention `lambda = total_n * f^2` (as in the "Cohen (1988)" option
-  for within-subjects designs in G*Power). For a term whose
-  within-subject component has more than one degree of freedom,
-  `target_pes` does not equal the partial eta squared actually achieved
-  under this convention (G\*Power's own convention does not adjust for
-  the number of measurements either); a warning is issued in that case.
+  for within-subjects designs in G*Power). G\*Power's estimates can
+  differ from `target_pes`, especially for small samples or terms with
+  more degrees of freedom; a warning is issued when `gpower = TRUE`. The
+  default `gpower = FALSE` is recommended.
 
 - ss_type:
 

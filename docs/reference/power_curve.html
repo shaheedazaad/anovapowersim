@@ -131,14 +131,10 @@ yields a population epsilon below <code>1</code>.</p></dd>
 <dd><p>Logical; if <code>TRUE</code>, calibrate means to the G<em>Power-style
 noncentrality convention <code>lambda = total_n * f^2</code>. The default <code>FALSE</code>
 calibrates the empirical reference dataset to <code>target_pes</code>, equivalent to
-<code>lambda = den_df * f^2</code> for the fitted ANOVA. For a term whose
-within-subject component has more than one degree of freedom, <code>gpower</code>'s
-<code>target_pes</code> does not equal the partial eta squared actually achieved
-(this mirrors a property of G</em>Power's own "as in Cohen (1988)"
-repeated-measures convention, which does not adjust for the number of
-measurements); a warning is issued in that case. Use the default if you
-want <code>target_pes</code> to match your reported or expected partial eta squared
-exactly.</p></dd>
+<code>lambda = den_df * f^2</code> for the fitted ANOVA. G</em>Power's estimates can
+differ from <code>target_pes</code>, especially for small samples or terms with more
+degrees of freedom; a warning is issued when <code>gpower = TRUE</code>. The default
+<code>gpower = FALSE</code> is recommended.</p></dd>
 
 
 <dt id="arg-progress">progress<a class="anchor" aria-label="anchor" href="#arg-progress"></a></dt>
@@ -164,8 +160,14 @@ cores, with a minimum of one.</p></dd>
 <dd><p>Optional within-subject covariance specification from
 <code><a href="within_covariance.html">within_covariance()</a></code> or a numeric covariance matrix. The default <code>NULL</code>
 uses standard deviations of <code>1</code> and a compound-symmetric correlation of
-<code>0.5</code>. A supplied matrix must have one row and column per within-subject
-cell; named matrices are reordered to the design's cell order. For terms
+<code>0.5</code> and issues a warning stating those defaults. A
+<code><a href="within_covariance.html">within_covariance()</a></code> specification issues a warning when correlation
+pairs are omitted: its <code>default_correlation</code> applies only to those
+undefined pairs, while explicitly defined correlations are unchanged.
+All measurements must have one common marginal variance. A supplied matrix
+must therefore have equal diagonal entries and one row and column per
+within-subject cell; named matrices are reordered to the design's cell
+order. Unequal correlations remain supported. For terms
 containing within-subject factors, the matrix is also used to derive a
 term-specific population Greenhouse–Geisser epsilon for <code>power_calc</code>. If
 that population epsilon is below <code>1</code>, <code>power_sim</code> is also based on each
@@ -177,14 +179,17 @@ and <code>power_calc</code> estimate the same corrected test.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code>anovapowersim_curve</code> object. The <code>$results</code> tibble contains
-<code>n_per_cell</code>, <code>total_n</code>, <code>n_sims</code>, the population nonsphericity correction
+<code>n_per_cell</code>, <code>total_n</code>, <code>n_sims</code>, successful and failed simulation counts
+(<code>valid_sims</code>, <code>failed_sims</code>), the population nonsphericity correction
 (<code>epsilon</code>), numerator and denominator degrees of freedom (<code>num_df</code>,
 <code>den_df</code>), the noncentrality parameter (<code>ncp</code>), calculated power
-(<code>power_calc</code>), and simulated power (<code>power_sim</code>). When <code>epsilon &lt; 1</code>, the
-reported degrees of freedom and noncentrality are the corrected values
-used for <code>power_calc</code>, and <code>power_sim</code> (for <code>ss_type</code> <code>"III"</code>/<code>"II"</code>) is
-based on the Greenhouse–Geisser-corrected simulated p-value rather than
-the uncorrected univariate test.</p>
+(<code>power_calc</code>), and simulated power (<code>power_sim</code>). The full-precision
+<code>power_sim</code> value, not its printed three-decimal representation, is used
+by adaptive searches. When <code>epsilon &lt; 1</code>, the reported degrees of freedom
+and noncentrality are the corrected values used for <code>power_calc</code>, and
+<code>power_sim</code> (for <code>ss_type</code> <code>"III"</code>/<code>"II"</code>) is based on the
+Greenhouse–Geisser-corrected simulated p-value rather than the
+uncorrected univariate test.</p>
     </div>
     <div class="section level2">
     <h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h2>

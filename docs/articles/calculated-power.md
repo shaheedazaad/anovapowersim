@@ -52,18 +52,30 @@ power_n_calc(
 #>   n needed for between-subjects cell: 63
 #>   total N needed: 126
 #> 
-#>  n_per_cell total_n n_sims epsilon num_df den_df    ncp power_calc power_sim
-#>           2       4     NA       1      1      2  0.174      0.058      <NA>
-#>           4       8     NA       1      1      6  0.522      0.094      <NA>
-#>           8      16     NA       1      1     14  1.217      0.177      <NA>
-#>          16      32     NA       1      1     30  2.609      0.346      <NA>
-#>          32      64     NA       1      1     62  5.391      0.628      <NA>
-#>          48      96     NA       1      1     94  8.174      0.808      <NA>
-#>          56     112     NA       1      1    110  9.565      0.866      <NA>
-#>          60     120     NA       1      1    118 10.261      0.888      <NA>
-#>          62     124     NA       1      1    122 10.609      0.898      <NA>
-#>          63     126     NA       1      1    124 10.783      0.903      <NA>
-#>          64     128     NA       1      1    126 10.957      0.907      <NA>
+#>  n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df den_df    ncp
+#>           2       4     NA         NA          NA       1      1      2  0.174
+#>           4       8     NA         NA          NA       1      1      6  0.522
+#>           8      16     NA         NA          NA       1      1     14  1.217
+#>          16      32     NA         NA          NA       1      1     30  2.609
+#>          32      64     NA         NA          NA       1      1     62  5.391
+#>          48      96     NA         NA          NA       1      1     94  8.174
+#>          56     112     NA         NA          NA       1      1    110  9.565
+#>          60     120     NA         NA          NA       1      1    118 10.261
+#>          62     124     NA         NA          NA       1      1    122 10.609
+#>          63     126     NA         NA          NA       1      1    124 10.783
+#>          64     128     NA         NA          NA       1      1    126 10.957
+#>  power_calc power_sim
+#>       0.058      <NA>
+#>       0.094      <NA>
+#>       0.177      <NA>
+#>       0.346      <NA>
+#>       0.628      <NA>
+#>       0.808      <NA>
+#>       0.866      <NA>
+#>       0.888      <NA>
+#>       0.898      <NA>
+#>       0.903      <NA>
+#>       0.907      <NA>
 ```
 
 ## Achieved power
@@ -92,8 +104,10 @@ power_achieved_calc(
 #>   achieved power:   0.598 (calculated)
 #>   calculated power: 0.598
 #> 
-#>  n_per_cell total_n n_sims epsilon num_df den_df   ncp power_calc power_sim
-#>          30      60     NA       1      1     58 5.043      0.598      <NA>
+#>  n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df den_df   ncp
+#>          30      60     NA         NA          NA       1      1     58 5.043
+#>  power_calc power_sim
+#>       0.598      <NA>
 ```
 
 ## Sensitivity
@@ -129,32 +143,32 @@ power_sensitivity_calc(
 #>   converged:        yes
 #>   calculation:      calculated power only
 #> 
-#>  target_pes n_per_cell total_n n_sims epsilon num_df den_df      ncp power_calc
-#>    0.000001         30      60     NA       1      1     58    0.000      0.050
-#>    0.123751         30      60     NA       1      1     58    8.191      0.804
-#>    0.154688         30      60     NA       1      1     58   10.614      0.893
-#>    0.156622         30      60     NA       1      1     58   10.771      0.897
-#>    0.157589         30      60     NA       1      1     58   10.850      0.900
-#>    0.158556         30      60     NA       1      1     58   10.929      0.902
-#>    0.162423         30      60     NA       1      1     58   11.247      0.910
-#>    0.170157         30      60     NA       1      1     58   11.893      0.924
-#>    0.185626         30      60     NA       1      1     58   13.220      0.947
-#>    0.247501         30      60     NA       1      1     58   19.076      0.990
-#>    0.495000         30      60     NA       1      1     58   56.852      1.000
-#>    0.990000         30      60     NA       1      1     58 5742.000      1.000
-#>  power_sim
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
+#>  target_pes n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df
+#>    0.000001         30      60     NA         NA          NA       1      1
+#>    0.123751         30      60     NA         NA          NA       1      1
+#>    0.154688         30      60     NA         NA          NA       1      1
+#>    0.156622         30      60     NA         NA          NA       1      1
+#>    0.157589         30      60     NA         NA          NA       1      1
+#>    0.158556         30      60     NA         NA          NA       1      1
+#>    0.162423         30      60     NA         NA          NA       1      1
+#>    0.170157         30      60     NA         NA          NA       1      1
+#>    0.185626         30      60     NA         NA          NA       1      1
+#>    0.247501         30      60     NA         NA          NA       1      1
+#>    0.495000         30      60     NA         NA          NA       1      1
+#>    0.990000         30      60     NA         NA          NA       1      1
+#>  den_df      ncp power_calc power_sim
+#>      58    0.000      0.050      <NA>
+#>      58    8.191      0.804      <NA>
+#>      58   10.614      0.893      <NA>
+#>      58   10.771      0.897      <NA>
+#>      58   10.850      0.900      <NA>
+#>      58   10.929      0.902      <NA>
+#>      58   11.247      0.910      <NA>
+#>      58   11.893      0.924      <NA>
+#>      58   13.220      0.947      <NA>
+#>      58   19.076      0.990      <NA>
+#>      58   56.852      1.000      <NA>
+#>      58 5742.000      1.000      <NA>
 ```
 
 ## Planned nonsphericity
@@ -190,18 +204,30 @@ power_n_calc(
 #>   n needed for between-subjects cell: 50
 #>   total N needed: 100
 #> 
-#>  n_per_cell total_n n_sims epsilon num_df den_df    ncp power_calc power_sim
-#>           2       4     NA     0.7    1.4    2.8  0.243      0.061      <NA>
-#>           4       8     NA     0.7    1.4    8.4  0.730      0.104      <NA>
-#>           8      16     NA     0.7    1.4   19.6  1.704      0.205      <NA>
-#>          16      32     NA     0.7    1.4   42.0  3.652      0.412      <NA>
-#>          32      64     NA     0.7    1.4   86.8  7.548      0.730      <NA>
-#>          48      96     NA     0.7    1.4  131.6 11.443      0.893      <NA>
-#>          49      98     NA     0.7    1.4  134.4 11.687      0.900      <NA>
-#>          50     100     NA     0.7    1.4  137.2 11.930      0.906      <NA>
-#>          52     104     NA     0.7    1.4  142.8 12.417      0.917      <NA>
-#>          56     112     NA     0.7    1.4  154.0 13.391      0.936      <NA>
-#>          64     128     NA     0.7    1.4  176.4 15.339      0.962      <NA>
+#>  n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df den_df    ncp
+#>           2       4     NA         NA          NA     0.7    1.4    2.8  0.243
+#>           4       8     NA         NA          NA     0.7    1.4    8.4  0.730
+#>           8      16     NA         NA          NA     0.7    1.4   19.6  1.704
+#>          16      32     NA         NA          NA     0.7    1.4   42.0  3.652
+#>          32      64     NA         NA          NA     0.7    1.4   86.8  7.548
+#>          48      96     NA         NA          NA     0.7    1.4  131.6 11.443
+#>          49      98     NA         NA          NA     0.7    1.4  134.4 11.687
+#>          50     100     NA         NA          NA     0.7    1.4  137.2 11.930
+#>          52     104     NA         NA          NA     0.7    1.4  142.8 12.417
+#>          56     112     NA         NA          NA     0.7    1.4  154.0 13.391
+#>          64     128     NA         NA          NA     0.7    1.4  176.4 15.339
+#>  power_calc power_sim
+#>       0.061      <NA>
+#>       0.104      <NA>
+#>       0.205      <NA>
+#>       0.412      <NA>
+#>       0.730      <NA>
+#>       0.893      <NA>
+#>       0.900      <NA>
+#>       0.906      <NA>
+#>       0.917      <NA>
+#>       0.936      <NA>
+#>       0.962      <NA>
 ```
 
 Calculation-only functions accept `epsilon`, not a

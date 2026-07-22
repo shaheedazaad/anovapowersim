@@ -17,7 +17,8 @@
 #'
 #' @return An `anovapowersim_achieved_power` object. `$achieved_power` and
 #'   `$calculated_power` contain the calculated-power estimate. In `$results`,
-#'   `n_sims` and `power_sim` are `NA` because no simulations are run.
+#'   simulation-specific result columns are `NA` because no simulations are
+#'   run.
 #'
 #' @examples
 #' power_achieved_calc(
@@ -110,7 +111,8 @@ power_achieved_calc <- function(between = NULL,
 #' @return An `anovapowersim_sensitivity` object. `$pes_needed` is the
 #'   calculated upper effect-size bracket, or `NA` when `pes_max` does not
 #'   achieve target power. `$results` contains every effect size evaluated by
-#'   the calculated-power search; `n_sims` and `power_sim` are always `NA`.
+#'   the calculated-power search; simulation-specific result columns are
+#'   always `NA`.
 #'
 #' @examples
 #' power_sensitivity_calc(
@@ -235,7 +237,7 @@ prepare_fixed_calc_inputs <- function(between, within, term, n, alpha,
   if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
     stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
   }
-  warn_gpower_within_term_df(gpower = gpower, spec = spec, term = term)
+  warn_gpower_within_term_df(gpower = gpower)
   epsilon <- validate_analytic_epsilon(epsilon, spec = spec, term = term)
   n <- validate_fixed_analytic_n(n, spec)
 

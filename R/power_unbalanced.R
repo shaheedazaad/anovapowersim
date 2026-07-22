@@ -1,9 +1,9 @@
 #' Define cells for a means-based unbalanced ANOVA design
 #'
 #' Creates the complete cell table used by [power_unbalanced()]. Each cell is
-#' defined by its factor levels, sample size (`n`), population mean (`m`), and
-#' population standard deviation (`sd`). End each cell after all three reserved
-#' values have been supplied.
+#' defined by its factor levels, sample size (`n`), and population mean (`m`).
+#' End each cell after both reserved values have been supplied. The common
+#' population standard deviation belongs in [unbalanced_covariance()].
 #'
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
@@ -12,26 +12,26 @@
 #' version of `anovapowersim`. Its API may change.
 #'
 #' @param ... Repeated named cell definitions. Each cell must contain the same
-#'   factor names in the same order, plus `n`, `m`, and `sd`. Every factor must
+#'   factor names in the same order, plus `n` and `m`. Every factor must
 #'   have at least 2 observed levels, and every combination of factor levels
 #'   must appear exactly once (or be filled automatically; see `default_n`).
 #' @param within Character vector naming factors in `...` that are measured
 #'   within subjects, or `NULL` for a purely between-subject design. Stored on
 #'   the returned object and read by [power_unbalanced()].
-#' @param default_n,default_m,default_sd Optional scalars used to fill any
-#'   missing cells in the complete factorial design. Supply all three to
+#' @param default_n,default_m Optional scalars used to fill any missing cells
+#'   in the complete factorial design. Supply both to
 #'   auto-fill missing cells with these values; supply none to require every
-#'   cell to be defined explicitly (the default). Supplying only some of the
-#'   three is an error.
+#'   cell to be defined explicitly (the default). Supplying only one is an
+#'   error.
 #'
 #' @return An `anovapowersim_cell_design` tibble with one row per design cell.
 #'
 #' @examples
 #' design <- cell_design(
-#'   group = "control", time = "pre",  n = 22, m = 10.0, sd = 2.0,
-#'   group = "control", time = "post", n = 22, m = 11.0, sd = 2.2,
-#'   group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
-#'   group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8,
+#'   group = "control", time = "pre",  n = 22, m = 10.0,
+#'   group = "control", time = "post", n = 22, m = 11.0,
+#'   group = "treatment", time = "pre",  n = 31, m = 10.1,
+#'   group = "treatment", time = "post", n = 31, m = 12.4,
 #'   within = "time"
 #' )
 #' design
@@ -40,17 +40,25 @@
 cell_design <- function(...,
                         within = NULL,
                         default_n = NULL,
-                        default_m = NULL,
-                        default_sd = NULL) {
+                        default_m = NULL) {
   dots <- list(...)
   nms <- names(dots)
-  reserved <- c("n", "m", "sd")
+  reserved <- c("n", "m")
   if (!length(dots)) {
-    stop("Enter at least one cell with factor values, `n`, `m`, and `sd`.",
+    stop("Enter at least one cell with factor values, `n`, and `m`.",
          call. = FALSE)
   }
   if (is.null(nms) || any(!nzchar(nms))) {
     stop("Every value in `...` must be named.", call. = FALSE)
+  }
+  legacy_sd <- intersect(nms, c("sd", "default_sd"))
+  if (length(legacy_sd)) {
+    stop(
+      "Standard deviations no longer belong in `cell_design()`. Remove ",
+      paste(paste0("`", unique(legacy_sd), "`"), collapse = " and "),
+      " and supply one common SD with `unbalanced_covariance(sd = ...)`.",
+      call. = FALSE
+    )
   }
 
   rows <- list()
@@ -112,11 +120,6 @@ cell_design <- function(...,
   if (!is.numeric(out$m) || any(!is.finite(out$m))) {
     stop("`m` must contain finite numeric means.", call. = FALSE)
   }
-  if (!is.numeric(out$sd) || any(!is.finite(out$sd)) || any(out$sd <= 0)) {
-    stop("`sd` must contain positive finite standard deviations.",
-         call. = FALSE)
-  }
-
   key <- interaction_key(out, factor_names)
   if (anyDuplicated(key)) {
     stop("Each design cell may be defined only once.", call. = FALSE)
@@ -126,13 +129,10 @@ cell_design <- function(...,
 
   default_n <- validate_optional_default_n(default_n)
   default_m <- validate_optional_default_m(default_m)
-  default_sd <- validate_optional_default_sd(default_sd)
-  defaults_supplied <- c(
-    !is.null(default_n), !is.null(default_m), !is.null(default_sd)
-  )
+  defaults_supplied <- c(!is.null(default_n), !is.null(default_m))
   if (any(defaults_supplied) && !all(defaults_supplied)) {
     stop(
-      "Supply all of `default_n`, `default_m`, and `default_sd` to fill ",
+      "Supply both `default_n` and `default_m` to fill ",
       "missing cells automatically, or none of them.",
       call. = FALSE
     )
@@ -165,7 +165,6 @@ cell_design <- function(...,
       fill <- expected[missing_idx, , drop = FALSE]
       fill$n <- default_n
       fill$m <- default_m
-      fill$sd <- default_sd
       out <- dplyr::bind_rows(
         out, fill[, c(factor_names, reserved), drop = FALSE]
       )
@@ -183,7 +182,7 @@ cell_design <- function(...,
         "Missing cell", if (length(labels) == 1L) "" else "s", ":\n",
         paste0("  ", labels, collapse = "\n"),
         "\nSupply the missing cell", if (length(labels) == 1L) "" else "s",
-        ", or provide `default_n`, `default_m`, and `default_sd` to fill ",
+        ", or provide `default_n` and `default_m` to fill ",
         "missing cells automatically.",
         call. = FALSE
       )
@@ -270,18 +269,6 @@ validate_optional_default_m <- function(default_m) {
 }
 
 
-#' @keywords internal
-#' @noRd
-validate_optional_default_sd <- function(default_sd) {
-  if (is.null(default_sd)) return(NULL)
-  if (!is.numeric(default_sd) || length(default_sd) != 1L ||
-      !is.finite(default_sd) || default_sd <= 0) {
-    stop("`default_sd` must be a single positive finite number.", call. = FALSE)
-  }
-  as.numeric(default_sd)
-}
-
-
 #' Partition factors into a between x within grid for an unbalanced design
 #'
 #' Shared by [cell_design()] (to check `n`-consistency at construction time)
@@ -339,11 +326,11 @@ resolve_unbalanced_grid <- function(data, factor_names, within) {
 }
 
 
-#' Specify correlations for a means-based unbalanced design
+#' Specify covariance for a means-based unbalanced design
 #'
-#' Defines the common within-subject correlation structure used by
-#' [power_unbalanced()]. Marginal standard deviations are deliberately absent:
-#' they come from [cell_design()] and may differ between groups.
+#' Defines the common marginal standard deviation and within-subject
+#' correlation structure used by [power_unbalanced()]. The resulting
+#' covariance is shared by every between-subject cell.
 #'
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
@@ -351,7 +338,12 @@ resolve_unbalanced_grid <- function(data, factor_names, within) {
 #' `unbalanced_covariance()` is experimental and is available only in the
 #' development version of `anovapowersim`. Its API may change.
 #'
+#' @param sd Common positive finite marginal standard deviation. If omitted,
+#'   `1` is used and a warning is issued.
 #' @param default_correlation Correlation in `(-1, 1)` used for unlisted pairs.
+#'   When the specification is resolved for a design, a warning identifies how
+#'   many pairs were not defined and makes clear that this default applies only
+#'   to those pairs.
 #' @param correlations Optional named numeric vector of pair-specific
 #'   correlations. Name pairs as `"cell1:cell2"`; pair order does not matter.
 #'
@@ -359,13 +351,20 @@ resolve_unbalanced_grid <- function(data, factor_names, within) {
 #'
 #' @examples
 #' unbalanced_covariance(
+#'   sd = 2,
 #'   default_correlation = 0.5,
 #'   correlations = c("pre:post" = 0.7)
 #' )
 #'
 #' @export
-unbalanced_covariance <- function(default_correlation = 0.5,
+unbalanced_covariance <- function(sd = 1,
+                                  default_correlation = 0.5,
                                   correlations = NULL) {
+  sd_missing <- missing(sd)
+  if (!is.numeric(sd) || length(sd) != 1L ||
+      !is.finite(sd) || sd <= 0) {
+    stop("`sd` must be a single positive finite number.", call. = FALSE)
+  }
   if (!is.numeric(default_correlation) ||
       length(default_correlation) != 1L ||
       !is.finite(default_correlation) ||
@@ -379,11 +378,21 @@ unbalanced_covariance <- function(default_correlation = 0.5,
     predicate = function(x) x > -1 & x < 1,
     requirement = "finite numbers in (-1, 1)"
   )
+  pairs <- parse_correlation_pairs(names(correlations))
+  if (sd_missing) {
+    warning(
+      "`sd` was not supplied to `unbalanced_covariance()`; using one common ",
+      "`sd = 1` for every design cell.",
+      call. = FALSE,
+      immediate. = TRUE
+    )
+  }
   structure(
     list(
+      sd = as.numeric(sd),
       default_correlation = as.numeric(default_correlation),
       correlations = correlations,
-      correlation_pairs = parse_correlation_pairs(names(correlations))
+      correlation_pairs = pairs
     ),
     class = "anovapowersim_unbalanced_covariance_spec"
   )
@@ -393,9 +402,9 @@ unbalanced_covariance <- function(default_correlation = 0.5,
 #' Simulate power for a fixed unbalanced ANOVA design
 #'
 #' Estimates achieved power for exact, potentially unequal cell sizes and
-#' user-supplied population means and standard deviations. This function is
-#' simulation-only: it does not calculate power from a noncentral F
-#' distribution and does not scale the supplied sample sizes.
+#' user-supplied population means under one common standard deviation. This
+#' function is simulation-only: it does not calculate power from a noncentral
+#' F distribution and does not scale the supplied sample sizes.
 #'
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
@@ -408,13 +417,15 @@ unbalanced_covariance <- function(default_correlation = 0.5,
 #'   Within-subject factors are read from the design's `within` attribute
 #'   (set via [cell_design()]'s `within` argument), not supplied here.
 #' @param term Character scalar naming the ANOVA term to test.
-#' @param covariance Optional correlation specification created by
-#'   [unbalanced_covariance()]. It can only be supplied when `design` has
-#'   within-subject factors. The default `NULL` uses a correlation of `0.5`
-#'   between within-subject
-#'   measurements. Standard deviations always come from `design` and may
-#'   differ between between-subject cells. If the term's population
-#'   covariance is non-spherical for any cell, `power_sim` is based on each
+#' @param covariance Optional common covariance specification created by
+#'   [unbalanced_covariance()]. The default `NULL` uses `sd = 1` and a
+#'   correlation of `0.5` between within-subject measurements and issues a
+#'   warning stating those defaults. For purely between-subject designs, use
+#'   this argument to change the common SD; correlation settings are not
+#'   applicable. When an [unbalanced_covariance()] specification omits some
+#'   correlation pairs, a warning states that `default_correlation` is used
+#'   only for those undefined pairs. If the term's population
+#'   covariance is non-spherical, `power_sim` is based on each
 #'   simulated dataset's Greenhouse--Geisser-corrected p-value rather than the
 #'   uncorrected univariate test. This correction requires `ss_type` `"III"`
 #'   or `"II"`; under `"I"`, simulated p-values remain uncorrected, and a
@@ -430,23 +441,24 @@ unbalanced_covariance <- function(default_correlation = 0.5,
 #' @return An `anovapowersim_unbalanced_power` object. `$power` and
 #'   `$achieved_power` contain simulated power. `$partial_eta_squared` is the
 #'   term effect size in a deterministic reference dataset. `$epsilon` is the
-#'   worst-case (smallest) population Greenhouse--Geisser epsilon across
-#'   between-subject cells for the tested term. `$results` also reports the
-#'   simulated partial eta-squared distribution and failed fits.
+#'   population Greenhouse--Geisser epsilon for the tested term. `$results`
+#'   also reports the common SD, simulated partial eta-squared distribution,
+#'   and failed fits.
 #'
 #' @examples
 #' \donttest{
 #' design <- cell_design(
-#'   group = "control", time = "pre",  n = 12, m = 10, sd = 2.0,
-#'   group = "control", time = "post", n = 12, m = 11, sd = 2.2,
-#'   group = "treatment", time = "pre",  n = 18, m = 10, sd = 2.4,
-#'   group = "treatment", time = "post", n = 18, m = 13, sd = 2.8,
+#'   group = "control", time = "pre",  n = 12, m = 10,
+#'   group = "control", time = "post", n = 12, m = 11,
+#'   group = "treatment", time = "pre",  n = 18, m = 10,
+#'   group = "treatment", time = "post", n = 18, m = 13,
 #'   within = "time"
 #' )
 #' power_unbalanced(
 #'   design = design,
 #'   term = "group:time",
 #'   covariance = unbalanced_covariance(
+#'     sd = 2,
 #'     correlations = c("pre:post" = 0.7)
 #'   ),
 #'   n_sims = 100,
@@ -480,7 +492,36 @@ power_unbalanced <- function(design,
     stop("`parallel` must be TRUE or FALSE.", call. = FALSE)
   }
   cores <- validate_parallel_cores(cores, parallel)
-  spec$within_correlation <- resolve_unbalanced_correlation(covariance, spec)
+  custom_covariance <- !is.null(covariance)
+  if (is.null(covariance)) {
+    if (length(spec$within)) {
+      warning(
+        "No `covariance` was supplied; using one common `sd = 1` and ",
+        "`correlation = 0.5` for every within-subject pair.",
+        call. = FALSE,
+        immediate. = TRUE
+      )
+    } else {
+      warning(
+        "No SD or `covariance` was supplied; using one common `sd = 1`. ",
+        "Correlations do not apply to this purely between-subject design.",
+        call. = FALSE,
+        immediate. = TRUE
+      )
+    }
+    covariance <- unbalanced_covariance(sd = 1)
+  }
+  if (!inherits(covariance, "anovapowersim_unbalanced_covariance_spec")) {
+    stop(
+      "`covariance` must be created by unbalanced_covariance(); ",
+      "within_covariance() objects and raw matrices are not accepted.",
+      call. = FALSE
+    )
+  }
+  spec$sd <- covariance$sd
+  spec$within_correlation <- resolve_unbalanced_correlation(
+    covariance, spec, warn_undefined = custom_covariance
+  )
   validate_calibration_n(spec$cell_n, spec, "design$n")
   epsilon <- unbalanced_term_epsilon(spec, term)
   warn_ss_type_i_uncorrected_gg(ss_type = ss_type, epsilon = epsilon)
@@ -526,6 +567,7 @@ power_unbalanced <- function(design,
     n_sims = as.integer(n_sims),
     valid_sims = simulation$valid_count,
     failed_sims = simulation$failed_count,
+    sd = spec$sd,
     epsilon = epsilon,
     num_df = reference_stats$num_df,
     den_df = reference_stats$den_df,
@@ -554,12 +596,13 @@ power_unbalanced <- function(design,
       max_cell_n = as.integer(max(spec$cell_n)),
       valid_sims = simulation$valid_count,
       failed_sims = simulation$failed_count,
+      sd = spec$sd,
       epsilon = epsilon,
       design = design,
       design_spec = spec,
       covariance = covariance,
       correlation = spec$within_correlation,
-      custom_covariance = !is.null(covariance),
+      custom_covariance = custom_covariance,
       ss_type = ss_type,
       call = match.call()
     ),
@@ -574,7 +617,7 @@ prepare_unbalanced_means_design <- function(design) {
   if (!inherits(design, "anovapowersim_cell_design")) {
     stop("`design` must be created by cell_design().", call. = FALSE)
   }
-  factor_names <- setdiff(names(design), c("n", "m", "sd"))
+  factor_names <- setdiff(names(design), c("n", "m"))
   within <- attr(design, "within")
   if (is.null(within)) within <- character(0)
 
@@ -600,10 +643,6 @@ prepare_unbalanced_means_design <- function(design) {
     cell_means = matrix(
       grid$ordered$m, nrow = grid$n_between, ncol = grid$n_within, byrow = TRUE
     ),
-    cell_sds = matrix(
-      grid$ordered$sd, nrow = grid$n_between, ncol = grid$n_within,
-      byrow = TRUE
-    ),
     cell_design = grid$ordered
   )
   class(spec) <- c(
@@ -617,25 +656,18 @@ prepare_unbalanced_means_design <- function(design) {
 
 #' @keywords internal
 #' @noRd
-resolve_unbalanced_correlation <- function(covariance, spec) {
+resolve_unbalanced_correlation <- function(covariance, spec,
+                                           warn_undefined = TRUE) {
   if (!length(spec$within)) {
-    if (!is.null(covariance)) {
+    if (length(covariance$correlations)) {
       stop(
-        "`covariance` can only be supplied when `within` identifies at ",
-        "least one within-subject factor.",
+        "`correlations` cannot be supplied for a purely between-subject ",
+        "design.",
         call. = FALSE
       )
     }
     return(matrix(1, nrow = 1L, ncol = 1L,
                   dimnames = list("outcome", "outcome")))
-  }
-  if (is.null(covariance)) covariance <- unbalanced_covariance()
-  if (!inherits(covariance, "anovapowersim_unbalanced_covariance_spec")) {
-    stop(
-      "`covariance` must be created by unbalanced_covariance(); ",
-      "within_covariance() objects and raw matrices are not accepted.",
-      call. = FALSE
-    )
   }
   cell_names <- within_cell_names(spec)
   named_cells <- unique(c(
@@ -675,29 +707,28 @@ resolve_unbalanced_correlation <- function(covariance, spec) {
       call. = FALSE
     )
   }
+  if (warn_undefined) {
+    warn_undefined_correlations(
+      defined_pairs = nrow(covariance$correlation_pairs),
+      n_cells = length(cell_names),
+      default_correlation = covariance$default_correlation
+    )
+  }
   correlation
 }
 
 
 #' Population Greenhouse-Geisser epsilon for an unbalanced means design
 #'
-#' Between-subject cells may have different standard deviations, so there is
-#' no single shared covariance matrix for the term. Each cell's own implied
-#' covariance (its standard deviations combined with the shared correlation)
-#' is checked, and the worst-case (smallest) epsilon across cells is used, so
-#' that a Greenhouse-Geisser-corrected simulated p-value is used whenever any
-#' cell's population covariance is non-spherical for this term.
+#' Every between-subject cell shares one covariance matrix, constructed from
+#' the common SD and within-subject correlation matrix.
 #'
 #' @keywords internal
 #' @noRd
 unbalanced_term_epsilon <- function(spec, term) {
   if (!length(spec$within)) return(1)
-  epsilons <- vapply(seq_len(spec$n_between_cells), function(i) {
-    covariance <- outer(spec$cell_sds[i, ], spec$cell_sds[i, ]) *
-      spec$within_correlation
-    covariance_term_epsilon(covariance = covariance, spec = spec, term = term)
-  }, numeric(1))
-  min(epsilons)
+  covariance <- spec$sd^2 * spec$within_correlation
+  covariance_term_epsilon(covariance = covariance, spec = spec, term = term)
 }
 
 
@@ -709,12 +740,10 @@ simulate_unbalanced_means_data <- function(spec, empirical = FALSE) {
   subject_rows <- vector("list", spec$n_between_cells)
   y_rows <- vector("list", spec$n_between_cells)
   id_offset <- 0L
+  sigma <- spec$sd^2 * spec$within_correlation
 
   for (i in seq_len(spec$n_between_cells)) {
     n_i <- spec$cell_n[[i]]
-    standard_deviations <- spec$cell_sds[i, ]
-    sigma <- outer(standard_deviations, standard_deviations) *
-      spec$within_correlation
     y <- MASS::mvrnorm(
       n = n_i,
       mu = spec$cell_means[i, ],
@@ -861,6 +890,7 @@ print.anovapowersim_unbalanced_power <- function(x, ...) {
   cat("  between-cell n range:  ", x$min_cell_n, " to ",
       x$max_cell_n, "\n", sep = "")
   cat("  simulations:           ", x$n_sims, "\n", sep = "")
+  cat("  common SD:             ", format(x$sd), "\n", sep = "")
   cat("  simulated power:       ", sprintf("%.3f", x$power), "\n",
       sep = "")
   if (!is.null(x$epsilon) && is.finite(x$epsilon) && x$epsilon < 1) {
@@ -913,6 +943,7 @@ summary.anovapowersim_unbalanced_power <- function(object, ...) {
     simulations = as.character(object$n_sims),
     valid_simulations = as.character(object$valid_sims),
     failed_simulations = as.character(object$failed_sims),
+    common_sd = format(object$sd),
     simulated_power = sprintf("%.3f", object$power),
     reference_partial_eta_squared = sprintf(
       "%.4f", object$partial_eta_squared

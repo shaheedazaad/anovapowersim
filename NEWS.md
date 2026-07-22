@@ -1,14 +1,35 @@
 # anovapowersim (development version)
 
+* The `gpower = TRUE` warning is now issued whenever `gpower = TRUE` is used,
+  not only for within-subject terms with more than one degree of freedom.
+  G*Power's estimates can differ from `target_pes` more broadly than that;
+  the default `gpower = FALSE` remains recommended.
+* `power_n()` now rejects `n_start` values above `n_max` instead of running
+  the first simulation outside the requested search range.
+* Balanced simulation results now retain the full-precision simulated power
+  used by adaptive searches and report valid/failed fit counts. Printed power
+  values remain formatted to three decimals.
+* **Breaking:** simulation APIs now require one common marginal variance.
+  `within_covariance()` replaces `default_sd` with `sd` and removes
+  measurement-specific `standard_deviations`; direct covariance matrices must
+  have equal diagonal variances. For unbalanced designs, remove cell-level
+  `sd` and `default_sd` from `cell_design()` and supply the common SD through
+  `unbalanced_covariance(sd = ...)`. Unequal correlations and
+  Greenhouse--Geisser correction remain supported.
+* Simulation functions now warn when an omitted covariance causes the common
+  `sd = 1` or within-subject correlation `0.5` defaults to be used. The
+  covariance constructors warn when `sd` is omitted, and resolved covariance
+  specifications warn when `default_correlation` fills unnamed pairs while
+  preserving every explicitly supplied correlation.
 * Added the experimental, development-version-only `cell_design()`,
   `unbalanced_covariance()`, and `power_unbalanced()` functions for
   simulation-only power analysis of a fixed unbalanced allocation with
-  user-defined cell means, marginal standard deviations, and within-subject
-  correlations. Results include simulated power and partial eta-squared
-  diagnostics, but deliberately omit calculated power.
-* `power_unbalanced()` now derives a worst-case population
-  Greenhouse--Geisser epsilon across between-subject cells for the tested
-  term, reports it as `$epsilon`, and bases `power_sim` on the
+  user-defined cell means and sample sizes under a common standard deviation
+  and optional within-subject correlations. Results include simulated power
+  and partial eta-squared diagnostics, but deliberately omit calculated power.
+* `power_unbalanced()` derives the population Greenhouse--Geisser epsilon from
+  the covariance matrix shared across between-subject cells, reports it as
+  `$epsilon`, and bases `power_sim` on the
   Greenhouse--Geisser-corrected simulated p-value whenever that epsilon is
   below 1 (requires `ss_type` `"III"` or `"II"`; a warning is issued if
   `ss_type = "I"` is combined with a non-spherical design).
@@ -17,10 +38,10 @@
   on the returned design; `power_unbalanced()` no longer accepts `within` and
   reads it from the design instead. Move `within = ...` from
   `power_unbalanced()` into `cell_design()`.
-* `cell_design()` gained `default_n`, `default_m`, and `default_sd`. Supply
-  all three to auto-fill any missing cells in the complete factorial design;
-  supplying only some of the three is an error, and supplying none requires
-  every cell to be defined explicitly (as before).
+* `cell_design()` gained `default_n` and `default_m`. Supply both to auto-fill
+  any missing cells in the complete factorial design; supplying only one is
+  an error, and supplying neither requires every cell to be defined explicitly
+  (as before).
 * `cell_design()` now reports the exact missing factor-level combinations
   when a design is incomplete, instead of only a count, and errors clearly
   when a factor has fewer than two observed levels (previously this only
@@ -44,8 +65,8 @@
 * Added an `epsilon` argument to `power_n_calc()` for calculated-power nonsphericity
   corrections on terms containing within-subject factors.
 * Added `within_covariance()` and a `covariance` argument for `power_n()` and
-  `power_curve()` so simulations can use custom within-subject covariance
-  structures. These functions now derive a term-specific population
+  `power_curve()` so simulations can use a custom common SD and within-subject
+  correlation structure. These functions now derive a term-specific population
   Greenhouse--Geisser epsilon from that covariance and apply it to their
   calculated power.
 * `power_curve()`, `power_n()`, `power_achieved()`, `power_sensitivity()`,

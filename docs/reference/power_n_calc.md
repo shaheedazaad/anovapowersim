@@ -69,14 +69,10 @@ power_n_calc(
 
   Logical; if `TRUE`, use the G*Power-style noncentrality convention
   `lambda = total_n * f^2`. The default `FALSE` uses
-  `lambda = den_df * f^2`. For a term whose within-subject component has
-  more than one degree of freedom, `gpower`'s `target_pes` does not
-  equal the partial eta squared actually achieved (this mirrors a
-  property of G*Power's own "as in Cohen (1988)" repeated-measures
-  convention, which does not adjust for the number of measurements); a
-  warning is issued in that case. Use the default if you want
-  `target_pes` to match your reported or expected partial eta squared
-  exactly.
+  `lambda = den_df * f^2`. G*Power's estimates can differ from
+  `target_pes`, especially for small samples or terms with more degrees
+  of freedom; a warning is issued when `gpower = TRUE`. The default
+  `gpower = FALSE` is recommended.
 
 - epsilon:
 
@@ -92,12 +88,13 @@ power_n_calc(
 
 An `anovapowersim_curve` object with `n_needed` and `total_n_needed`.
 The `$results` tibble contains `n_per_cell`, `total_n`, `n_sims`,
-numerator and denominator degrees of freedom (`num_df`, `den_df`), the
-nonsphericity correction (`epsilon`), the noncentrality parameter
-(`ncp`), calculated power (`power_calc`), and simulated power
-(`power_sim`). For `power_n_calc()`, `n_sims` and `power_sim` are always
-`NA`. When `epsilon < 1`, `num_df` and `den_df` are the corrected
-degrees of freedom used in the power calculation.
+`valid_sims`, `failed_sims`, numerator and denominator degrees of
+freedom (`num_df`, `den_df`), the nonsphericity correction (`epsilon`),
+the noncentrality parameter (`ncp`), calculated power (`power_calc`),
+and simulated power (`power_sim`). For `power_n_calc()`, the
+simulation-specific columns are always `NA`. When `epsilon < 1`,
+`num_df` and `den_df` are the corrected degrees of freedom used in the
+power calculation.
 
 ## Lifecycle
 
@@ -128,14 +125,24 @@ power_n_calc(
 #>   n needed for between-subjects cell: 21
 #>   total N needed: 42
 #> 
-#>  n_per_cell total_n n_sims epsilon num_df den_df    ncp power_calc power_sim
-#>           2       4     NA     0.7    2.1    4.2  0.684      0.077      <NA>
-#>           4       8     NA     0.7    2.1   12.6  2.051      0.185      <NA>
-#>           8      16     NA     0.7    2.1   29.4  4.786      0.436      <NA>
-#>          16      32     NA     0.7    2.1   63.0 10.256      0.799      <NA>
-#>          20      40     NA     0.7    2.1   79.8 12.991      0.892      <NA>
-#>          21      42     NA     0.7    2.1   84.0 13.674      0.908      <NA>
-#>          22      44     NA     0.7    2.1   88.2 14.358      0.922      <NA>
-#>          24      48     NA     0.7    2.1   96.6 15.726      0.945      <NA>
-#>          32      64     NA     0.7    2.1  130.2 21.195      0.987      <NA>
+#>  n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df den_df    ncp
+#>           2       4     NA         NA          NA     0.7    2.1    4.2  0.684
+#>           4       8     NA         NA          NA     0.7    2.1   12.6  2.051
+#>           8      16     NA         NA          NA     0.7    2.1   29.4  4.786
+#>          16      32     NA         NA          NA     0.7    2.1   63.0 10.256
+#>          20      40     NA         NA          NA     0.7    2.1   79.8 12.991
+#>          21      42     NA         NA          NA     0.7    2.1   84.0 13.674
+#>          22      44     NA         NA          NA     0.7    2.1   88.2 14.358
+#>          24      48     NA         NA          NA     0.7    2.1   96.6 15.726
+#>          32      64     NA         NA          NA     0.7    2.1  130.2 21.195
+#>  power_calc power_sim
+#>       0.077      <NA>
+#>       0.185      <NA>
+#>       0.436      <NA>
+#>       0.799      <NA>
+#>       0.892      <NA>
+#>       0.908      <NA>
+#>       0.922      <NA>
+#>       0.945      <NA>
+#>       0.987      <NA>
 ```

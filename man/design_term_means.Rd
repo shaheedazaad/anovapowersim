@@ -32,11 +32,10 @@ is the total sample size.}
 
 \item{gpower}{Logical; if \code{TRUE}, calibrate to the G\emph{Power-style
 noncentrality convention \code{lambda = total_n * f^2} (as in the "Cohen
-(1988)" option for within-subjects designs in G}Power). For a term whose
-within-subject component has more than one degree of freedom,
-\code{target_pes} does not equal the partial eta squared actually achieved
-under this convention (G*Power's own convention does not adjust for the
-number of measurements either); a warning is issued in that case.}
+(1988)" option for within-subjects designs in G}Power). G*Power's
+estimates can differ from \code{target_pes}, especially for small samples or
+terms with more degrees of freedom; a warning is issued when
+\code{gpower = TRUE}. The default \code{gpower = FALSE} is recommended.}
 
 \item{ss_type}{Sums-of-squares type for the tested ANOVA term. \code{"III"} is
 the default for order-invariant tests in unbalanced designs. Use \code{"I"} to

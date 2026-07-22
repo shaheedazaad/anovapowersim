@@ -72,14 +72,10 @@ power_sensitivity_calc(
 
   Logical; if `TRUE`, use the G*Power-style noncentrality convention
   `lambda = total_n * f^2`. The default `FALSE` uses
-  `lambda = den_df * f^2`. For a term whose within-subject component has
-  more than one degree of freedom, `gpower`'s `target_pes` does not
-  equal the partial eta squared actually achieved (this mirrors a
-  property of G*Power's own "as in Cohen (1988)" repeated-measures
-  convention, which does not adjust for the number of measurements); a
-  warning is issued in that case. Use the default if you want
-  `target_pes` to match your reported or expected partial eta squared
-  exactly.
+  `lambda = den_df * f^2`. G*Power's estimates can differ from
+  `target_pes`, especially for small samples or terms with more degrees
+  of freedom; a warning is issued when `gpower = TRUE`. The default
+  `gpower = FALSE` is recommended.
 
 - epsilon:
 
@@ -96,7 +92,8 @@ power_sensitivity_calc(
 An `anovapowersim_sensitivity` object. `$pes_needed` is the calculated
 upper effect-size bracket, or `NA` when `pes_max` does not achieve
 target power. `$results` contains every effect size evaluated by the
-calculated-power search; `n_sims` and `power_sim` are always `NA`.
+calculated-power search; simulation-specific result columns are always
+`NA`.
 
 ## Lifecycle
 
@@ -119,7 +116,7 @@ power_sensitivity_calc(
   gpower = TRUE,
   epsilon = 0.80
 )
-#> Warning: `gpower = TRUE` for term 'group:time' does not calibrate `target_pes` to the partial eta squared you will actually observe in a fitted ANOVA, because its within-subject component has 2 degrees of freedom (more than one). This mirrors a property of G*Power's own 'as in Cohen (1988)' repeated-measures convention, which does not adjust for the number of measurements. Use the default `gpower = FALSE` if you want `target_pes` to match your reported or expected partial eta squared exactly.
+#> Warning: `gpower = TRUE` calibrates means to G*Power's noncentrality convention, so the partial eta squared actually achieved can differ from `target_pes` -- this is more pronounced for small samples and terms with more degrees of freedom. The default `gpower = FALSE` is recommended if you want `target_pes` to match your reported or expected partial eta squared exactly.
 #> <anovapowersim_sensitivity>
 #>   term:             'group:time'
 #>   fixed n per cell: 30
@@ -136,30 +133,30 @@ power_sensitivity_calc(
 #>   G*Power convention: TRUE
 #>   epsilon:          0.8
 #> 
-#>  target_pes n_per_cell total_n n_sims epsilon num_df den_df      ncp power_calc
-#>    0.000001         30      60     NA     0.8    1.6   92.8    0.000      0.050
-#>    0.123751         30      60     NA     0.8    1.6   92.8    6.779      0.662
-#>    0.185626         30      60     NA     0.8    1.6   92.8   10.941      0.863
-#>    0.201095         30      60     NA     0.8    1.6   92.8   12.082      0.896
-#>    0.203028         30      60     NA     0.8    1.6   92.8   12.228      0.899
-#>    0.203995         30      60     NA     0.8    1.6   92.8   12.301      0.901
-#>    0.204962         30      60     NA     0.8    1.6   92.8   12.374      0.903
-#>    0.208829         30      60     NA     0.8    1.6   92.8   12.670      0.910
-#>    0.216563         30      60     NA     0.8    1.6   92.8   13.269      0.922
-#>    0.247501         30      60     NA     0.8    1.6   92.8   15.787      0.959
-#>    0.495000         30      60     NA     0.8    1.6   92.8   47.050      1.000
-#>    0.990000         30      60     NA     0.8    1.6   92.8 4752.000      1.000
-#>  power_sim
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
-#>       <NA>
+#>  target_pes n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df
+#>    0.000001         30      60     NA         NA          NA     0.8    1.6
+#>    0.123751         30      60     NA         NA          NA     0.8    1.6
+#>    0.185626         30      60     NA         NA          NA     0.8    1.6
+#>    0.201095         30      60     NA         NA          NA     0.8    1.6
+#>    0.203028         30      60     NA         NA          NA     0.8    1.6
+#>    0.203995         30      60     NA         NA          NA     0.8    1.6
+#>    0.204962         30      60     NA         NA          NA     0.8    1.6
+#>    0.208829         30      60     NA         NA          NA     0.8    1.6
+#>    0.216563         30      60     NA         NA          NA     0.8    1.6
+#>    0.247501         30      60     NA         NA          NA     0.8    1.6
+#>    0.495000         30      60     NA         NA          NA     0.8    1.6
+#>    0.990000         30      60     NA         NA          NA     0.8    1.6
+#>  den_df      ncp power_calc power_sim
+#>    92.8    0.000      0.050      <NA>
+#>    92.8    6.779      0.662      <NA>
+#>    92.8   10.941      0.863      <NA>
+#>    92.8   12.082      0.896      <NA>
+#>    92.8   12.228      0.899      <NA>
+#>    92.8   12.301      0.901      <NA>
+#>    92.8   12.374      0.903      <NA>
+#>    92.8   12.670      0.910      <NA>
+#>    92.8   13.269      0.922      <NA>
+#>    92.8   15.787      0.959      <NA>
+#>    92.8   47.050      1.000      <NA>
+#>    92.8 4752.000      1.000      <NA>
 ```

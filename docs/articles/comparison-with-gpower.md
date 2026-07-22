@@ -50,7 +50,8 @@ in the same way when running simulations.
 
 ## More than three within-subject levels
 
-The conventions can diverge substantially when a within-subject term has
+The conventions can diverge more noticeably for smaller samples and for
+terms with more degrees of freedom, such as within-subject factors with
 more than three levels. With four within-subject levels, the same inputs
 produce:
 

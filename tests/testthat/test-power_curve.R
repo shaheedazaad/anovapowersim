@@ -27,7 +27,7 @@ test_that("power_n_calc is exported and defaults to 90 percent power", {
 })
 
 test_that("power_n warns when requested power is below 90 percent", {
-  expect_warning(
+  low_power_warnings <- capture_warning_messages(
     expect_error(
       power_n(
         between = c(group = 2),
@@ -39,10 +39,18 @@ test_that("power_n warns when requested power is below 90 percent", {
         n_max = 1,
         progress = FALSE
       )
-    ),
-    "Power greater than or equal to .90 is recommended.",
-    fixed = TRUE
+    )
   )
+  expect_true(any(grepl(
+    "Power greater than or equal to .90 is recommended.",
+    low_power_warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl(
+    "No `covariance` was supplied",
+    low_power_warnings,
+    fixed = TRUE
+  )))
 
   warnings <- capture_warning_messages(
     expect_error(
@@ -85,7 +93,7 @@ test_that("rule-of-thumb medium partial eta squared warns at call time", {
     "research or empirically-derived guidelines."
   )
 
-  expect_warning(
+  curve_warnings <- capture_warning_messages(
     expect_error(
       power_curve(
         between = c(group = 2),
@@ -96,11 +104,14 @@ test_that("rule-of-thumb medium partial eta squared warns at call time", {
         n_sims = 1,
         progress = FALSE
       )
-    ),
-    medium_message,
-    fixed = TRUE
+    )
   )
-  expect_warning(
+  expect_true(any(grepl(medium_message, curve_warnings, fixed = TRUE)))
+  expect_true(any(grepl(
+    "No `covariance` was supplied", curve_warnings, fixed = TRUE
+  )))
+
+  n_warnings <- capture_warning_messages(
     expect_error(
       power_n(
         between = c(group = 2),
@@ -111,10 +122,12 @@ test_that("rule-of-thumb medium partial eta squared warns at call time", {
         n_max = 1,
         progress = FALSE
       )
-    ),
-    medium_message,
-    fixed = TRUE
+    )
   )
+  expect_true(any(grepl(medium_message, n_warnings, fixed = TRUE)))
+  expect_true(any(grepl(
+    "No `covariance` was supplied", n_warnings, fixed = TRUE
+  )))
   expect_warning(
     expect_error(
       power_n_calc(
@@ -194,11 +207,14 @@ test_that("power_curve simulates a balanced mixed design", {
   expect_s3_class(pc, "anovapowersim_curve")
   expect_equal(pc$results$n_per_cell, c(8L, 10L))
   expect_equal(pc$results$total_n, c(16L, 20L))
-  expect_true(all(c("num_df", "den_df", "ncp", "power_calc", "power_sim") %in%
-                    names(pc$results)))
-  hidden_columns <- paste0(c("ci", "ci", "n_success", "n_fail"),
-                           c("_low", "_high", "es", "ed"))
-  expect_false(any(hidden_columns %in% names(pc$results)))
+  expect_true(all(c(
+    "valid_sims", "failed_sims", "num_df", "den_df", "ncp",
+    "power_calc", "power_sim"
+  ) %in% names(pc$results)))
+  expect_false(any(c("power_sim_lower", "power_sim_upper") %in%
+                   names(pc$results)))
+  expect_equal(pc$results$valid_sims + pc$results$failed_sims,
+               pc$results$n_sims)
   expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
   expect_equal(pc$target_pes, 0.20721)
   expect_equal(pc$ss_type, "III")
@@ -365,7 +381,7 @@ test_that("power_n_calc reports unreached target when n_max is too small", {
 })
 
 test_that("power_n warns when target power is not reached by n_max", {
-  expect_warning(
+  warnings <- capture_warning_messages(
     pc <- power_n(
       between = c(group = 2),
       term = "group",
@@ -376,11 +392,17 @@ test_that("power_n warns when target power is not reached by n_max", {
       n_max = 2,
       progress = FALSE,
       seed = 202
-    ),
-    "Target power 0.990 was not reached by `n_max = 2`. Increase `n_max`",
-    fixed = TRUE
+    )
   )
 
+  expect_true(any(grepl(
+    "Target power 0.990 was not reached by `n_max = 2`. Increase `n_max`",
+    warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl(
+    "No SD or `covariance` was supplied", warnings, fixed = TRUE
+  )))
   expect_true(is.na(pc$n_needed))
   expect_true(is.na(pc$total_n_needed))
 })
@@ -913,12 +935,15 @@ test_that("design_term_means can calibrate to G*Power convention", {
     between = c(group = 2),
     within = c(time = 2, condition = 3)
   )
-  means <- design_term_means(
-    d,
-    term = "group:time",
-    target_pes = 0.15,
-    n = 16,
-    gpower = TRUE
+  expect_warning(
+    means <- design_term_means(
+      d,
+      term = "group:time",
+      target_pes = 0.15,
+      n = 16,
+      gpower = TRUE
+    ),
+    "gpower = TRUE"
   )
   sim <- simulate_design_dataset(d, n = 16, means = means, empirical = TRUE)
   fit <- anovapowersim:::fit_design_model(sim, d)
@@ -1492,37 +1517,58 @@ test_that("power_n validates parallel controls", {
   )
 })
 
-test_that("warn_gpower_within_term_df warns only for gpower = TRUE with within-term df > 1", {
-  spec_3 <- balanced_anova_design(within = c(time = 3))
-  spec_2 <- balanced_anova_design(within = c(time = 2))
-  spec_between <- balanced_anova_design(between = c(group = 2))
-  mixed_spec <- balanced_anova_design(
-    between = c(group = 2), within = c(time = 3)
-  )
-
-  expect_warning(
-    anovapowersim:::warn_gpower_within_term_df(TRUE, spec_3, "time"),
-    "gpower = TRUE"
-  )
-  expect_warning(
-    anovapowersim:::warn_gpower_within_term_df(TRUE, mixed_spec, "group:time"),
-    "gpower = TRUE"
-  )
-  expect_silent(
-    anovapowersim:::warn_gpower_within_term_df(FALSE, spec_3, "time")
-  )
-  expect_silent(
-    anovapowersim:::warn_gpower_within_term_df(TRUE, spec_2, "time")
-  )
-  expect_silent(
-    anovapowersim:::warn_gpower_within_term_df(TRUE, spec_between, "group")
-  )
-  expect_silent(
-    anovapowersim:::warn_gpower_within_term_df(TRUE, mixed_spec, "group")
+test_that("power_n rejects a starting sample size above n_max", {
+  expect_error(
+    quiet_power_n(
+      between = c(group = 2),
+      term = "group",
+      target_pes = 0.1,
+      n_sims = 1,
+      n_start = 10,
+      n_max = 9,
+      progress = FALSE
+    ),
+    "`n_max` must be greater than or equal to `n_start`",
+    fixed = TRUE
   )
 })
 
-test_that("gpower = TRUE warns for multi-df within terms across all gpower-accepting functions", {
+test_that("balanced simulation power retains full precision", {
+  result <- quiet_power_curve(
+    between = c(group = 2),
+    term = "group",
+    target_pes = 0.1,
+    n_range = 8,
+    n_sims = 7,
+    seed = 808,
+    progress = FALSE
+  )$results
+
+  expect_equal(result$valid_sims + result$failed_sims, result$n_sims)
+  expect_equal(result$power_sim * result$valid_sims,
+               round(result$power_sim * result$valid_sims))
+  expect_false(isTRUE(all.equal(result$power_sim, round(result$power_sim, 3))))
+})
+
+test_that("Wilson intervals cover the observed simulation proportion", {
+  interval <- anovapowersim:::binomial_wilson_interval(5, 10)
+
+  expect_equal(unname(interval), c(0.2365931, 0.7634069), tolerance = 1e-7)
+  expect_lte(interval[["lower"]], 0.5)
+  expect_gte(interval[["upper"]], 0.5)
+})
+
+test_that("warn_gpower_within_term_df warns whenever gpower = TRUE", {
+  expect_warning(
+    anovapowersim:::warn_gpower_within_term_df(TRUE),
+    "gpower = TRUE"
+  )
+  expect_silent(
+    anovapowersim:::warn_gpower_within_term_df(FALSE)
+  )
+})
+
+test_that("gpower = TRUE warns across all gpower-accepting functions", {
   # each incidental warning (target power not reached with a tiny n_max,
   # power < .90 recommended, sim/calc disagreement from n_sims = 1 noise) is
   # an expected side effect of keeping these calls fast; capture_warnings()
@@ -1539,14 +1585,14 @@ test_that("gpower = TRUE warns for multi-df within terms across all gpower-accep
   # calculated-power functions (fast, no simulation)
   expect_gpower_warning(
     power_n_calc(
-      within = c(time = 3), term = "time", target_pes = 0.1, power = 0.5,
+      within = c(time = 2), term = "time", target_pes = 0.1, power = 0.5,
       n_start = 4, n_max = 4, gpower = TRUE
     )
   )
   expect_no_gpower_warning(
     power_n_calc(
       within = c(time = 2), term = "time", target_pes = 0.1, power = 0.5,
-      n_start = 4, n_max = 4, gpower = TRUE
+      n_start = 4, n_max = 4, gpower = FALSE
     )
   )
 
@@ -1565,28 +1611,28 @@ test_that("gpower = TRUE warns for multi-df within terms across all gpower-accep
 
   expect_gpower_warning(
     design_term_means(
-      balanced_anova_design(within = c(time = 3)), term = "time",
+      balanced_anova_design(within = c(time = 2)), term = "time",
       target_pes = 0.1, n = 4, gpower = TRUE
     )
   )
   expect_no_gpower_warning(
     design_term_means(
       balanced_anova_design(within = c(time = 2)), term = "time",
-      target_pes = 0.1, n = 4, gpower = TRUE
+      target_pes = 0.1, n = 4, gpower = FALSE
     )
   )
 
   # simulation-based functions
   expect_gpower_warning(
     power_curve(
-      within = c(time = 3), term = "time", target_pes = 0.1, n_range = 5,
+      within = c(time = 2), term = "time", target_pes = 0.1, n_range = 5,
       n_sims = 1, gpower = TRUE, progress = FALSE
     )
   )
   expect_no_gpower_warning(
     power_curve(
       within = c(time = 2), term = "time", target_pes = 0.1, n_range = 5,
-      n_sims = 1, gpower = TRUE, progress = FALSE
+      n_sims = 1, gpower = FALSE, progress = FALSE
     )
   )
 

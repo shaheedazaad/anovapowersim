@@ -113,7 +113,7 @@
 <div class="section level3">
 <h3 id="power-for-unbalanced-designs">Power for unbalanced designs<a class="anchor" aria-label="anchor" href="#power-for-unbalanced-designs"></a>
 </h3>
-<p><code><a href="reference/power_unbalanced.html">power_unbalanced()</a></code> simulates one exact allocation from user-defined cell means, standard deviations, sample sizes, and within-subject correlations. It is simulation-only and does not extrapolate how unequal cell sizes should scale. See the <a href="https://shaheedazaad.github.io/anovapowersim/articles/unbalanced-designs.html">unbalanced-design tutorial</a>.</p>
+<p><code><a href="reference/power_unbalanced.html">power_unbalanced()</a></code> simulates one exact allocation from user-defined cell means and sample sizes under a common standard deviation and optional within-subject correlations. It is simulation-only and does not extrapolate how unequal cell sizes should scale. See the <a href="https://shaheedazaad.github.io/anovapowersim/articles/unbalanced-designs.html">unbalanced-design tutorial</a>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -145,8 +145,9 @@
 <li>Sample-size searches or power curves for unbalanced designs</li>
 <li>Huynh-Feldt corrections in power simulations. Greenhouse-Geisser-corrected simulated tests are supported for sums-of-squares type II or III when a custom covariance implies <code>epsilon &lt; 1</code>; type I tests remain uncorrected.</li>
 <li>User-defined cell-mean patterns in the balanced target-PES functions. Exact means and specific interaction shapes are supported by <code><a href="reference/power_unbalanced.html">power_unbalanced()</a></code>.</li>
-<li>Simple main effects/pairwise comparisons</li>
+<li>Heteroskedastic ANOVA. Simulation functions require one common marginal variance; unequal correlations and Greenhouse–Geisser corrections remain supported for repeated-measures designs.</li>
 </ul>
+<p>Simulation functions warn when their default common <code>sd = 1</code> or default within-subject correlation of <code>0.5</code> is used. Covariance specifications also warn when only some correlations are defined; the default correlation fills only the undefined pairs. - Simple main effects/pairwise comparisons</p>
 </div>
 <div class="section level2">
 <h2 id="other-packages">Other packages<a class="anchor" aria-label="anchor" href="#other-packages"></a>

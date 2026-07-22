@@ -385,7 +385,10 @@ format_power_results <- function(x) {
       is.na(x$target_pes), NA_character_, sprintf("%.6f", x$target_pes)
     )
   }
-  numeric_3dp <- intersect(c("ncp", "power_calc", "power_sim"), names(x))
+  numeric_3dp <- intersect(
+    c("ncp", "power_calc", "power_sim"),
+    names(x)
+  )
   for (nm in numeric_3dp) {
     x[[nm]] <- ifelse(is.na(x[[nm]]), NA_character_, sprintf("%.3f", x[[nm]]))
   }

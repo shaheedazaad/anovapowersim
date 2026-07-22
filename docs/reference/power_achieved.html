@@ -122,14 +122,10 @@ yields a population epsilon below <code>1</code>.</p></dd>
 <dd><p>Logical; if <code>TRUE</code>, calibrate means to the G<em>Power-style
 noncentrality convention <code>lambda = total_n * f^2</code>. The default <code>FALSE</code>
 calibrates the empirical reference dataset to <code>target_pes</code>, equivalent to
-<code>lambda = den_df * f^2</code> for the fitted ANOVA. For a term whose
-within-subject component has more than one degree of freedom, <code>gpower</code>'s
-<code>target_pes</code> does not equal the partial eta squared actually achieved
-(this mirrors a property of G</em>Power's own "as in Cohen (1988)"
-repeated-measures convention, which does not adjust for the number of
-measurements); a warning is issued in that case. Use the default if you
-want <code>target_pes</code> to match your reported or expected partial eta squared
-exactly.</p></dd>
+<code>lambda = den_df * f^2</code> for the fitted ANOVA. G</em>Power's estimates can
+differ from <code>target_pes</code>, especially for small samples or terms with more
+degrees of freedom; a warning is issued when <code>gpower = TRUE</code>. The default
+<code>gpower = FALSE</code> is recommended.</p></dd>
 
 
 <dt id="arg-progress">progress<a class="anchor" aria-label="anchor" href="#arg-progress"></a></dt>
@@ -155,8 +151,14 @@ cores, with a minimum of one.</p></dd>
 <dd><p>Optional within-subject covariance specification from
 <code><a href="within_covariance.html">within_covariance()</a></code> or a numeric covariance matrix. The default <code>NULL</code>
 uses standard deviations of <code>1</code> and a compound-symmetric correlation of
-<code>0.5</code>. A supplied matrix must have one row and column per within-subject
-cell; named matrices are reordered to the design's cell order. For terms
+<code>0.5</code> and issues a warning stating those defaults. A
+<code><a href="within_covariance.html">within_covariance()</a></code> specification issues a warning when correlation
+pairs are omitted: its <code>default_correlation</code> applies only to those
+undefined pairs, while explicitly defined correlations are unchanged.
+All measurements must have one common marginal variance. A supplied matrix
+must therefore have equal diagonal entries and one row and column per
+within-subject cell; named matrices are reordered to the design's cell
+order. Unequal correlations remain supported. For terms
 containing within-subject factors, the matrix is also used to derive a
 term-specific population Greenhouse–Geisser epsilon for <code>power_calc</code>. If
 that population epsilon is below <code>1</code>, <code>power_sim</code> is also based on each
@@ -192,6 +194,7 @@ version of <code>anovapowersim</code>. Its API and reporting format may change.<
 <span class="r-in"><span>  n_sims <span class="op">=</span> <span class="fl">100</span>,</span></span>
 <span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">123</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>No `covariance` was supplied; using one common `sd = 1` and `correlation = 0.5` for every within-subject pair.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;anovapowersim_achieved_power&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   term:             'group:time'</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   fixed n per cell: 20</span>
@@ -203,8 +206,10 @@ version of <code>anovapowersim</code>. Its API and reporting format may change.<
 <span class="r-out co"><span class="r-pr">#&gt;</span>   calculated power: 0.679</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   SS type:          III</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  n_per_cell total_n n_sims epsilon num_df den_df   ncp power_calc power_sim</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          20      40    100       1      1     38 6.186      0.679     0.640</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df den_df   ncp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          20      40    100        100           0       1      1     38 6.186</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  power_calc power_sim</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.679     0.640</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

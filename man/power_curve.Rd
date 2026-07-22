@@ -53,14 +53,10 @@ yields a population epsilon below \code{1}.}
 \item{gpower}{Logical; if \code{TRUE}, calibrate means to the G\emph{Power-style
 noncentrality convention \code{lambda = total_n * f^2}. The default \code{FALSE}
 calibrates the empirical reference dataset to \code{target_pes}, equivalent to
-\code{lambda = den_df * f^2} for the fitted ANOVA. For a term whose
-within-subject component has more than one degree of freedom, \code{gpower}'s
-\code{target_pes} does not equal the partial eta squared actually achieved
-(this mirrors a property of G}Power's own "as in Cohen (1988)"
-repeated-measures convention, which does not adjust for the number of
-measurements); a warning is issued in that case. Use the default if you
-want \code{target_pes} to match your reported or expected partial eta squared
-exactly.}
+\code{lambda = den_df * f^2} for the fitted ANOVA. G}Power's estimates can
+differ from \code{target_pes}, especially for small samples or terms with more
+degrees of freedom; a warning is issued when \code{gpower = TRUE}. The default
+\code{gpower = FALSE} is recommended.}
 
 \item{progress}{Logical; if \code{TRUE}, show a text progress bar.}
 
@@ -76,8 +72,14 @@ cores, with a minimum of one.}
 \item{covariance}{Optional within-subject covariance specification from
 \code{\link[=within_covariance]{within_covariance()}} or a numeric covariance matrix. The default \code{NULL}
 uses standard deviations of \code{1} and a compound-symmetric correlation of
-\code{0.5}. A supplied matrix must have one row and column per within-subject
-cell; named matrices are reordered to the design's cell order. For terms
+\code{0.5} and issues a warning stating those defaults. A
+\code{\link[=within_covariance]{within_covariance()}} specification issues a warning when correlation
+pairs are omitted: its \code{default_correlation} applies only to those
+undefined pairs, while explicitly defined correlations are unchanged.
+All measurements must have one common marginal variance. A supplied matrix
+must therefore have equal diagonal entries and one row and column per
+within-subject cell; named matrices are reordered to the design's cell
+order. Unequal correlations remain supported. For terms
 containing within-subject factors, the matrix is also used to derive a
 term-specific population Greenhouse--Geisser epsilon for \code{power_calc}. If
 that population epsilon is below \code{1}, \code{power_sim} is also based on each
@@ -87,14 +89,17 @@ and \code{power_calc} estimate the same corrected test.}
 }
 \value{
 An \code{anovapowersim_curve} object. The \verb{$results} tibble contains
-\code{n_per_cell}, \code{total_n}, \code{n_sims}, the population nonsphericity correction
+\code{n_per_cell}, \code{total_n}, \code{n_sims}, successful and failed simulation counts
+(\code{valid_sims}, \code{failed_sims}), the population nonsphericity correction
 (\code{epsilon}), numerator and denominator degrees of freedom (\code{num_df},
 \code{den_df}), the noncentrality parameter (\code{ncp}), calculated power
-(\code{power_calc}), and simulated power (\code{power_sim}). When \code{epsilon < 1}, the
-reported degrees of freedom and noncentrality are the corrected values
-used for \code{power_calc}, and \code{power_sim} (for \code{ss_type} \code{"III"}/\code{"II"}) is
-based on the Greenhouse--Geisser-corrected simulated p-value rather than
-the uncorrected univariate test.
+(\code{power_calc}), and simulated power (\code{power_sim}). The full-precision
+\code{power_sim} value, not its printed three-decimal representation, is used
+by adaptive searches. When \code{epsilon < 1}, the reported degrees of freedom
+and noncentrality are the corrected values used for \code{power_calc}, and
+\code{power_sim} (for \code{ss_type} \code{"III"}/\code{"II"}) is based on the
+Greenhouse--Geisser-corrected simulated p-value rather than the
+uncorrected univariate test.
 }
 \description{
 Simulation-based power estimation for balanced factorial designs. Users

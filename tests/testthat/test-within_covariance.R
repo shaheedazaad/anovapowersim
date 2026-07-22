@@ -1,11 +1,10 @@
 quiet_covariance_power_curve <- function(...) suppressWarnings(power_curve(...))
 quiet_covariance_power_n <- function(...) suppressWarnings(power_n(...))
 
-test_that("within_covariance records flat SD and correlation overrides", {
+test_that("within_covariance records one common SD and correlation overrides", {
   covariance <- within_covariance(
-    default_sd = 1,
+    sd = 2,
     default_correlation = 0.5,
-    standard_deviations = c("time2_condition2" = 1.2),
     correlations = c(
       "time1_condition1:time1_condition2" = 0.6,
       "time2_condition1:time2_condition2" = 0.7
@@ -13,9 +12,10 @@ test_that("within_covariance records flat SD and correlation overrides", {
   )
 
   expect_s3_class(covariance, "anovapowersim_covariance_spec")
-  expect_equal(covariance$default_sd, 1)
+  expect_equal(covariance$sd, 2)
   expect_equal(covariance$default_correlation, 0.5)
-  expect_equal(covariance$standard_deviations[["time2_condition2"]], 1.2)
+  expect_false(any(c("default_sd", "standard_deviations") %in%
+                     names(covariance)))
   expect_equal(
     covariance$correlation_pairs$pair_name,
     c(
@@ -28,16 +28,18 @@ test_that("within_covariance records flat SD and correlation overrides", {
 test_that("covariance specifications resolve defaults and overrides", {
   design <- balanced_anova_design(within = c(time = 2, condition = 2))
   covariance <- within_covariance(
-    default_sd = 1,
+    sd = 2,
     default_correlation = 0.5,
-    standard_deviations = c("time2_condition2" = 1.2),
     correlations = c(
       "time1_condition1:time1_condition2" = 0.6,
       "time2_condition1:time2_condition2" = 0.7
     )
   )
 
-  sigma <- anovapowersim:::resolve_within_covariance(covariance, design)
+  expect_warning(
+    sigma <- anovapowersim:::resolve_within_covariance(covariance, design),
+    "used only for those undefined pairs"
+  )
   expected_names <- c(
     "time1_condition1", "time1_condition2",
     "time2_condition1", "time2_condition2"
@@ -45,26 +47,32 @@ test_that("covariance specifications resolve defaults and overrides", {
 
   expect_equal(rownames(sigma), expected_names)
   expect_equal(colnames(sigma), expected_names)
-  expect_equal(unname(diag(sigma)), c(1, 1, 1, 1.44), tolerance = 1e-12)
-  expect_equal(sigma["time1_condition1", "time1_condition2"], 0.6)
-  expect_equal(sigma["time1_condition1", "time2_condition1"], 0.5)
-  expect_equal(sigma["time1_condition1", "time2_condition2"], 0.6)
-  expect_equal(sigma["time2_condition1", "time2_condition2"], 0.84)
+  expect_equal(unname(diag(sigma)), rep(4, 4), tolerance = 1e-12)
+  expect_equal(sigma["time1_condition1", "time1_condition2"], 2.4)
+  expect_equal(sigma["time1_condition1", "time2_condition1"], 2)
+  expect_equal(sigma["time1_condition1", "time2_condition2"], 2)
+  expect_equal(sigma["time2_condition1", "time2_condition2"], 2.8)
   expect_equal(sigma, t(sigma))
 })
 
 test_that("correlation pair order is ignored and duplicate pairs are rejected", {
   design <- balanced_anova_design(within = c(time = 3))
   forward <- within_covariance(
+    sd = 1,
     correlations = c("time1:time2" = 0.7)
   )
   reverse <- within_covariance(
+    sd = 1,
     correlations = c("time2:time1" = 0.7)
   )
 
   expect_equal(
-    anovapowersim:::resolve_within_covariance(forward, design),
-    anovapowersim:::resolve_within_covariance(reverse, design)
+    suppressWarnings(
+      anovapowersim:::resolve_within_covariance(forward, design)
+    ),
+    suppressWarnings(
+      anovapowersim:::resolve_within_covariance(reverse, design)
+    )
   )
   expect_error(
     within_covariance(
@@ -78,16 +86,20 @@ test_that("correlation pair order is ignored and duplicate pairs are rejected", 
 })
 
 test_that("within_covariance validates its public inputs", {
-  expect_error(within_covariance(default_sd = 0), "`default_sd`")
+  expect_warning(
+    within_covariance(),
+    "using one common `sd = 1`"
+  )
+  expect_error(within_covariance(sd = 0), "`sd`")
   expect_error(within_covariance(default_correlation = 1),
                "`default_correlation`")
   expect_error(
-    within_covariance(standard_deviations = c(time1 = -1)),
-    "positive finite numbers"
+    within_covariance(default_sd = 1),
+    "unused argument"
   )
   expect_error(
-    within_covariance(standard_deviations = c(1)),
-    "must be named"
+    within_covariance(standard_deviations = c(time1 = 1)),
+    "unused argument"
   )
   expect_error(
     within_covariance(correlations = c("time1:time2" = 1)),
@@ -108,7 +120,10 @@ test_that("covariance resolution validates cells and positive definiteness", {
 
   expect_error(
     anovapowersim:::resolve_within_covariance(
-      within_covariance(standard_deviations = c("missing" = 1)),
+      within_covariance(
+        sd = 1,
+        correlations = c("missing:time1" = 0.5)
+      ),
       design
     ),
     "Unknown within-subject cell"
@@ -116,6 +131,7 @@ test_that("covariance resolution validates cells and positive definiteness", {
   expect_error(
     anovapowersim:::resolve_within_covariance(
       within_covariance(
+        sd = 1,
         default_correlation = 0,
         correlations = c(
           "time1:time2" = 0.9,
@@ -129,7 +145,9 @@ test_that("covariance resolution validates cells and positive definiteness", {
   )
   between_design <- balanced_anova_design(between = c(group = 2))
   expect_error(
-    anovapowersim:::resolve_within_covariance(within_covariance(), between_design),
+    anovapowersim:::resolve_within_covariance(
+      within_covariance(sd = 1), between_design
+    ),
     "design with a `within` factor"
   )
 })
@@ -151,9 +169,27 @@ test_that("named covariance matrices are reordered to the design", {
   expect_equal(resolved["time1", "time3"], 0.3)
 })
 
+test_that("direct covariance matrices require equal diagonal variances", {
+  design <- balanced_anova_design(within = c(time = 3))
+  unequal <- diag(c(1, 1, 4))
+
+  expect_error(
+    anovapowersim:::resolve_within_covariance(unequal, design),
+    "equal diagonal variances"
+  )
+
+  equal <- matrix(c(4, 3.2, 0, 3.2, 4, 0, 0, 0, 4), nrow = 3)
+  expect_silent(
+    anovapowersim:::resolve_within_covariance(equal, design)
+  )
+  expect_lt(
+    anovapowersim:::covariance_term_epsilon(equal, design, "time"), 1
+  )
+})
+
 test_that("power_curve and power_n accept and retain custom covariance", {
   covariance <- within_covariance(
-    default_sd = 1,
+    sd = 1,
     default_correlation = 0.4,
     correlations = c("time1:time2" = 0.7)
   )
@@ -192,7 +228,7 @@ test_that("power_curve and power_n accept and retain custom covariance", {
 test_that("the balanced simulator uses the resolved covariance matrix", {
   design <- balanced_anova_design(within = c(time = 3))
   sigma <- matrix(
-    c(1, 0.6, 0.3, 0.6, 1.44, 0.48, 0.3, 0.48, 1),
+    c(4, 2.4, 1.2, 2.4, 4, 1.6, 1.2, 1.6, 4),
     nrow = 3,
     dimnames = list(
       c("time1", "time2", "time3"),
@@ -220,16 +256,28 @@ test_that("the balanced simulator uses the resolved covariance matrix", {
 })
 
 test_that("omitting covariance preserves the current default matrix", {
-  curve <- quiet_covariance_power_curve(
-    within = c(time = 3),
-    term = "time",
-    target_pes = 0.14,
-    n_range = 5,
-    n_sims = 1,
-    progress = FALSE,
-    seed = 9
+  warnings <- testthat::capture_warnings(
+    curve <- power_curve(
+      within = c(time = 3),
+      term = "time",
+      target_pes = 0.14,
+      n_range = 5,
+      n_sims = 1,
+      progress = FALSE,
+      seed = 9
+    )
   )
 
+  expect_true(any(grepl(
+    "No `covariance` was supplied; using one common `sd = 1` and ",
+    warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl(
+    "`correlation = 0.5` for every within-subject pair",
+    warnings,
+    fixed = TRUE
+  )))
   expect_false(curve$custom_covariance)
   expect_equal(unname(diag(curve$covariance)), rep(1, 3))
   expect_equal(curve$covariance[lower.tri(curve$covariance)], rep(0.5, 3))
@@ -242,7 +290,9 @@ test_that("population epsilon is derived for the tested within term", {
     between = c(group = 2),
     within = c(time = 3, condition = 2)
   )
-  time_covariance <- diag(c(1, 1, 4))
+  time_covariance <- matrix(
+    c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3
+  )
   condition_covariance <- diag(2)
   sigma <- kronecker(time_covariance, condition_covariance)
   dimnames(sigma) <- list(
@@ -252,19 +302,19 @@ test_that("population epsilon is derived for the tested within term", {
 
   expect_equal(
     anovapowersim:::covariance_term_epsilon(sigma, design, "time"),
-    0.8,
+    0.654054054054054,
     tolerance = 1e-12
   )
   expect_equal(
     anovapowersim:::covariance_term_epsilon(
       sigma, design, "time:condition"
     ),
-    0.8,
+    0.654054054054054,
     tolerance = 1e-12
   )
   expect_equal(
     anovapowersim:::covariance_term_epsilon(sigma, design, "group:time"),
-    0.8,
+    0.654054054054054,
     tolerance = 1e-12
   )
   expect_equal(
@@ -278,7 +328,7 @@ test_that("population epsilon is derived for the tested within term", {
 })
 
 test_that("covariance-corrected power_calc matches power_n_calc", {
-  sigma <- diag(c(1, 1, 4))
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
   dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
 
   curve <- quiet_covariance_power_curve(
@@ -300,7 +350,7 @@ test_that("covariance-corrected power_calc matches power_n_calc", {
     epsilon = curve$epsilon
   ))
 
-  expect_equal(curve$epsilon, 0.8, tolerance = 1e-12)
+  expect_equal(curve$epsilon, 0.6540541, tolerance = 1e-7)
   expect_equal(curve$results$epsilon, calculated$results$epsilon)
   expect_equal(curve$results$num_df, calculated$results$num_df)
   expect_equal(curve$results$den_df, calculated$results$den_df)
@@ -312,7 +362,7 @@ test_that("covariance-corrected power_calc matches power_n_calc", {
 })
 
 test_that("power_n retains and applies covariance-derived epsilon", {
-  sigma <- diag(c(1, 1, 4))
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
   dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
 
   searched <- quiet_covariance_power_n(
@@ -328,15 +378,15 @@ test_that("power_n retains and applies covariance-derived epsilon", {
     seed = 42
   )
 
-  expect_equal(searched$epsilon, 0.8, tolerance = 1e-12)
-  expect_equal(searched$results$epsilon, 0.8, tolerance = 1e-12)
-  expect_equal(searched$results$num_df, 1.6, tolerance = 1e-12)
-  expect_equal(searched$results$den_df, 11.2, tolerance = 1e-12)
+  expect_equal(searched$epsilon, 0.6540541, tolerance = 1e-7)
+  expect_equal(searched$results$epsilon, searched$epsilon)
+  expect_equal(searched$results$num_df, 2 * searched$epsilon)
+  expect_equal(searched$results$den_df, 14 * searched$epsilon)
 })
 
 test_that("fit_design_term_stats reports a Greenhouse-Geisser p-value for ss_type III/II that matches car directly, and NA for ss_type I", {
   design <- balanced_anova_design(within = c(time = 3))
-  sigma <- diag(c(1, 1, 4))
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
   dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
 
   set.seed(321)
@@ -374,7 +424,7 @@ test_that("fit_design_term_stats reports a Greenhouse-Geisser p-value for ss_typ
 })
 
 test_that("power_curve GG-corrects power_sim to match power_calc under severe non-sphericity", {
-  sigma <- diag(c(1, 1, 1, 16))
+  sigma <- outer(1:4, 1:4, function(i, j) 0.8^abs(i - j))
   dimnames(sigma) <- list(paste0("time", 1:4), paste0("time", 1:4))
 
   corrected <- quiet_covariance_power_curve(
@@ -399,7 +449,7 @@ test_that("power_curve GG-corrects power_sim to match power_calc under severe no
     seed = 55
   )
 
-  expect_equal(corrected$epsilon, 0.4451295, tolerance = 1e-6)
+  expect_equal(corrected$epsilon, 0.7244823, tolerance = 1e-6)
   expect_equal(
     corrected$results$power_sim,
     corrected$results$power_calc,
@@ -426,7 +476,7 @@ test_that("warn_ss_type_i_uncorrected_gg only warns for ss_type = 'I' with epsil
 })
 
 test_that("power_curve warns when ss_type = 'I' is combined with a non-spherical covariance", {
-  sigma <- diag(c(1, 1, 4))
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
   dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
 
   # ss_type = "I" also diverges from power_calc in a real way here (it stays

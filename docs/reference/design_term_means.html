@@ -97,11 +97,10 @@ is the total sample size.</p></dd>
 <dt id="arg-gpower">gpower<a class="anchor" aria-label="anchor" href="#arg-gpower"></a></dt>
 <dd><p>Logical; if <code>TRUE</code>, calibrate to the G<em>Power-style
 noncentrality convention <code>lambda = total_n * f^2</code> (as in the "Cohen
-(1988)" option for within-subjects designs in G</em>Power). For a term whose
-within-subject component has more than one degree of freedom,
-<code>target_pes</code> does not equal the partial eta squared actually achieved
-under this convention (G*Power's own convention does not adjust for the
-number of measurements either); a warning is issued in that case.</p></dd>
+(1988)" option for within-subjects designs in G</em>Power). G*Power's
+estimates can differ from <code>target_pes</code>, especially for small samples or
+terms with more degrees of freedom; a warning is issued when
+<code>gpower = TRUE</code>. The default <code>gpower = FALSE</code> is recommended.</p></dd>
 
 
 <dt id="arg-ss-type">ss_type<a class="anchor" aria-label="anchor" href="#arg-ss-type"></a></dt>

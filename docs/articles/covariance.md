@@ -11,11 +11,10 @@ The balanced simulation functions
 [`power_achieved()`](https://shaheedazaad.github.io/anovapowersim/reference/power_achieved.md),
 and
 [`power_sensitivity()`](https://shaheedazaad.github.io/anovapowersim/reference/power_sensitivity.md)
-use a standard deviation of 1 for every within-subject cell and a
-correlation of 0.5 between every pair by default. All four accept
+use a common standard deviation of 1 and a correlation of 0.5 between
+every within-subject pair by default. All four accept
 [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
-when repeated measurements have different standard deviations or
-correlations.
+to change that common SD or specify pair-specific correlations.
 
 ## Name the within-subject cells
 
@@ -29,11 +28,8 @@ Correlation names join a pair of cells with `:`.
 ``` r
 
 covariance <- within_covariance(
-  default_sd = 1,
+  sd = 1,
   default_correlation = 0.5,
-  standard_deviations = c(
-    "time3_condition2" = 1.2
-  ),
   correlations = c(
     "time1_condition1:time1_condition2" = 0.6,
     "time2_condition1:time2_condition2" = 0.7
@@ -41,8 +37,25 @@ covariance <- within_covariance(
 )
 ```
 
-Unlisted measurements use `default_sd`, and unlisted pairs use
-`default_correlation`.
+Every measurement uses the common `sd`; unlisted pairs use
+`default_correlation`. Pair-specific correlations can produce
+nonsphericity even though all diagonal variances are equal.
+
+The package warns whenever these defaults are actually needed:
+
+- Omitting `covariance` from a balanced simulation uses `sd = 1` and a
+  correlation of `0.5` for every within-subject pair.
+- Calling
+  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+  without `sd` uses the common `sd = 1`.
+- If `correlations` does not name every pair, the warning reports how
+  many pairs are undefined. `default_correlation` fills only those
+  undefined pairs; correlations explicitly listed by the user are never
+  replaced.
+
+A raw covariance matrix defines both variances and correlations directly
+and does not use these defaults. Its diagonal variances must all be
+equal.
 
 ## Use the covariance specification
 
@@ -81,9 +94,8 @@ power](https://shaheedazaad.github.io/anovapowersim/articles/calculated-power.md
 
 For
 [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md),
-standard deviations belong in
-[`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md),
-so its covariance argument accepts
-[`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md)
-correlations only. See [Power for unbalanced
+the common SD and correlations belong in
+[`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md);
+individual cells specify only sample sizes and means. See [Power for
+unbalanced
 designs](https://shaheedazaad.github.io/anovapowersim/articles/unbalanced-designs.md).

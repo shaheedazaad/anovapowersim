@@ -30,14 +30,10 @@
 #' @param gpower Logical; if `TRUE`, calibrate means to the G*Power-style
 #'   noncentrality convention `lambda = total_n * f^2`. The default `FALSE`
 #'   calibrates the empirical reference dataset to `target_pes`, equivalent to
-#'   `lambda = den_df * f^2` for the fitted ANOVA. For a term whose
-#'   within-subject component has more than one degree of freedom, `gpower`'s
-#'   `target_pes` does not equal the partial eta squared actually achieved
-#'   (this mirrors a property of G*Power's own "as in Cohen (1988)"
-#'   repeated-measures convention, which does not adjust for the number of
-#'   measurements); a warning is issued in that case. Use the default if you
-#'   want `target_pes` to match your reported or expected partial eta squared
-#'   exactly.
+#'   `lambda = den_df * f^2` for the fitted ANOVA. G*Power's estimates can
+#'   differ from `target_pes`, especially for small samples or terms with more
+#'   degrees of freedom; a warning is issued when `gpower = TRUE`. The default
+#'   `gpower = FALSE` is recommended.
 #' @param progress Logical; if `TRUE`, show a text progress bar.
 #' @param parallel Logical; if `TRUE`, run simulations for each sample size via
 #'   the `future` ecosystem.
@@ -48,8 +44,14 @@
 #' @param covariance Optional within-subject covariance specification from
 #'   [within_covariance()] or a numeric covariance matrix. The default `NULL`
 #'   uses standard deviations of `1` and a compound-symmetric correlation of
-#'   `0.5`. A supplied matrix must have one row and column per within-subject
-#'   cell; named matrices are reordered to the design's cell order. For terms
+#'   `0.5` and issues a warning stating those defaults. A
+#'   [within_covariance()] specification issues a warning when correlation
+#'   pairs are omitted: its `default_correlation` applies only to those
+#'   undefined pairs, while explicitly defined correlations are unchanged.
+#'   All measurements must have one common marginal variance. A supplied matrix
+#'   must therefore have equal diagonal entries and one row and column per
+#'   within-subject cell; named matrices are reordered to the design's cell
+#'   order. Unequal correlations remain supported. For terms
 #'   containing within-subject factors, the matrix is also used to derive a
 #'   term-specific population Greenhouse--Geisser epsilon for `power_calc`. If
 #'   that population epsilon is below `1`, `power_sim` is also based on each
@@ -58,14 +60,17 @@
 #'   and `power_calc` estimate the same corrected test.
 #'
 #' @return An `anovapowersim_curve` object. The `$results` tibble contains
-#'   `n_per_cell`, `total_n`, `n_sims`, the population nonsphericity correction
+#'   `n_per_cell`, `total_n`, `n_sims`, successful and failed simulation counts
+#'   (`valid_sims`, `failed_sims`), the population nonsphericity correction
 #'   (`epsilon`), numerator and denominator degrees of freedom (`num_df`,
 #'   `den_df`), the noncentrality parameter (`ncp`), calculated power
-#'   (`power_calc`), and simulated power (`power_sim`). When `epsilon < 1`, the
-#'   reported degrees of freedom and noncentrality are the corrected values
-#'   used for `power_calc`, and `power_sim` (for `ss_type` `"III"`/`"II"`) is
-#'   based on the Greenhouse--Geisser-corrected simulated p-value rather than
-#'   the uncorrected univariate test.
+#'   (`power_calc`), and simulated power (`power_sim`). The full-precision
+#'   `power_sim` value, not its printed three-decimal representation, is used
+#'   by adaptive searches. When `epsilon < 1`, the reported degrees of freedom
+#'   and noncentrality are the corrected values used for `power_calc`, and
+#'   `power_sim` (for `ss_type` `"III"`/`"II"`) is based on the
+#'   Greenhouse--Geisser-corrected simulated p-value rather than the
+#'   uncorrected univariate test.
 #'
 #' @section Examples:
 #' ```{r, eval = FALSE}
@@ -306,6 +311,10 @@ power_n <- function(between = NULL,
   }
   n_start <- as.integer(n_start)
   n_max <- as.integer(n_max)
+  if (n_max < n_start) {
+    stop("`n_max` must be greater than or equal to `n_start`.",
+         call. = FALSE)
+  }
   validate_calibration_n(n_start, setup$spec, "n_start")
   if (n_max < min_n) {
     stop(
@@ -498,11 +507,10 @@ balanced_anova_design <- function(between = NULL, within = NULL) {
 #' @param r Compound-symmetric correlation among within-subject cells.
 #' @param gpower Logical; if `TRUE`, calibrate to the G*Power-style
 #'   noncentrality convention `lambda = total_n * f^2` (as in the "Cohen
-#'   (1988)" option for within-subjects designs in G*Power). For a term whose
-#'   within-subject component has more than one degree of freedom,
-#'   `target_pes` does not equal the partial eta squared actually achieved
-#'   under this convention (G*Power's own convention does not adjust for the
-#'   number of measurements either); a warning is issued in that case.
+#'   (1988)" option for within-subjects designs in G*Power). G*Power's
+#'   estimates can differ from `target_pes`, especially for small samples or
+#'   terms with more degrees of freedom; a warning is issued when
+#'   `gpower = TRUE`. The default `gpower = FALSE` is recommended.
 #' @param ss_type Sums-of-squares type for the tested ANOVA term. `"III"` is
 #'   the default for order-invariant tests in unbalanced designs. Use `"I"` to
 #'   reproduce sequential `stats::aov()` tests.
@@ -535,7 +543,7 @@ design_term_means <- function(design, term, target_pes, n, sd = 1, r = 0.5,
   if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
     stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
   }
-  warn_gpower_within_term_df(gpower = gpower, spec = design, term = term)
+  warn_gpower_within_term_df(gpower = gpower)
   calibrate_design_means(
     spec = design,
     term = term,
@@ -957,7 +965,7 @@ prepare_balanced_power_inputs <- function(between, within, term, n_sims,
   if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
     stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
   }
-  warn_gpower_within_term_df(gpower = gpower, spec = spec, term = term)
+  warn_gpower_within_term_df(gpower = gpower)
   if (!is.logical(progress) || length(progress) != 1L || is.na(progress)) {
     stop("`progress` must be TRUE or FALSE.", call. = FALSE)
   }
@@ -1050,26 +1058,18 @@ warn_ss_type_i_uncorrected_gg <- function(ss_type, epsilon) {
 }
 
 
-#' Warn that gpower = TRUE does not calibrate target_pes for multi-df
-#' within-subject terms
+#' Warn that gpower = TRUE may not calibrate target_pes exactly
 #'
 #' @keywords internal
 #' @noRd
-warn_gpower_within_term_df <- function(gpower, spec, term) {
+warn_gpower_within_term_df <- function(gpower) {
   if (!isTRUE(gpower)) return(invisible(NULL))
-  term_factors <- strsplit(term, ":", fixed = TRUE)[[1L]]
-  within_term_factors <- intersect(term_factors, spec$within)
-  if (!length(within_term_factors)) return(invisible(NULL))
-  within_term_df <- prod(spec$level_counts[within_term_factors] - 1L)
-  if (within_term_df <= 1L) return(invisible(NULL))
   warning(
-    "`gpower = TRUE` for term '", term, "' does not calibrate `target_pes` ",
-    "to the partial eta squared you will actually observe in a fitted ",
-    "ANOVA, because its within-subject component has ", within_term_df,
-    " degrees of freedom (more than one). This mirrors a property of ",
-    "G*Power's own 'as in Cohen (1988)' repeated-measures convention, which ",
-    "does not adjust for the number of measurements. Use the default ",
-    "`gpower = FALSE` if you want `target_pes` to match your reported or ",
+    "`gpower = TRUE` calibrates means to G*Power's noncentrality ",
+    "convention, so the partial eta squared actually achieved can differ ",
+    "from `target_pes` -- this is more pronounced for small samples and ",
+    "terms with more degrees of freedom. The default `gpower = FALSE` is ",
+    "recommended if you want `target_pes` to match your reported or ",
     "expected partial eta squared exactly.",
     call. = FALSE,
     immediate. = TRUE
@@ -1266,12 +1266,14 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     n_per_cell = as.integer(n),
     total_n = as.integer(n * max(1L, spec$n_between_cells)),
     n_sims = n_sims,
+    valid_sims = as.integer(valid_count),
+    failed_sims = as.integer(failed_count),
     epsilon = epsilon,
     num_df = sanity$num_df,
     den_df = sanity$den_df,
     ncp = round(sanity$ncp, 3),
     power_calc = round(sanity$power_calc, 3),
-    power_sim = round(power, 3)
+    power_sim = power
   )
 }
 

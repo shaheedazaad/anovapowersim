@@ -55,8 +55,9 @@ Set `gpower = TRUE` in `power_n()`, `power_curve()`, `power_achieved()`, or
 
 ## More than three within-subject levels
 
-The conventions can diverge substantially when a within-subject term has more
-than three levels. With four within-subject levels, the same inputs produce:
+The conventions can diverge more noticeably for smaller samples and for terms
+with more degrees of freedom, such as within-subject factors with more than
+three levels. With four within-subject levels, the same inputs produce:
 
 ```{r four-levels}
 default_4 <- power_n_calc(

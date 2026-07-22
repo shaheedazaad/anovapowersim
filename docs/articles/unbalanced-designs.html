@@ -79,46 +79,56 @@ sizes or return calculated power.</p>
 </h2>
 <p>Define every cell with <code><a href="../reference/cell_design.html">cell_design()</a></code>. Factor values
 identify the cell, <code>n</code> is the number of subjects in its
-between-subject group, <code>m</code> is its population mean, and
-<code>sd</code> is its marginal population standard deviation. Name
-repeated- measures factors in <code>within</code>; all remaining factors
-are between-subject factors.</p>
+between-subject group, and <code>m</code> is its population mean. Name
+repeated-measures factors in <code>within</code>; all remaining factors
+are between-subject factors. The common population SD is specified
+separately with <code><a href="../reference/unbalanced_covariance.html">unbalanced_covariance()</a></code>.</p>
 <p>For repeated-measures designs, the same <code>n</code> must appear on
 every within-subject row belonging to a given between-subject group.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">unbalanced_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cell_design.html">cell_design</a></span><span class="op">(</span></span>
-<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">10.0</span>, sd <span class="op">=</span> <span class="fl">2.0</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">11.0</span>, sd <span class="op">=</span> <span class="fl">2.2</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">10.1</span>, sd <span class="op">=</span> <span class="fl">2.4</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">12.4</span>, sd <span class="op">=</span> <span class="fl">2.8</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">10.0</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">11.0</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">10.1</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">12.4</span>,</span>
 <span>  within <span class="op">=</span> <span class="st">"time"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The means define the complete effect pattern, including main effects
-and interactions. Standard deviations can differ across groups and
-within-subject cells.</p>
+and interactions. A single marginal SD is shared across groups and
+within-subject cells, preventing unequal cell sizes from being combined
+with unequal variances in the classical ANOVA test.</p>
 <p>Every factor must have at least two observed levels, and every
 factor-level combination must be defined exactly once. If cells are
 missing, <code><a href="../reference/cell_design.html">cell_design()</a></code> reports which ones. Supply
-<code>default_n</code>, <code>default_m</code>, and
-<code>default_sd</code> together to fill missing cells
-automatically:</p>
+<code>default_n</code> and <code>default_m</code> together to fill
+missing cells automatically:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cell_design.html">cell_design</a></span><span class="op">(</span></span>
-<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">10.0</span>, sd <span class="op">=</span> <span class="fl">2.0</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">11.0</span>, sd <span class="op">=</span> <span class="fl">2.2</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">10.1</span>, sd <span class="op">=</span> <span class="fl">2.4</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">10.0</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">11.0</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">10.1</span>,</span>
 <span>  within <span class="op">=</span> <span class="st">"time"</span>,</span>
-<span>  default_n <span class="op">=</span> <span class="fl">31</span>, default_m <span class="op">=</span> <span class="fl">12.4</span>, default_sd <span class="op">=</span> <span class="fl">2.8</span></span>
+<span>  default_n <span class="op">=</span> <span class="fl">31</span>, default_m <span class="op">=</span> <span class="fl">12.4</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="define-within-subject-correlations">Define within-subject correlations<a class="anchor" aria-label="anchor" href="#define-within-subject-correlations"></a>
 </h2>
-<p>For repeated measures, use <code><a href="../reference/unbalanced_covariance.html">unbalanced_covariance()</a></code> to
-define correlations. It deliberately has no standard-deviation argument:
-<code><a href="../reference/power_unbalanced.html">power_unbalanced()</a></code> combines its correlations with the
-cell-specific <code>sd</code> values to construct a covariance matrix
-for each between-subject group.</p>
+<p>Use <code><a href="../reference/unbalanced_covariance.html">unbalanced_covariance()</a></code> to define the common SD and,
+for repeated measures, the correlation structure.
+<code><a href="../reference/power_unbalanced.html">power_unbalanced()</a></code> constructs one covariance matrix and
+uses it for every between-subject group.</p>
+<p>If <code>covariance</code> is omitted,
+<code><a href="../reference/power_unbalanced.html">power_unbalanced()</a></code> warns that it is using the common
+<code>sd = 1</code> and, for repeated measures, correlation
+<code>0.5</code> for every pair. Calling
+<code><a href="../reference/unbalanced_covariance.html">unbalanced_covariance()</a></code> without <code>sd</code> likewise
+warns that <code>sd = 1</code> is being used. When only some
+correlations are named, a separate warning reports the number of
+undefined pairs: <code>default_correlation</code> applies only to those
+undefined pairs and does not alter explicitly supplied correlations. For
+a purely between-subject design, correlations do not apply and the
+warning mentions only the common SD.</p>
 <p>With one within-subject factor, pair names use its levels, such as
 <code>"pre:post"</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -126,6 +136,7 @@ for each between-subject group.</p>
 <span>  design <span class="op">=</span> <span class="va">unbalanced_design</span>,</span>
 <span>  term <span class="op">=</span> <span class="st">"group:time"</span>,</span>
 <span>  covariance <span class="op">=</span> <span class="fu"><a href="../reference/unbalanced_covariance.html">unbalanced_covariance</a></span><span class="op">(</span></span>
+<span>    sd <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>    default_correlation <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>    correlations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pre:post"</span> <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span></span>
 <span>  <span class="op">)</span>,</span>
@@ -137,12 +148,12 @@ for each between-subject group.</p>
 <div class="section level2">
 <h2 id="interpret-the-result">Interpret the result<a class="anchor" aria-label="anchor" href="#interpret-the-result"></a>
 </h2>
-<p>The result reports simulated power, partial eta squared from a
-deterministic reference dataset matching the design assumptions, and the
-mean, median, and 95% interval of partial eta squared across successful
-simulations. These effect-size summaries describe the exact allocation,
-means, variances, correlations, tested term, and sums-of-squares type
-supplied by the user.</p>
+<p>The result reports simulated power, the common SD, partial eta
+squared from a deterministic reference dataset matching the design
+assumptions, and the mean, median, and 95% interval of partial eta
+squared across successful simulations. These effect-size summaries
+describe the exact allocation, means, shared variance, correlations,
+tested term, and sums-of-squares type supplied by the user.</p>
 </div>
 <div class="section level2">
 <h2 id="multiple-within-subject-factors">Multiple within-subject factors<a class="anchor" aria-label="anchor" href="#multiple-within-subject-factors"></a>
@@ -152,14 +163,14 @@ join their level combinations with underscores in correlation-pair
 names:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multi_within_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cell_design.html">cell_design</a></span><span class="op">(</span></span>
-<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">0.0</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">0.5</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">0.2</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1.0</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">0.0</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">0.6</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">0.3</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">1.4</span>, sd <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">0.0</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"A"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1.0</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">0.0</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">0.6</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"control"</span>, n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">0.3</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"B"</span>, time <span class="op">=</span> <span class="st">"post"</span>, cond <span class="op">=</span> <span class="st">"treat"</span>,   n <span class="op">=</span> <span class="fl">15</span>, m <span class="op">=</span> <span class="fl">1.4</span>,</span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"time"</span>, <span class="st">"cond"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>

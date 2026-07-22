@@ -24,13 +24,15 @@ Within-subject factors are read from the design's \code{within} attribute
 
 \item{term}{Character scalar naming the ANOVA term to test.}
 
-\item{covariance}{Optional correlation specification created by
-\code{\link[=unbalanced_covariance]{unbalanced_covariance()}}. It can only be supplied when \code{design} has
-within-subject factors. The default \code{NULL} uses a correlation of \code{0.5}
-between within-subject
-measurements. Standard deviations always come from \code{design} and may
-differ between between-subject cells. If the term's population
-covariance is non-spherical for any cell, \code{power_sim} is based on each
+\item{covariance}{Optional common covariance specification created by
+\code{\link[=unbalanced_covariance]{unbalanced_covariance()}}. The default \code{NULL} uses \code{sd = 1} and a
+correlation of \code{0.5} between within-subject measurements and issues a
+warning stating those defaults. For purely between-subject designs, use
+this argument to change the common SD; correlation settings are not
+applicable. When an \code{\link[=unbalanced_covariance]{unbalanced_covariance()}} specification omits some
+correlation pairs, a warning states that \code{default_correlation} is used
+only for those undefined pairs. If the term's population
+covariance is non-spherical, \code{power_sim} is based on each
 simulated dataset's Greenhouse--Geisser-corrected p-value rather than the
 uncorrected univariate test. This correction requires \code{ss_type} \code{"III"}
 or \code{"II"}; under \code{"I"}, simulated p-values remain uncorrected, and a
@@ -54,15 +56,15 @@ warning is issued.}
 An \code{anovapowersim_unbalanced_power} object. \verb{$power} and
 \verb{$achieved_power} contain simulated power. \verb{$partial_eta_squared} is the
 term effect size in a deterministic reference dataset. \verb{$epsilon} is the
-worst-case (smallest) population Greenhouse--Geisser epsilon across
-between-subject cells for the tested term. \verb{$results} also reports the
-simulated partial eta-squared distribution and failed fits.
+population Greenhouse--Geisser epsilon for the tested term. \verb{$results}
+also reports the common SD, simulated partial eta-squared distribution,
+and failed fits.
 }
 \description{
 Estimates achieved power for exact, potentially unequal cell sizes and
-user-supplied population means and standard deviations. This function is
-simulation-only: it does not calculate power from a noncentral F
-distribution and does not scale the supplied sample sizes.
+user-supplied population means under one common standard deviation. This
+function is simulation-only: it does not calculate power from a noncentral
+F distribution and does not scale the supplied sample sizes.
 }
 \section{Lifecycle}{
 
@@ -76,16 +78,17 @@ change.
 \examples{
 \donttest{
 design <- cell_design(
-  group = "control", time = "pre",  n = 12, m = 10, sd = 2.0,
-  group = "control", time = "post", n = 12, m = 11, sd = 2.2,
-  group = "treatment", time = "pre",  n = 18, m = 10, sd = 2.4,
-  group = "treatment", time = "post", n = 18, m = 13, sd = 2.8,
+  group = "control", time = "pre",  n = 12, m = 10,
+  group = "control", time = "post", n = 12, m = 11,
+  group = "treatment", time = "pre",  n = 18, m = 10,
+  group = "treatment", time = "post", n = 18, m = 13,
   within = "time"
 )
 power_unbalanced(
   design = design,
   term = "group:time",
   covariance = unbalanced_covariance(
+    sd = 2,
     correlations = c("pre:post" = 0.7)
   ),
   n_sims = 100,

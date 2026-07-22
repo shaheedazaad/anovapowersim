@@ -2,12 +2,18 @@
 % Please edit documentation in R/power_unbalanced.R
 \name{unbalanced_covariance}
 \alias{unbalanced_covariance}
-\title{Specify correlations for a means-based unbalanced design}
+\title{Specify covariance for a means-based unbalanced design}
 \usage{
-unbalanced_covariance(default_correlation = 0.5, correlations = NULL)
+unbalanced_covariance(sd = 1, default_correlation = 0.5, correlations = NULL)
 }
 \arguments{
-\item{default_correlation}{Correlation in \verb{(-1, 1)} used for unlisted pairs.}
+\item{sd}{Common positive finite marginal standard deviation. If omitted,
+\code{1} is used and a warning is issued.}
+
+\item{default_correlation}{Correlation in \verb{(-1, 1)} used for unlisted pairs.
+When the specification is resolved for a design, a warning identifies how
+many pairs were not defined and makes clear that this default applies only
+to those pairs.}
 
 \item{correlations}{Optional named numeric vector of pair-specific
 correlations. Name pairs as \code{"cell1:cell2"}; pair order does not matter.}
@@ -16,9 +22,9 @@ correlations. Name pairs as \code{"cell1:cell2"}; pair order does not matter.}
 An \code{anovapowersim_unbalanced_covariance_spec} object.
 }
 \description{
-Defines the common within-subject correlation structure used by
-\code{\link[=power_unbalanced]{power_unbalanced()}}. Marginal standard deviations are deliberately absent:
-they come from \code{\link[=cell_design]{cell_design()}} and may differ between groups.
+Defines the common marginal standard deviation and within-subject
+correlation structure used by \code{\link[=power_unbalanced]{power_unbalanced()}}. The resulting
+covariance is shared by every between-subject cell.
 }
 \section{Lifecycle}{
 
@@ -30,6 +36,7 @@ development version of \code{anovapowersim}. Its API may change.
 
 \examples{
 unbalanced_covariance(
+  sd = 2,
   default_correlation = 0.5,
   correlations = c("pre:post" = 0.7)
 )

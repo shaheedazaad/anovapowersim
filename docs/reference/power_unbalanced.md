@@ -1,9 +1,9 @@
 # Simulate power for a fixed unbalanced ANOVA design
 
 Estimates achieved power for exact, potentially unequal cell sizes and
-user-supplied population means and standard deviations. This function is
-simulation-only: it does not calculate power from a noncentral F
-distribution and does not scale the supplied sample sizes.
+user-supplied population means under one common standard deviation. This
+function is simulation-only: it does not calculate power from a
+noncentral F distribution and does not scale the supplied sample sizes.
 
 ## Usage
 
@@ -39,17 +39,20 @@ power_unbalanced(
 
 - covariance:
 
-  Optional correlation specification created by
+  Optional common covariance specification created by
   [`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md).
-  It can only be supplied when `design` has within-subject factors. The
-  default `NULL` uses a correlation of `0.5` between within-subject
-  measurements. Standard deviations always come from `design` and may
-  differ between between-subject cells. If the term's population
-  covariance is non-spherical for any cell, `power_sim` is based on each
-  simulated dataset's Greenhouse–Geisser-corrected p-value rather than
-  the uncorrected univariate test. This correction requires `ss_type`
-  `"III"` or `"II"`; under `"I"`, simulated p-values remain uncorrected,
-  and a warning is issued.
+  The default `NULL` uses `sd = 1` and a correlation of `0.5` between
+  within-subject measurements and issues a warning stating those
+  defaults. For purely between-subject designs, use this argument to
+  change the common SD; correlation settings are not applicable. When an
+  [`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md)
+  specification omits some correlation pairs, a warning states that
+  `default_correlation` is used only for those undefined pairs. If the
+  term's population covariance is non-spherical, `power_sim` is based on
+  each simulated dataset's Greenhouse–Geisser-corrected p-value rather
+  than the uncorrected univariate test. This correction requires
+  `ss_type` `"III"` or `"II"`; under `"I"`, simulated p-values remain
+  uncorrected, and a warning is issued.
 
 - n_sims:
 
@@ -84,9 +87,9 @@ power_unbalanced(
 An `anovapowersim_unbalanced_power` object. `$power` and
 `$achieved_power` contain simulated power. `$partial_eta_squared` is the
 term effect size in a deterministic reference dataset. `$epsilon` is the
-worst-case (smallest) population Greenhouse–Geisser epsilon across
-between-subject cells for the tested term. `$results` also reports the
-simulated partial eta-squared distribution and failed fits.
+population Greenhouse–Geisser epsilon for the tested term. `$results`
+also reports the common SD, simulated partial eta-squared distribution,
+and failed fits.
 
 ## Lifecycle
 
@@ -101,16 +104,17 @@ change.
 ``` r
 # \donttest{
 design <- cell_design(
-  group = "control", time = "pre",  n = 12, m = 10, sd = 2.0,
-  group = "control", time = "post", n = 12, m = 11, sd = 2.2,
-  group = "treatment", time = "pre",  n = 18, m = 10, sd = 2.4,
-  group = "treatment", time = "post", n = 18, m = 13, sd = 2.8,
+  group = "control", time = "pre",  n = 12, m = 10,
+  group = "control", time = "post", n = 12, m = 11,
+  group = "treatment", time = "pre",  n = 18, m = 10,
+  group = "treatment", time = "post", n = 18, m = 13,
   within = "time"
 )
 power_unbalanced(
   design = design,
   term = "group:time",
   covariance = unbalanced_covariance(
+    sd = 2,
     correlations = c("pre:post" = 0.7)
   ),
   n_sims = 100,
@@ -121,29 +125,30 @@ power_unbalanced(
 #>   fixed total N:         30
 #>   between-cell n range:  12 to 18
 #>   simulations:           100
-#>   simulated power:       0.820
-#>   reference pes:         0.2223
-#>   mean simulated pes:    0.2556
-#>   median simulated pes:  0.2497
-#>   simulated pes 95%:     [0.0469, 0.5434]
+#>   common SD:             2
+#>   simulated power:       0.970
+#>   reference pes:         0.3000
+#>   mean simulated pes:    0.3278
+#>   median simulated pes:  0.3222
+#>   simulated pes 95%:     [0.1132, 0.5841]
 #>   within correlations:   custom
 #>   SS type:               III
 #> 
 #> Cell design:
-#> # A tibble: 4 × 5
-#>   group     time      n     m    sd
-#>   <chr>     <chr> <int> <dbl> <dbl>
-#> 1 control   pre      12    10   2  
-#> 2 control   post     12    11   2.2
-#> 3 treatment pre      18    10   2.4
-#> 4 treatment post     18    13   2.8
+#> # A tibble: 4 × 4
+#>   group     time      n     m
+#>   <chr>     <chr> <int> <dbl>
+#> 1 control   pre      12    10
+#> 2 control   post     12    11
+#> 3 treatment pre      18    10
+#> 4 treatment post     18    13
 #> 
 #> Power and effect-size diagnostics:
-#>  total_n min_cell_n max_cell_n n_sims valid_sims failed_sims epsilon num_df
-#>       30         12         18    100        100           0       1      1
+#>  total_n min_cell_n max_cell_n n_sims valid_sims failed_sims sd epsilon num_df
+#>       30         12         18    100        100           0  2       1      1
 #>  den_df partial_eta_squared mean_pes_sim median_pes_sim pes_sim_lower
-#>      28           0.2223183    0.2555821      0.2497243    0.04690494
+#>      28                 0.3    0.3278059      0.3222229      0.113171
 #>  pes_sim_upper power_sim
-#>      0.5434147     0.820
+#>      0.5841011     0.970
 # }
 ```

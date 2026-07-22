@@ -121,13 +121,10 @@ freedom.</p></dd>
 <dt id="arg-gpower">gpower<a class="anchor" aria-label="anchor" href="#arg-gpower"></a></dt>
 <dd><p>Logical; if <code>TRUE</code>, use the G<em>Power-style noncentrality
 convention <code>lambda = total_n * f^2</code>. The default <code>FALSE</code> uses
-<code>lambda = den_df * f^2</code>. For a term whose within-subject component has
-more than one degree of freedom, <code>gpower</code>'s <code>target_pes</code> does not equal
-the partial eta squared actually achieved (this mirrors a property of
-G</em>Power's own "as in Cohen (1988)" repeated-measures convention, which
-does not adjust for the number of measurements); a warning is issued in
-that case. Use the default if you want <code>target_pes</code> to match your
-reported or expected partial eta squared exactly.</p></dd>
+<code>lambda = den_df * f^2</code>. G</em>Power's estimates can differ from
+<code>target_pes</code>, especially for small samples or terms with more degrees of
+freedom; a warning is issued when <code>gpower = TRUE</code>. The default
+<code>gpower = FALSE</code> is recommended.</p></dd>
 
 
 <dt id="arg-epsilon">epsilon<a class="anchor" aria-label="anchor" href="#arg-epsilon"></a></dt>
@@ -143,12 +140,13 @@ apply to purely between-subject terms.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code>anovapowersim_curve</code> object with <code>n_needed</code> and
 <code>total_n_needed</code>. The <code>$results</code> tibble contains <code>n_per_cell</code>, <code>total_n</code>,
-<code>n_sims</code>, numerator and denominator degrees of freedom (<code>num_df</code>,
-<code>den_df</code>), the nonsphericity correction (<code>epsilon</code>), the noncentrality
-parameter (<code>ncp</code>), calculated power (<code>power_calc</code>), and simulated power
-(<code>power_sim</code>). For <code>power_n_calc()</code>, <code>n_sims</code> and <code>power_sim</code> are always
-<code>NA</code>. When <code>epsilon &lt; 1</code>, <code>num_df</code> and <code>den_df</code> are the corrected degrees
-of freedom used in the power calculation.</p>
+<code>n_sims</code>, <code>valid_sims</code>, <code>failed_sims</code>, numerator and denominator degrees
+of freedom (<code>num_df</code>, <code>den_df</code>), the nonsphericity correction (<code>epsilon</code>),
+the noncentrality parameter (<code>ncp</code>), calculated power (<code>power_calc</code>),
+and simulated power (<code>power_sim</code>). For <code>power_n_calc()</code>, the
+simulation-specific columns are always <code>NA</code>. When <code>epsilon &lt; 1</code>, <code>num_df</code>
+and <code>den_df</code> are the corrected degrees of freedom used in the power
+calculation.</p>
     </div>
     <div class="section level2">
     <h2 id="lifecycle">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle"></a></h2>
@@ -180,16 +178,26 @@ reporting format are refined.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   n needed for between-subjects cell: 21</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   total N needed: 42</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  n_per_cell total_n n_sims epsilon num_df den_df    ncp power_calc power_sim</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           2       4     NA     0.7    2.1    4.2  0.684      0.077      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           4       8     NA     0.7    2.1   12.6  2.051      0.185      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           8      16     NA     0.7    2.1   29.4  4.786      0.436      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          16      32     NA     0.7    2.1   63.0 10.256      0.799      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          20      40     NA     0.7    2.1   79.8 12.991      0.892      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          21      42     NA     0.7    2.1   84.0 13.674      0.908      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          22      44     NA     0.7    2.1   88.2 14.358      0.922      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          24      48     NA     0.7    2.1   96.6 15.726      0.945      &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          32      64     NA     0.7    2.1  130.2 21.195      0.987      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df den_df    ncp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           2       4     NA         NA          NA     0.7    2.1    4.2  0.684</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           4       8     NA         NA          NA     0.7    2.1   12.6  2.051</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           8      16     NA         NA          NA     0.7    2.1   29.4  4.786</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          16      32     NA         NA          NA     0.7    2.1   63.0 10.256</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          20      40     NA         NA          NA     0.7    2.1   79.8 12.991</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          21      42     NA         NA          NA     0.7    2.1   84.0 13.674</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          22      44     NA         NA          NA     0.7    2.1   88.2 14.358</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          24      48     NA         NA          NA     0.7    2.1   96.6 15.726</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          32      64     NA         NA          NA     0.7    2.1  130.2 21.195</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  power_calc power_sim</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.077      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.185      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.436      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.799      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.892      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.908      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.922      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.945      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.987      &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

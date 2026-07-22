@@ -43,13 +43,10 @@ freedom.}
 
 \item{gpower}{Logical; if \code{TRUE}, use the G\emph{Power-style noncentrality
 convention \code{lambda = total_n * f^2}. The default \code{FALSE} uses
-\code{lambda = den_df * f^2}. For a term whose within-subject component has
-more than one degree of freedom, \code{gpower}'s \code{target_pes} does not equal
-the partial eta squared actually achieved (this mirrors a property of
-G}Power's own "as in Cohen (1988)" repeated-measures convention, which
-does not adjust for the number of measurements); a warning is issued in
-that case. Use the default if you want \code{target_pes} to match your
-reported or expected partial eta squared exactly.}
+\code{lambda = den_df * f^2}. G}Power's estimates can differ from
+\code{target_pes}, especially for small samples or terms with more degrees of
+freedom; a warning is issued when \code{gpower = TRUE}. The default
+\code{gpower = FALSE} is recommended.}
 
 \item{epsilon}{Population nonsphericity correction for the within-subject
 component of \code{term}. Must lie between the theoretical lower bound
@@ -61,12 +58,13 @@ apply to purely between-subject terms.}
 \value{
 An \code{anovapowersim_curve} object with \code{n_needed} and
 \code{total_n_needed}. The \verb{$results} tibble contains \code{n_per_cell}, \code{total_n},
-\code{n_sims}, numerator and denominator degrees of freedom (\code{num_df},
-\code{den_df}), the nonsphericity correction (\code{epsilon}), the noncentrality
-parameter (\code{ncp}), calculated power (\code{power_calc}), and simulated power
-(\code{power_sim}). For \code{power_n_calc()}, \code{n_sims} and \code{power_sim} are always
-\code{NA}. When \code{epsilon < 1}, \code{num_df} and \code{den_df} are the corrected degrees
-of freedom used in the power calculation.
+\code{n_sims}, \code{valid_sims}, \code{failed_sims}, numerator and denominator degrees
+of freedom (\code{num_df}, \code{den_df}), the nonsphericity correction (\code{epsilon}),
+the noncentrality parameter (\code{ncp}), calculated power (\code{power_calc}),
+and simulated power (\code{power_sim}). For \code{power_n_calc()}, the
+simulation-specific columns are always \code{NA}. When \code{epsilon < 1}, \code{num_df}
+and \code{den_df} are the corrected degrees of freedom used in the power
+calculation.
 }
 \description{
 Calculation-only search for the per-between-cell sample size needed to reach

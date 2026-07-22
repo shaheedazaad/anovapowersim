@@ -93,7 +93,7 @@ test_that("power_sensitivity is reproducible for a fixed seed", {
 })
 
 test_that("power_sensitivity reports an unreachable upper bound", {
-  expect_warning(
+  warnings <- testthat::capture_warnings(
     result <- power_sensitivity(
       between = c(group = 2),
       term = "group",
@@ -105,9 +105,12 @@ test_that("power_sensitivity reports an unreachable upper bound", {
       pes_max = 2e-6,
       progress = FALSE,
       seed = 7
-    ),
-    "pes_max"
+    )
   )
+  expect_true(any(grepl("pes_max", warnings, fixed = TRUE)))
+  expect_true(any(grepl(
+    "No SD or `covariance` was supplied", warnings, fixed = TRUE
+  )))
   expect_true(is.na(result$pes_needed))
   expect_true(2e-6 %in% result$results$target_pes)
 })
@@ -115,22 +118,28 @@ test_that("power_sensitivity reports an unreachable upper bound", {
 test_that("fixed-N APIs validate n and sensitivity controls", {
   common <- list(between = c(group = 2), term = "group", progress = FALSE)
   expect_error(
-    do.call(power_achieved, c(common, list(target_pes = 0.1, n = 1.5))),
+    suppressWarnings(do.call(
+      power_achieved, c(common, list(target_pes = 0.1, n = 1.5))
+    )),
     "single positive integer"
   )
   expect_error(
-    do.call(power_sensitivity, c(common, list(n = 5, pes_min = 0.2,
-                                              pes_max = 0.1))),
+    suppressWarnings(do.call(
+      power_sensitivity,
+      c(common, list(n = 5, pes_min = 0.2, pes_max = 0.1))
+    )),
     "smaller"
   )
   expect_error(
-    do.call(power_sensitivity, c(common, list(n = 5, pes_tol = 0))),
+    suppressWarnings(do.call(
+      power_sensitivity, c(common, list(n = 5, pes_tol = 0))
+    )),
     "positive finite"
   )
 })
 
 test_that("fixed-N APIs retain covariance and analysis controls", {
-  sigma <- diag(c(1, 1, 4))
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
   dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
   result <- quiet_power_achieved(
     within = c(time = 3),
@@ -145,7 +154,7 @@ test_that("fixed-N APIs retain covariance and analysis controls", {
     seed = 4
   )
 
-  expect_equal(result$epsilon, 0.8, tolerance = 1e-12)
+  expect_equal(result$epsilon, 0.6540541, tolerance = 1e-7)
   expect_true(result$custom_covariance)
   expect_identical(result$ss_type, "I")
   expect_true(result$gpower)
