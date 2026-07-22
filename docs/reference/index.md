@@ -50,8 +50,10 @@ Component functions for power analyses.
   : Create a balanced factorial ANOVA design specification
 - [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
   : Specify a within-subject covariance structure
+- [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
+  : Define a sparse relative cell-mean pattern
 - [`design_term_means()`](https://shaheedazaad.github.io/anovapowersim/reference/design_term_means.md)
-  : Build calibrated default means for a design term
+  : Build calibrated means for a design term
 - [`simulate_design_dataset()`](https://shaheedazaad.github.io/anovapowersim/reference/simulate_design_dataset.md)
   : Simulate data from a balanced ANOVA design
 - [`compute_scale_factor()`](https://shaheedazaad.github.io/anovapowersim/reference/compute_scale_factor.md)

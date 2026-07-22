@@ -2,7 +2,7 @@
 
 `anovapowersim` is designed to make determining a priori power for
 ANOVAs as easy as possible. You can add as many within/between factors
-with as many levels as you would like. There’s no need to estimate
+with as many levels as you would like. There's no need to estimate
 condition means, SDs, or repeated-measures correlations; just enter the
 target partial eta squared.
 
@@ -128,9 +128,6 @@ means it has some limitations for now. It does not support:
   Greenhouse-Geisser-corrected simulated tests are supported for
   sums-of-squares type II or III when a custom covariance implies
   `epsilon < 1`; type I tests remain uncorrected.
-- User-defined cell-mean patterns in the balanced target-PES functions.
-  Exact means and specific interaction shapes are supported by
-  [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md).
 - Heteroskedastic ANOVA. Simulation functions require one common
   marginal variance; unequal correlations and Greenhouse–Geisser
   corrections remain supported for repeated-measures designs.

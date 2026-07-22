@@ -2,7 +2,7 @@
 % Please edit documentation in R/power_curve.R
 \name{design_term_means}
 \alias{design_term_means}
-\title{Build calibrated default means for a design term}
+\title{Build calibrated means for a design term}
 \usage{
 design_term_means(
   design,
@@ -12,7 +12,8 @@ design_term_means(
   sd = 1,
   r = 0.5,
   gpower = FALSE,
-  ss_type = "III"
+  ss_type = "III",
+  means_pattern = NULL
 )
 }
 \arguments{
@@ -40,15 +41,20 @@ terms with more degrees of freedom; a warning is issued when
 \item{ss_type}{Sums-of-squares type for the tested ANOVA term. \code{"III"} is
 the default for order-invariant tests in unbalanced designs. Use \code{"I"} to
 reproduce sequential \code{stats::aov()} tests.}
+
+\item{means_pattern}{Optional relative mean shape from \code{\link[=means_pattern]{means_pattern()}}.
+Sparse values are projected onto \code{term} before calibration. If \code{NULL}, the
+deterministic linear/Kronecker default is used.}
 }
 \value{
 A numeric matrix of cell means, with rows indexing between cells and
 columns indexing within cells.
 }
 \description{
-Creates the default contrast pattern for one ANOVA term and scales it so an
-exact reference dataset has the requested partial eta squared under the
-supplied balanced design assumptions.
+Projects a supplied relative pattern (or uses the documented
+linear/Kronecker default) for one ANOVA term and scales it so an exact
+reference dataset has the requested partial eta squared under the supplied
+balanced design assumptions.
 }
 \examples{
 d <- balanced_anova_design(between = c(group = 2), within = c(time = 2))

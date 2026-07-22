@@ -45,7 +45,8 @@ power_achieved <- function(between = NULL,
                            parallel = FALSE,
                            cores = NULL,
                            seed = NULL,
-                           covariance = NULL) {
+                           covariance = NULL,
+                           means_pattern = NULL) {
   sd <- 1
   r <- 0.5
   setup <- prepare_power_curve_inputs(
@@ -62,7 +63,8 @@ power_achieved <- function(between = NULL,
     gpower = gpower,
     progress = progress,
     parallel = parallel,
-    cores = cores
+    cores = cores,
+    means_pattern = means_pattern
   )
   n <- validate_fixed_design_n(n, setup$spec)
   message_long_serial_run(setup$n_sims, setup$parallel)
@@ -90,7 +92,8 @@ power_achieved <- function(between = NULL,
     gpower = setup$gpower,
     progress_bar = if (setup$parallel) NULL else progress_bar,
     parallel = setup$parallel,
-    cores = setup$cores
+    cores = setup$cores,
+    resolved_means_pattern = setup$means_pattern
   )
   if (setup$parallel) tick_progress_bar(progress_bar)
   warn_power_disagreement(row, setup$n_sims)
@@ -110,6 +113,7 @@ power_achieved <- function(between = NULL,
       epsilon = setup$epsilon,
       covariance = setup$covariance,
       custom_covariance = setup$custom_covariance,
+      custom_means_pattern = setup$custom_means_pattern,
       ss_type = setup$ss_type,
       design = setup$spec,
       call = match.call()
@@ -176,7 +180,8 @@ power_sensitivity <- function(between = NULL,
                               parallel = FALSE,
                               cores = NULL,
                               seed = NULL,
-                              covariance = NULL) {
+                              covariance = NULL,
+                              means_pattern = NULL) {
   sd <- 1
   r <- 0.5
   setup <- prepare_balanced_power_inputs(
@@ -192,7 +197,8 @@ power_sensitivity <- function(between = NULL,
     gpower = gpower,
     progress = progress,
     parallel = parallel,
-    cores = cores
+    cores = cores,
+    means_pattern = means_pattern
   )
   assert_unit_interval(power, "power")
   if (power < 0.90) {
@@ -247,7 +253,8 @@ power_sensitivity <- function(between = NULL,
       gpower = setup$gpower,
       progress_bar = NULL,
       parallel = setup$parallel,
-      cores = setup$cores
+      cores = setup$cores,
+      resolved_means_pattern = setup$means_pattern
     )
     tibble::add_column(row, target_pes = as.numeric(pes), .before = 1L)
   }
@@ -312,6 +319,7 @@ power_sensitivity <- function(between = NULL,
       epsilon = setup$epsilon,
       covariance = setup$covariance,
       custom_covariance = setup$custom_covariance,
+      custom_means_pattern = setup$custom_means_pattern,
       ss_type = setup$ss_type,
       design = setup$spec,
       call = match.call()

@@ -3,10 +3,10 @@
 Simulation-based power estimation for balanced factorial designs. Users
 specify the between- and within-subject factors, the ANOVA term to test,
 a target partial eta squared, and explicit sample sizes. The function
-creates a default contrast pattern for the target term, scales it to the
-requested partial eta squared, simulates datasets, refits
-[`stats::aov()`](https://rdrr.io/r/stats/aov.html), and estimates power
-by counting `p < alpha`.
+projects an explicit relative means pattern (or uses the documented
+linear/Kronecker default), scales it to the requested partial eta
+squared, simulates datasets, refits the ANOVA, and estimates power by
+counting `p < alpha`.
 
 ## Usage
 
@@ -25,7 +25,8 @@ power_curve(
   parallel = FALSE,
   cores = NULL,
   seed = NULL,
-  covariance = NULL
+  covariance = NULL,
+  means_pattern = NULL
 )
 ```
 
@@ -128,6 +129,17 @@ power_curve(
   the uncorrected univariate test, so `power_sim` and `power_calc`
   estimate the same corrected test.
 
+- means_pattern:
+
+  Optional relative cell-mean shape created by
+  [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md).
+  The sparse values are projected onto `term`, normalized, and uniformly
+  rescaled to reach `target_pes`. If `NULL`, simulations use the
+  package's deterministic linear/Kronecker pattern. For multi-df
+  nonspherical within-subject terms, simulated power is conditional on
+  this direction, so an explicit pattern is recommended when the
+  expected shape is known.
+
 ## Value
 
 An `anovapowersim_curve` object. The `$results` tibble contains
@@ -141,7 +153,9 @@ representation, is used by adaptive searches. When `epsilon < 1`, the
 reported degrees of freedom and noncentrality are the corrected values
 used for `power_calc`, and `power_sim` (for `ss_type` `"III"`/`"II"`) is
 based on the Greenhouse–Geisser-corrected simulated p-value rather than
-the uncorrected univariate test.
+the uncorrected univariate test. Balanced simulation result objects also
+include `custom_means_pattern`, indicating whether the relative
+direction was supplied explicitly.
 
 ## Examples
 
@@ -164,5 +178,20 @@ the uncorrected univariate test.
       n_sims = 5000,
       parallel = TRUE,
       cores = 4,
+      seed = 123
+    )
+
+    power_curve(
+      within = c(time = 4),
+      term = "time",
+      target_pes = 0.15,
+      n_range = 30,
+      means_pattern = means_pattern(
+        time = 1, value = 0,
+        time = 2, value = 0.3,
+        time = 3, value = 0.5,
+        time = 4, value = 0.6
+      ),
+      n_sims = 1000,
       seed = 123
     )

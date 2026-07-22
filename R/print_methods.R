@@ -34,6 +34,12 @@ print.anovapowersim_curve <- function(x, ...) {
   } else {
     cat("  sims per cell size: ", x$n_sims, "\n", sep = "")
   }
+  if (!calc_only && !is.null(x$custom_means_pattern)) {
+    cat("  means pattern: ",
+        if (isTRUE(x$custom_means_pattern)) "custom" else
+          "default linear/Kronecker",
+        "\n", sep = "")
+  }
   if (isTRUE(x$gpower)) {
     cat("  G*Power convention: TRUE\n", sep = "")
   }
@@ -102,6 +108,17 @@ summary.anovapowersim_curve <- function(object, ...) {
   if (isTRUE(object$gpower)) {
     header <- append(header, c(gpower_convention = "TRUE"), after = 4L)
   }
+  if (!calc_only && !is.null(object$custom_means_pattern)) {
+    header <- append(
+      header,
+      c("means pattern" = if (isTRUE(object$custom_means_pattern)) {
+        "custom"
+      } else {
+        "default linear/Kronecker"
+      }),
+      after = 4L
+    )
+  }
   if (!is.null(object$epsilon) && is.finite(object$epsilon) &&
       object$epsilon < 1) {
     header <- append(
@@ -163,6 +180,12 @@ print.anovapowersim_achieved_power <- function(x, ...) {
   } else {
     cat("  simulations:      ", x$n_sims, "\n", sep = "")
   }
+  if (!calc_only && !is.null(x$custom_means_pattern)) {
+    cat("  means pattern:    ",
+        if (isTRUE(x$custom_means_pattern)) "custom" else
+          "default linear/Kronecker",
+        "\n", sep = "")
+  }
   cat("  achieved power:   ", sprintf("%.3f", x$achieved_power),
       if (calc_only) " (calculated)" else "", "\n", sep = "")
   cat("  calculated power: ", sprintf("%.3f", x$calculated_power), "\n", sep = "")
@@ -214,6 +237,17 @@ summary.anovapowersim_achieved_power <- function(object, ...) {
   )
   if (isTRUE(object$gpower)) {
     header <- append(header, c(gpower_convention = "TRUE"), after = 5L)
+  }
+  if (!calc_only && !is.null(object$custom_means_pattern)) {
+    header <- append(
+      header,
+      c("means pattern" = if (isTRUE(object$custom_means_pattern)) {
+        "custom"
+      } else {
+        "default linear/Kronecker"
+      }),
+      after = 5L
+    )
   }
   if (!is.null(object$epsilon) && is.finite(object$epsilon) &&
       object$epsilon < 1) {
@@ -285,6 +319,12 @@ print.anovapowersim_sensitivity <- function(x, ...) {
   } else {
     cat("  simulations/point:", x$n_sims, "\n", sep = " ")
   }
+  if (!calc_only && !is.null(x$custom_means_pattern)) {
+    cat("  means pattern:    ",
+        if (isTRUE(x$custom_means_pattern)) "custom" else
+          "default linear/Kronecker",
+        "\n", sep = "")
+  }
   if (isTRUE(x$gpower)) cat("  G*Power convention: TRUE\n")
   if (!is.null(x$epsilon) && is.finite(x$epsilon) && x$epsilon < 1) {
     cat("  epsilon:          ", format(x$epsilon), "\n", sep = "")
@@ -343,6 +383,17 @@ summary.anovapowersim_sensitivity <- function(object, ...) {
   )
   if (isTRUE(object$gpower)) {
     header <- append(header, c(gpower_convention = "TRUE"), after = 5L)
+  }
+  if (!calc_only && !is.null(object$custom_means_pattern)) {
+    header <- append(
+      header,
+      c("means pattern" = if (isTRUE(object$custom_means_pattern)) {
+        "custom"
+      } else {
+        "default linear/Kronecker"
+      }),
+      after = 5L
+    )
   }
   if (!is.null(object$epsilon) && is.finite(object$epsilon) &&
       object$epsilon < 1) {

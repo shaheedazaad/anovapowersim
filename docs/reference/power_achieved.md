@@ -22,7 +22,8 @@ power_achieved(
   parallel = FALSE,
   cores = NULL,
   seed = NULL,
-  covariance = NULL
+  covariance = NULL,
+  means_pattern = NULL
 )
 ```
 
@@ -125,6 +126,17 @@ power_achieved(
   the uncorrected univariate test, so `power_sim` and `power_calc`
   estimate the same corrected test.
 
+- means_pattern:
+
+  Optional relative cell-mean shape created by
+  [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md).
+  The sparse values are projected onto `term`, normalized, and uniformly
+  rescaled to reach `target_pes`. If `NULL`, simulations use the
+  package's deterministic linear/Kronecker pattern. For multi-df
+  nonspherical within-subject terms, simulated power is conditional on
+  this direction, so an explicit pattern is recommended when the
+  expected shape is known.
+
 ## Value
 
 An `anovapowersim_achieved_power` object. `$results` contains the
@@ -161,6 +173,7 @@ power_achieved(
 #>   target pes:       0.1400
 #>   alpha:            0.05
 #>   simulations:      100
+#>   means pattern:    default linear/Kronecker
 #>   achieved power:   0.640
 #>   calculated power: 0.679
 #>   SS type:          III

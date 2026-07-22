@@ -109,8 +109,6 @@ Azaad, S. (2026). A priori power analysis for ANOVA interaction effects with the
 - Huynh-Feldt corrections in power simulations. Greenhouse-Geisser-corrected
   simulated tests are supported for sums-of-squares type II or III when a
   custom covariance implies `epsilon < 1`; type I tests remain uncorrected.
-- User-defined cell-mean patterns in the balanced target-PES functions. Exact
-  means and specific interaction shapes are supported by `power_unbalanced()`.
 - Heteroskedastic ANOVA. Simulation functions require one common marginal
   variance; unequal correlations and Greenhouse--Geisser corrections remain
   supported for repeated-measures designs.

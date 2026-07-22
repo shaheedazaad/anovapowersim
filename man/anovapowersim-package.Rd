@@ -8,10 +8,11 @@
 \description{
 Simulation-based power analysis for balanced factorial ANOVA designs. Given
 between- and within-subject factor structures, a target partial eta squared,
-and sample sizes, \code{anovapowersim} generates default term-specific cell means,
+and sample sizes, \code{anovapowersim} generates term-specific cell means from an
+explicit \code{\link[=means_pattern]{means_pattern()}} or a documented linear/Kronecker default,
 simulates datasets using default or custom within-subject covariance
-structures, refits the ANOVA with \pkg{stats}, and returns tidy power
-estimates and a \code{ggplot2} power curve.
+structures, refits the ANOVA, and returns tidy power estimates and a
+\code{ggplot2} power curve.
 }
 \details{
 The main entry points are \code{\link[=power_n]{power_n()}} for required sample size,
@@ -27,6 +28,7 @@ custom simulations:
 \itemize{
 \item \code{\link[=balanced_anova_design]{balanced_anova_design()}}
 \item \code{\link[=design_term_means]{design_term_means()}}
+\item \code{\link[=means_pattern]{means_pattern()}}
 \item \code{\link[=simulate_design_dataset]{simulate_design_dataset()}}
 \item \code{\link[=within_covariance]{within_covariance()}}
 \item \code{\link[=cell_design]{cell_design()}}

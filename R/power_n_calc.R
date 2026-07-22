@@ -224,13 +224,13 @@ validate_analytic_epsilon <- function(epsilon, spec, term) {
     return(1)
   }
 
-  within_term_df <- prod(spec$level_counts[within_factors] - 1L)
-  lower_bound <- 1 / within_term_df
+  term_df <- within_term_df(spec = spec, term = term)
+  lower_bound <- 1 / term_df
   if (epsilon < lower_bound) {
     stop(
       "`epsilon` must be at least ", format(lower_bound),
       " for term '", term, "' because its within-subject component has ",
-      within_term_df, " degree", if (within_term_df == 1L) "" else "s",
+      term_df, " degree", if (term_df == 1L) "" else "s",
       " of freedom.",
       call. = FALSE
     )
@@ -295,8 +295,8 @@ analytic_term_dfs <- function(spec, term, n) {
 
   within_factors <- intersect(term_factors, spec$within)
   if (length(within_factors)) {
-    within_term_df <- prod(spec$level_counts[within_factors] - 1L)
-    den_df <- (total_n - spec$n_between_cells) * within_term_df
+    term_df <- within_term_df(spec = spec, term = term)
+    den_df <- (total_n - spec$n_between_cells) * term_df
   } else {
     den_df <- total_n - spec$n_between_cells
   }

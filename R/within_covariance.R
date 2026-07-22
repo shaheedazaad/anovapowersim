@@ -395,6 +395,21 @@ validate_positive_definite_covariance <- function(covariance) {
 }
 
 
+#' Degrees of freedom for the within-subject component of a term
+#'
+#' Purely between-subject terms have a within component of one for the purpose
+#' of shared epsilon and direction-sensitivity checks.
+#'
+#' @keywords internal
+#' @noRd
+within_term_df <- function(spec, term) {
+  term_factors <- strsplit(term, ":", fixed = TRUE)[[1L]]
+  within_factors <- intersect(term_factors, spec$within)
+  if (!length(within_factors)) return(1L)
+  as.integer(prod(spec$level_counts[within_factors] - 1L))
+}
+
+
 #' Calculate population Greenhouse--Geisser epsilon for a design term
 #'
 #' @keywords internal
@@ -404,8 +419,8 @@ covariance_term_epsilon <- function(covariance, spec, term) {
   within_term_factors <- intersect(term_factors, spec$within)
   if (!length(within_term_factors)) return(1)
 
-  within_term_df <- prod(spec$level_counts[within_term_factors] - 1L)
-  if (within_term_df == 1L) return(1)
+  term_df <- within_term_df(spec = spec, term = term)
+  if (term_df == 1L) return(1)
 
   contrast_matrix <- within_term_contrast_matrix(
     spec = spec,
@@ -414,11 +429,11 @@ covariance_term_epsilon <- function(covariance, spec, term) {
   projected <- contrast_matrix %*% covariance %*% t(contrast_matrix)
   trace_projected <- sum(diag(projected))
   epsilon <- trace_projected^2 /
-    (within_term_df * sum(projected * projected))
+    (term_df * sum(projected * projected))
 
   # Floating-point error can put a theoretically valid epsilon just outside
   # its bounds. Clamp only after the population value has been calculated.
-  lower_bound <- 1 / within_term_df
+  lower_bound <- 1 / term_df
   epsilon <- min(1, max(lower_bound, epsilon))
   if (abs(epsilon - 1) < 1e-12) epsilon <- 1
   as.numeric(epsilon)

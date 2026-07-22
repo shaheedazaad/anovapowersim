@@ -2,10 +2,12 @@
 
 Simulation-based power analysis for balanced factorial ANOVA designs.
 Given between- and within-subject factor structures, a target partial
-eta squared, and sample sizes, `anovapowersim` generates default
-term-specific cell means, simulates datasets using default or custom
-within-subject covariance structures, refits the ANOVA with stats, and
-returns tidy power estimates and a `ggplot2` power curve.
+eta squared, and sample sizes, `anovapowersim` generates term-specific
+cell means from an explicit
+[`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
+or a documented linear/Kronecker default, simulates datasets using
+default or custom within-subject covariance structures, refits the
+ANOVA, and returns tidy power estimates and a `ggplot2` power curve.
 
 ## Details
 
@@ -32,6 +34,8 @@ custom simulations:
 - [`balanced_anova_design()`](https://shaheedazaad.github.io/anovapowersim/reference/balanced_anova_design.md)
 
 - [`design_term_means()`](https://shaheedazaad.github.io/anovapowersim/reference/design_term_means.md)
+
+- [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
 
 - [`simulate_design_dataset()`](https://shaheedazaad.github.io/anovapowersim/reference/simulate_design_dataset.md)
 

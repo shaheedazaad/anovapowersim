@@ -8,5 +8,7 @@
 ^anovapowersim_cache$
 ^vignettes/anovapowersim_cache$
 ^cran-comments\.md$
+^issues\.md$
+^means_pattern_plan\.md$
 ^.*\.tar\.gz$
 ^.*\.Rcheck$

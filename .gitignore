@@ -9,3 +9,5 @@ testsim.R
 cran-comments.md
 anovapowersim_cache/
 vignettes/anovapowersim_cache/
+issues.md
+means_pattern_plan.md

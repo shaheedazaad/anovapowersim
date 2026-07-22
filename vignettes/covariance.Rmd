@@ -86,6 +86,126 @@ dataset's sample-estimated Greenhouse--Geisser-adjusted p-value for sums-of-
 squares type II or III. Type I tests remain uncorrected and issue a warning.
 Huynh--Feldt corrections are not currently implemented.
 
+## Why the relative means pattern matters
+
+For a within-subject term with more than one degree of freedom, the effect is
+a vector, `theta`, in a multidimensional contrast space. Its covariance in
+that space is `Psi`. Under sphericity, `Psi` is rotationally symmetric, so
+rotating a fixed-length `theta` does not change omnibus power. Under
+nonsphericity, the components have unequal weights: power depends on how
+`theta` aligns with the eigenspaces of `Psi`.
+
+This answers an initially surprising question: **If `target_pes` and the
+covariance are identical, how can power differ?** The conventional
+noncentral-F calculation uses a scalar aggregate signal magnitude related to
+`||theta||^2 / tr(Psi)`. It therefore reports the same `power_calc` for every
+fixed-length direction. The actual univariate repeated-measures statistic has
+weighted noncentral components under nonsphericity, so `power_sim` is
+conditional on the relative mean direction. Greenhouse--Geisser correction
+changes the reference degrees of freedom and rejection threshold; it does not
+remove the underlying direction sensitivity. The uncorrected type-I path can
+also be direction-sensitive.
+
+Use `means_pattern()` to state that relative shape. Sparse cells not listed
+have raw value zero. Factors outside the tested term are broadcast, and the
+raw values are projected exactly onto the requested term before one positive
+scale factor calibrates them to `target_pes`.
+
+```{r explicit-pattern, eval=FALSE}
+curve_pattern <- means_pattern(
+  time = 1, value =  1,
+  time = 2, value = -1,
+  time = 3, value = -1,
+  time = 4, value =  1
+)
+
+level_pattern <- means_pattern(time = "time4", value = 1)
+```
+
+The index `time = 4` and generated level name `time = "time4"` are
+equivalent. Multiplying every raw value by the same positive constant gives
+the same calibrated means. Reversing all signs gives the same omnibus power,
+and adding an intercept or lower-order effect does not change the projected
+target-term component. Projection may make final target-term means nonzero in
+cells omitted from the sparse input.
+
+The following validation audit used the same four-level AR(1) covariance,
+`target_pes = 0.20`, population epsilon `0.7244823`, `n = 25`, and
+`alpha = 0.05` for both patterns:
+
+```{r direction-audit, eval=FALSE}
+ar_covariance <- within_covariance(
+  sd = 1,
+  correlations = c(
+    "time1:time2" = 0.800,
+    "time1:time3" = 0.640,
+    "time1:time4" = 0.512,
+    "time2:time3" = 0.800,
+    "time2:time4" = 0.640,
+    "time3:time4" = 0.800
+  )
+)
+
+power_achieved(
+  within = c(time = 4), term = "time", target_pes = 0.20, n = 25,
+  covariance = ar_covariance, means_pattern = curve_pattern,
+  n_sims = 10000, seed = 55
+)
+
+power_achieved(
+  within = c(time = 4), term = "time", target_pes = 0.20, n = 25,
+  covariance = ar_covariance, means_pattern = level_pattern,
+  n_sims = 10000, seed = 55
+)
+```
+
+The observed corrected simulation powers were `power_sim = 0.945` and
+`power_sim = 0.896`, respectively, while `power_calc` was identical. The gap
+is the motivation for `means_pattern`; it is materially larger than Monte
+Carlo instability at this simulation count.
+
+## The default linear/Kronecker direction
+
+When `means_pattern = NULL`, the package uses a deterministic convention. For
+a factor with `L` generated levels in design order, it centers the scores
+`1, ..., L` and normalizes them to unit Euclidean length. Before normalization:
+
+| levels | centered scores |
+|---:|:---|
+| 2 | `(-1, 1)` |
+| 3 | `(-1, 0, 1)` |
+| 4 | `(-3, -1, 1, 3)` |
+| 5 | `(-2, -1, 0, 1, 2)` |
+
+Interaction directions are Kronecker products of the component vectors. In
+the package's documented cell order, the unnormalized 2-by-2 and 2-by-4
+patterns are
+
+```text
+ 1 -1       3  1 -1 -3
+-1  1      -3 -1  1  3
+```
+
+The complete pattern is normalized once after broadcasting across factors
+outside the term. This convention is readable for ordered factors such as
+time or dose, but it is not scientifically neutral, particularly for nominal
+multi-level factors. Supply an explicit pattern whenever the expected shape
+is known. A balanced simulation warns when the implicit default is
+consequential: a multi-df within component and population epsilon below one.
+Calculation-only functions do not simulate a direction and do not issue this
+warning.
+
+## The two sparse-cell interfaces
+
+`means_pattern()` ends each sparse definition in `value`, while
+`cell_design()` ends one in both `n` and `m`. Balanced designs store factor
+counts and generate names such as `time1`, so
+`means_pattern()` accepts either one-based indices or those exact generated
+names. In contrast, `cell_design()` defines an unbalanced design directly and
+can therefore retain arbitrary user labels. Literal `cell_design()` means
+already specify an effect direction, so `power_unbalanced()` needs no
+`means_pattern` argument or direction warning.
+
 ## Calculation-only and unbalanced designs
 
 Calculation-only functions accept a planned `epsilon` rather than a

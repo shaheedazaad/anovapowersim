@@ -2,6 +2,31 @@
 
 ## anovapowersim (development version)
 
+- Added
+  [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
+  and an optional `means_pattern` argument to
+  [`power_curve()`](https://shaheedazaad.github.io/anovapowersim/reference/power_curve.md),
+  [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md),
+  [`power_achieved()`](https://shaheedazaad.github.io/anovapowersim/reference/power_achieved.md),
+  [`power_sensitivity()`](https://shaheedazaad.github.io/anovapowersim/reference/power_sensitivity.md),
+  and
+  [`design_term_means()`](https://shaheedazaad.github.io/anovapowersim/reference/design_term_means.md).
+  Sparse relative cell values accept one-based indices or exact
+  generated balanced-design level names, are broadcast over omitted
+  factors, and are projected onto the requested ANOVA term before
+  uniform calibration to `target_pes`.
+- Balanced simulations now use a normalized centered-linear/Kronecker
+  direction when no explicit pattern is supplied. Results record and
+  print whether this documented default or a custom pattern was used.
+- Balanced simulations now warn when an implicit default direction is
+  consequential: the tested within-subject component has more than one
+  degree of freedom and its population Greenhouse–Geisser epsilon is
+  below one. Under nonsphericity, `power_sim` can depend on mean
+  direction even when `target_pes` and covariance are fixed.
+  Calculation-only functions retain the conventional
+  direction-insensitive noncentral-F approximation and do not warn;
+  [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md)
+  already receives literal means.
 - The `gpower = TRUE` warning is now issued whenever `gpower = TRUE` is
   used, not only for within-subject terms with more than one degree of
   freedom. G\*Power’s estimates can differ from `target_pes` more

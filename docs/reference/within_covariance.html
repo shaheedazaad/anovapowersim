@@ -118,34 +118,34 @@ it to <code>power_calc</code>.</p>
 <span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">123</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>13 of 15 within-subject correlations were not explicitly defined; `default_correlation = 0.5` is used only for those undefined pairs. Explicitly defined correlations are unchanged.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>`power_sim` and `power_calc` differ by more than 5 percentage points for n_per_cell = 45 (largest difference = 0.061). Try increasing `n_sims` for a more stable simulation estimate.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>This multi-df within-subject term is nonspherical, so simulated power depends on the relative cell-mean pattern. `power_sim` currently uses the package's default linear/Kronecker pattern; a different pattern with the same `target_pes` and covariance can produce different power. Supply `means_pattern` to describe the expected relative mean shape.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Requested precision band was not reached for target power 0.900 with tolerance 0.030; reporting the closest explicitly simulated n_per_cell at or above target power: 47 (power_sim = 0.940).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;anovapowersim_curve&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   term:          'time:condition'</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   target power:  0.900</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   alpha:         0.05</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   effect size:   pes = 0.14</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   n values:      6 per-cell sample sizes visited</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   n values:      5 per-cell sample sizes visited</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sims per cell size: 100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   means pattern: default linear/Kronecker</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   epsilon:       0.9795918</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   covariance:    custom 6 x 6 within-subject matrix</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   SS type:       III</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   n needed for between-subjects cell: 46</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   total N needed: 46</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   n needed for between-subjects cell: 47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   total N needed: 47</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  n_per_cell total_n n_sims valid_sims failed_sims   epsilon   num_df    den_df</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          33      33    100        100           0 0.9795918 1.959184  62.69388</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          45      45    100        100           0 0.9795918 1.959184  86.20408</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          46      46    100        100           0 0.9795918 1.959184  88.16327</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          50      50    100        100           0 0.9795918 1.959184  96.00000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          52      52    100        100           0 0.9795918 1.959184  99.91837</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          47      47    100        100           0 0.9795918 1.959184  90.12245</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          53      53    100        100           0 0.9795918 1.959184 101.87755</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          66      66    100        100           0 0.9795918 1.959184 127.34694</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ncp power_calc power_sim</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  10.206      0.807     0.770</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  14.033      0.921     0.860</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  14.352      0.927     0.910</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  15.628      0.947     0.950</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  16.266      0.955     0.920</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  20.731      0.987     1.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  14.352      0.927     0.890</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  14.671      0.933     0.940</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  16.585      0.959     0.980</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  20.731      0.987     0.990</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

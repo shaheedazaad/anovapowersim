@@ -138,6 +138,142 @@ uncorrected and issue a warning. Huynh–Feldt corrections are not
 currently implemented.</p>
 </div>
 <div class="section level2">
+<h2 id="why-the-relative-means-pattern-matters">Why the relative means pattern matters<a class="anchor" aria-label="anchor" href="#why-the-relative-means-pattern-matters"></a>
+</h2>
+<p>For a within-subject term with more than one degree of freedom, the
+effect is a vector, <code>theta</code>, in a multidimensional contrast
+space. Its covariance in that space is <code>Psi</code>. Under
+sphericity, <code>Psi</code> is rotationally symmetric, so rotating a
+fixed-length <code>theta</code> does not change omnibus power. Under
+nonsphericity, the components have unequal weights: power depends on how
+<code>theta</code> aligns with the eigenspaces of <code>Psi</code>.</p>
+<p>This answers an initially surprising question: <strong>If
+<code>target_pes</code> and the covariance are identical, how can power
+differ?</strong> The conventional noncentral-F calculation uses a scalar
+aggregate signal magnitude related to
+<code>||theta||^2 / tr(Psi)</code>. It therefore reports the same
+<code>power_calc</code> for every fixed-length direction. The actual
+univariate repeated-measures statistic has weighted noncentral
+components under nonsphericity, so <code>power_sim</code> is conditional
+on the relative mean direction. Greenhouse–Geisser correction changes
+the reference degrees of freedom and rejection threshold; it does not
+remove the underlying direction sensitivity. The uncorrected type-I path
+can also be direction-sensitive.</p>
+<p>Use <code><a href="../reference/means_pattern.html">means_pattern()</a></code> to state that relative shape. Sparse
+cells not listed have raw value zero. Factors outside the tested term
+are broadcast, and the raw values are projected exactly onto the
+requested term before one positive scale factor calibrates them to
+<code>target_pes</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">curve_pattern</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/means_pattern.html">means_pattern</a></span><span class="op">(</span></span>
+<span>  time <span class="op">=</span> <span class="fl">1</span>, value <span class="op">=</span>  <span class="fl">1</span>,</span>
+<span>  time <span class="op">=</span> <span class="fl">2</span>, value <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
+<span>  time <span class="op">=</span> <span class="fl">3</span>, value <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
+<span>  time <span class="op">=</span> <span class="fl">4</span>, value <span class="op">=</span>  <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">level_pattern</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/means_pattern.html">means_pattern</a></span><span class="op">(</span>time <span class="op">=</span> <span class="st">"time4"</span>, value <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<p>The index <code>time = 4</code> and generated level name
+<code>time = "time4"</code> are equivalent. Multiplying every raw value
+by the same positive constant gives the same calibrated means. Reversing
+all signs gives the same omnibus power, and adding an intercept or
+lower-order effect does not change the projected target-term component.
+Projection may make final target-term means nonzero in cells omitted
+from the sparse input.</p>
+<p>The following validation audit used the same four-level AR(1)
+covariance, <code>target_pes = 0.20</code>, population epsilon
+<code>0.7244823</code>, <code>n = 25</code>, and
+<code>alpha = 0.05</code> for both patterns:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ar_covariance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/within_covariance.html">within_covariance</a></span><span class="op">(</span></span>
+<span>  sd <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  correlations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"time1:time2"</span> <span class="op">=</span> <span class="fl">0.800</span>,</span>
+<span>    <span class="st">"time1:time3"</span> <span class="op">=</span> <span class="fl">0.640</span>,</span>
+<span>    <span class="st">"time1:time4"</span> <span class="op">=</span> <span class="fl">0.512</span>,</span>
+<span>    <span class="st">"time2:time3"</span> <span class="op">=</span> <span class="fl">0.800</span>,</span>
+<span>    <span class="st">"time2:time4"</span> <span class="op">=</span> <span class="fl">0.640</span>,</span>
+<span>    <span class="st">"time3:time4"</span> <span class="op">=</span> <span class="fl">0.800</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/power_achieved.html">power_achieved</a></span><span class="op">(</span></span>
+<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, term <span class="op">=</span> <span class="st">"time"</span>, target_pes <span class="op">=</span> <span class="fl">0.20</span>, n <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  covariance <span class="op">=</span> <span class="va">ar_covariance</span>, means_pattern <span class="op">=</span> <span class="va">curve_pattern</span>,</span>
+<span>  n_sims <span class="op">=</span> <span class="fl">10000</span>, seed <span class="op">=</span> <span class="fl">55</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/power_achieved.html">power_achieved</a></span><span class="op">(</span></span>
+<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, term <span class="op">=</span> <span class="st">"time"</span>, target_pes <span class="op">=</span> <span class="fl">0.20</span>, n <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  covariance <span class="op">=</span> <span class="va">ar_covariance</span>, means_pattern <span class="op">=</span> <span class="va">level_pattern</span>,</span>
+<span>  n_sims <span class="op">=</span> <span class="fl">10000</span>, seed <span class="op">=</span> <span class="fl">55</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The observed corrected simulation powers were
+<code>power_sim = 0.945</code> and <code>power_sim = 0.896</code>,
+respectively, while <code>power_calc</code> was identical. The gap is
+the motivation for <code>means_pattern</code>; it is materially larger
+than Monte Carlo instability at this simulation count.</p>
+</div>
+<div class="section level2">
+<h2 id="the-default-linearkronecker-direction">The default linear/Kronecker direction<a class="anchor" aria-label="anchor" href="#the-default-linearkronecker-direction"></a>
+</h2>
+<p>When <code>means_pattern = NULL</code>, the package uses a
+deterministic convention. For a factor with <code>L</code> generated
+levels in design order, it centers the scores <code>1, ..., L</code> and
+normalizes them to unit Euclidean length. Before normalization:</p>
+<table class="table">
+<thead><tr class="header">
+<th align="right">levels</th>
+<th align="left">centered scores</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="right">2</td>
+<td align="left"><code>(-1, 1)</code></td>
+</tr>
+<tr class="even">
+<td align="right">3</td>
+<td align="left"><code>(-1, 0, 1)</code></td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="left"><code>(-3, -1, 1, 3)</code></td>
+</tr>
+<tr class="even">
+<td align="right">5</td>
+<td align="left"><code>(-2, -1, 0, 1, 2)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Interaction directions are Kronecker products of the component
+vectors. In the package’s documented cell order, the unnormalized 2-by-2
+and 2-by-4 patterns are</p>
+<pre class="text"><code> 1 -1       3  1 -1 -3
+-1  1      -3 -1  1  3</code></pre>
+<p>The complete pattern is normalized once after broadcasting across
+factors outside the term. This convention is readable for ordered
+factors such as time or dose, but it is not scientifically neutral,
+particularly for nominal multi-level factors. Supply an explicit pattern
+whenever the expected shape is known. A balanced simulation warns when
+the implicit default is consequential: a multi-df within component and
+population epsilon below one. Calculation-only functions do not simulate
+a direction and do not issue this warning.</p>
+</div>
+<div class="section level2">
+<h2 id="the-two-sparse-cell-interfaces">The two sparse-cell interfaces<a class="anchor" aria-label="anchor" href="#the-two-sparse-cell-interfaces"></a>
+</h2>
+<p><code><a href="../reference/means_pattern.html">means_pattern()</a></code> ends each sparse definition in
+<code>value</code>, while <code><a href="../reference/cell_design.html">cell_design()</a></code> ends one in both
+<code>n</code> and <code>m</code>. Balanced designs store factor counts
+and generate names such as <code>time1</code>, so
+<code><a href="../reference/means_pattern.html">means_pattern()</a></code> accepts either one-based indices or those
+exact generated names. In contrast, <code><a href="../reference/cell_design.html">cell_design()</a></code> defines
+an unbalanced design directly and can therefore retain arbitrary user
+labels. Literal <code><a href="../reference/cell_design.html">cell_design()</a></code> means already specify an
+effect direction, so <code><a href="../reference/power_unbalanced.html">power_unbalanced()</a></code> needs no
+<code>means_pattern</code> argument or direction warning.</p>
+</div>
+<div class="section level2">
 <h2 id="calculation-only-and-unbalanced-designs">Calculation-only and unbalanced designs<a class="anchor" aria-label="anchor" href="#calculation-only-and-unbalanced-designs"></a>
 </h2>
 <p>Calculation-only functions accept a planned <code>epsilon</code>

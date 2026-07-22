@@ -72,7 +72,8 @@ effect-size bracket using interpolation with midpoint fallback.</p>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  covariance <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  covariance <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  means_pattern <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -185,6 +186,16 @@ simulated dataset's Greenhouse–Geisser-corrected p-value (from
 <code><a href="https://rdrr.io/pkg/car/man/Anova.html" class="external-link">car::Anova()</a></code>) rather than the uncorrected univariate test, so <code>power_sim</code>
 and <code>power_calc</code> estimate the same corrected test.</p></dd>
 
+
+<dt id="arg-means-pattern">means_pattern<a class="anchor" aria-label="anchor" href="#arg-means-pattern"></a></dt>
+<dd><p>Optional relative cell-mean shape created by
+<code><a href="means_pattern.html">means_pattern()</a></code>. The sparse values are projected onto <code>term</code>, normalized,
+and uniformly rescaled to reach <code>target_pes</code>. If <code>NULL</code>, simulations use
+the package's deterministic linear/Kronecker pattern. For multi-df
+nonspherical within-subject terms, simulated power is conditional on this
+direction, so an explicit pattern is recommended when the expected shape
+is known.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -231,6 +242,7 @@ change.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   final width:      0.007048313</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   converged:        yes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   simulations/point: 100 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   means pattern:    default linear/Kronecker</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   SS type:          III</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  target_pes n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df</span>

@@ -70,33 +70,33 @@ power_n(
   seed = 123
 )
 #> Warning: 13 of 15 within-subject correlations were not explicitly defined; `default_correlation = 0.5` is used only for those undefined pairs. Explicitly defined correlations are unchanged.
-#> Warning: `power_sim` and `power_calc` differ by more than 5 percentage points for n_per_cell = 45 (largest difference = 0.061). Try increasing `n_sims` for a more stable simulation estimate.
+#> Warning: This multi-df within-subject term is nonspherical, so simulated power depends on the relative cell-mean pattern. `power_sim` currently uses the package's default linear/Kronecker pattern; a different pattern with the same `target_pes` and covariance can produce different power. Supply `means_pattern` to describe the expected relative mean shape.
+#> Warning: Requested precision band was not reached for target power 0.900 with tolerance 0.030; reporting the closest explicitly simulated n_per_cell at or above target power: 47 (power_sim = 0.940).
 #> <anovapowersim_curve>
 #>   term:          'time:condition'
 #>   target power:  0.900
 #>   alpha:         0.05
 #>   effect size:   pes = 0.14
-#>   n values:      6 per-cell sample sizes visited
+#>   n values:      5 per-cell sample sizes visited
 #>   sims per cell size: 100
+#>   means pattern: default linear/Kronecker
 #>   epsilon:       0.9795918
 #>   covariance:    custom 6 x 6 within-subject matrix
 #>   SS type:       III
-#>   n needed for between-subjects cell: 46
-#>   total N needed: 46
+#>   n needed for between-subjects cell: 47
+#>   total N needed: 47
 #> 
 #>  n_per_cell total_n n_sims valid_sims failed_sims   epsilon   num_df    den_df
 #>          33      33    100        100           0 0.9795918 1.959184  62.69388
-#>          45      45    100        100           0 0.9795918 1.959184  86.20408
 #>          46      46    100        100           0 0.9795918 1.959184  88.16327
-#>          50      50    100        100           0 0.9795918 1.959184  96.00000
-#>          52      52    100        100           0 0.9795918 1.959184  99.91837
+#>          47      47    100        100           0 0.9795918 1.959184  90.12245
+#>          53      53    100        100           0 0.9795918 1.959184 101.87755
 #>          66      66    100        100           0 0.9795918 1.959184 127.34694
 #>     ncp power_calc power_sim
 #>  10.206      0.807     0.770
-#>  14.033      0.921     0.860
-#>  14.352      0.927     0.910
-#>  15.628      0.947     0.950
-#>  16.266      0.955     0.920
-#>  20.731      0.987     1.000
+#>  14.352      0.927     0.890
+#>  14.671      0.933     0.940
+#>  16.585      0.959     0.980
+#>  20.731      0.987     0.990
 # }
 ```

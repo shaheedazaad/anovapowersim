@@ -2,9 +2,12 @@
 
 `anovapowersim` is designed to make determining a priori power for
 ANOVAs as easy as possible. You can add as many within/between factors
-with as many levels as you would like. There’s no need to estimate
-condition means, SDs, or repeated-measures correlations; just enter the
-target partial eta squared.
+with as many levels as you would like. For spherical designs, a target
+partial eta squared is enough to determine the omnibus effect magnitude.
+For multi-df nonspherical within-subject terms, also describe the
+expected relative mean shape with
+[`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
+because simulated power can depend on its direction.
 
 The package simulates data and estimates power based on the specified
 design. It also provides direct power calculations for comparison.
@@ -31,6 +34,28 @@ power_n(
 )
 ```
 
+Balanced simulations use a documented centered-linear/Kronecker pattern
+when `means_pattern` is omitted. This is a reproducible convention, not
+a neutral scientific assumption. For example, a four-session trend can
+be made explicit:
+
+``` r
+
+means_pattern(
+  time = 1, value = 0,
+  time = 2, value = 0.3,
+  time = 3, value = 0.5,
+  time = 4, value = 0.6
+)
+```
+
+The values specify only relative shape; the pattern is projected onto
+the tested term and rescaled to `target_pes`. See [Covariance and
+nonsphericity](https://shaheedazaad.github.io/anovapowersim/articles/covariance.html)
+for why two patterns with identical `target_pes` and covariance can have
+different `power_sim`, while `power_calc` remains the same conventional
+direction-insensitive approximation.
+
 ``` text
 #><anovapowersim_curve>
 #>  term:          'group:stim:cond'
@@ -39,6 +64,7 @@ power_n(
 #>  effect size:   pes = 0.08
 #>  n values:      8 per-cell sample sizes visited
 #>  sims per cell size: 5000
+#>  means pattern: default linear/Kronecker
 #>  SS type:       III
 #>  n needed for between-subjects cell: 38
 #>  total N needed: 76
@@ -128,9 +154,6 @@ means it has some limitations for now. It does not support:
   Greenhouse-Geisser-corrected simulated tests are supported for
   sums-of-squares type II or III when a custom covariance implies
   `epsilon < 1`; type I tests remain uncorrected.
-- User-defined cell-mean patterns in the balanced target-PES functions.
-  Exact means and specific interaction shapes are supported by
-  [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md).
 - Heteroskedastic ANOVA. Simulation functions require one common
   marginal variance; unequal correlations and Greenhouse–Geisser
   corrections remain supported for repeated-measures designs.
@@ -199,8 +222,10 @@ Component functions for power analyses.
   : Create a balanced factorial ANOVA design specification
 - [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
   : Specify a within-subject covariance structure
+- [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
+  : Define a sparse relative cell-mean pattern
 - [`design_term_means()`](https://shaheedazaad.github.io/anovapowersim/reference/design_term_means.md)
-  : Build calibrated default means for a design term
+  : Build calibrated means for a design term
 - [`simulate_design_dataset()`](https://shaheedazaad.github.io/anovapowersim/reference/simulate_design_dataset.md)
   : Simulate data from a balanced ANOVA design
 - [`compute_scale_factor()`](https://shaheedazaad.github.io/anovapowersim/reference/compute_scale_factor.md)

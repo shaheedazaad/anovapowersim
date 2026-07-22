@@ -1,8 +1,9 @@
-# Build calibrated default means for a design term
+# Build calibrated means for a design term
 
-Creates the default contrast pattern for one ANOVA term and scales it so
-an exact reference dataset has the requested partial eta squared under
-the supplied balanced design assumptions.
+Projects a supplied relative pattern (or uses the documented
+linear/Kronecker default) for one ANOVA term and scales it so an exact
+reference dataset has the requested partial eta squared under the
+supplied balanced design assumptions.
 
 ## Usage
 
@@ -15,7 +16,8 @@ design_term_means(
   sd = 1,
   r = 0.5,
   gpower = FALSE,
-  ss_type = "III"
+  ss_type = "III",
+  means_pattern = NULL
 )
 ```
 
@@ -63,6 +65,13 @@ design_term_means(
   for order-invariant tests in unbalanced designs. Use `"I"` to
   reproduce sequential
   [`stats::aov()`](https://rdrr.io/r/stats/aov.html) tests.
+
+- means_pattern:
+
+  Optional relative mean shape from
+  [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md).
+  Sparse values are projected onto `term` before calibration. If `NULL`,
+  the deterministic linear/Kronecker default is used.
 
 ## Value
 

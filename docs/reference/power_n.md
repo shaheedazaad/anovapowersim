@@ -26,7 +26,8 @@ power_n(
   parallel = FALSE,
   cores = NULL,
   seed = NULL,
-  covariance = NULL
+  covariance = NULL,
+  means_pattern = NULL
 )
 ```
 
@@ -143,6 +144,17 @@ power_n(
   [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html)) rather than
   the uncorrected univariate test, so `power_sim` and `power_calc`
   estimate the same corrected test.
+
+- means_pattern:
+
+  Optional relative cell-mean shape created by
+  [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md).
+  The sparse values are projected onto `term`, normalized, and uniformly
+  rescaled to reach `target_pes`. If `NULL`, simulations use the
+  package's deterministic linear/Kronecker pattern. For multi-df
+  nonspherical within-subject terms, simulated power is conditional on
+  this direction, so an explicit pattern is recommended when the
+  expected shape is known.
 
 ## Value
 

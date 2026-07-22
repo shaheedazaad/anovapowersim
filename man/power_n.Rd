@@ -21,7 +21,8 @@ power_n(
   parallel = FALSE,
   cores = NULL,
   seed = NULL,
-  covariance = NULL
+  covariance = NULL,
+  means_pattern = NULL
 )
 }
 \arguments{
@@ -98,6 +99,14 @@ that population epsilon is below \code{1}, \code{power_sim} is also based on eac
 simulated dataset's Greenhouse--Geisser-corrected p-value (from
 \code{car::Anova()}) rather than the uncorrected univariate test, so \code{power_sim}
 and \code{power_calc} estimate the same corrected test.}
+
+\item{means_pattern}{Optional relative cell-mean shape created by
+\code{\link[=means_pattern]{means_pattern()}}. The sparse values are projected onto \code{term}, normalized,
+and uniformly rescaled to reach \code{target_pes}. If \code{NULL}, simulations use
+the package's deterministic linear/Kronecker pattern. For multi-df
+nonspherical within-subject terms, simulated power is conditional on this
+direction, so an explicit pattern is recommended when the expected shape
+is known.}
 }
 \value{
 An \code{anovapowersim_curve} object with \code{n_needed} and

@@ -26,7 +26,8 @@ power_sensitivity(
   parallel = FALSE,
   cores = NULL,
   seed = NULL,
-  covariance = NULL
+  covariance = NULL,
+  means_pattern = NULL
 )
 ```
 
@@ -141,6 +142,17 @@ power_sensitivity(
   the uncorrected univariate test, so `power_sim` and `power_calc`
   estimate the same corrected test.
 
+- means_pattern:
+
+  Optional relative cell-mean shape created by
+  [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md).
+  The sparse values are projected onto `term`, normalized, and uniformly
+  rescaled to reach `target_pes`. If `NULL`, simulations use the
+  package's deterministic linear/Kronecker pattern. For multi-df
+  nonspherical within-subject terms, simulated power is conditional on
+  this direction, so an explicit pattern is recommended when the
+  expected shape is known.
+
 ## Value
 
 An `anovapowersim_sensitivity` object. `$pes_needed` is the explicitly
@@ -185,6 +197,7 @@ power_sensitivity(
 #>   final width:      0.007048313
 #>   converged:        yes
 #>   simulations/point: 100 
+#>   means pattern:    default linear/Kronecker
 #>   SS type:          III
 #> 
 #>  target_pes n_per_cell total_n n_sims valid_sims failed_sims epsilon num_df

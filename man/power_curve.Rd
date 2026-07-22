@@ -18,7 +18,8 @@ power_curve(
   parallel = FALSE,
   cores = NULL,
   seed = NULL,
-  covariance = NULL
+  covariance = NULL,
+  means_pattern = NULL
 )
 }
 \arguments{
@@ -86,6 +87,14 @@ that population epsilon is below \code{1}, \code{power_sim} is also based on eac
 simulated dataset's Greenhouse--Geisser-corrected p-value (from
 \code{car::Anova()}) rather than the uncorrected univariate test, so \code{power_sim}
 and \code{power_calc} estimate the same corrected test.}
+
+\item{means_pattern}{Optional relative cell-mean shape created by
+\code{\link[=means_pattern]{means_pattern()}}. The sparse values are projected onto \code{term}, normalized,
+and uniformly rescaled to reach \code{target_pes}. If \code{NULL}, simulations use
+the package's deterministic linear/Kronecker pattern. For multi-df
+nonspherical within-subject terms, simulated power is conditional on this
+direction, so an explicit pattern is recommended when the expected shape
+is known.}
 }
 \value{
 An \code{anovapowersim_curve} object. The \verb{$results} tibble contains
@@ -99,15 +108,18 @@ by adaptive searches. When \code{epsilon < 1}, the reported degrees of freedom
 and noncentrality are the corrected values used for \code{power_calc}, and
 \code{power_sim} (for \code{ss_type} \code{"III"}/\code{"II"}) is based on the
 Greenhouse--Geisser-corrected simulated p-value rather than the
-uncorrected univariate test.
+uncorrected univariate test. Balanced simulation result objects also
+include \code{custom_means_pattern}, indicating whether the relative direction
+was supplied explicitly.
 }
 \description{
 Simulation-based power estimation for balanced factorial designs. Users
 specify the between- and within-subject factors, the ANOVA term to test, a
-target partial eta squared, and explicit sample sizes. The function creates
-a default contrast pattern for the target term, scales it to the requested
-partial eta squared, simulates datasets, refits \code{stats::aov()}, and estimates
-power by counting \code{p < alpha}.
+target partial eta squared, and explicit sample sizes. The function projects
+an explicit relative means pattern (or uses the documented
+linear/Kronecker default), scales it to the requested partial eta squared,
+simulates datasets, refits the ANOVA, and estimates power by counting
+\code{p < alpha}.
 }
 \section{Examples}{
 
@@ -131,6 +143,21 @@ power_curve(
   n_sims = 5000,
   parallel = TRUE,
   cores = 4,
+  seed = 123
+)
+
+power_curve(
+  within = c(time = 4),
+  term = "time",
+  target_pes = 0.15,
+  n_range = 30,
+  means_pattern = means_pattern(
+    time = 1, value = 0,
+    time = 2, value = 0.3,
+    time = 3, value = 0.5,
+    time = 4, value = 0.6
+  ),
+  n_sims = 1000,
   seed = 123
 )
 }\if{html}{\out{</div>}}
