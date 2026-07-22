@@ -2,7 +2,7 @@
 
 `anovapowersim` is designed to make determining a priori power for
 ANOVAs as easy as possible. You can add as many within/between factors
-with as many levels as you would like. There's no need to estimate
+with as many levels as you would like. There’s no need to estimate
 condition means, SDs, or repeated-measures correlations; just enter the
 target partial eta squared.
 
