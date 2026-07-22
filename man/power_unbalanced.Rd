@@ -6,7 +6,6 @@
 \usage{
 power_unbalanced(
   design,
-  within = NULL,
   term,
   covariance = NULL,
   n_sims = 10000,
@@ -19,16 +18,16 @@ power_unbalanced(
 )
 }
 \arguments{
-\item{design}{A complete design table created by \code{\link[=cell_design]{cell_design()}}.}
-
-\item{within}{Character vector naming factors in \code{design} that are measured
-within subjects. Use \code{NULL} for a purely between-subject design.}
+\item{design}{A complete design table created by \code{\link[=cell_design]{cell_design()}}.
+Within-subject factors are read from the design's \code{within} attribute
+(set via \code{\link[=cell_design]{cell_design()}}'s \code{within} argument), not supplied here.}
 
 \item{term}{Character scalar naming the ANOVA term to test.}
 
 \item{covariance}{Optional correlation specification created by
-\code{\link[=unbalanced_covariance]{unbalanced_covariance()}}. It can only be supplied when \code{within} is used.
-The default \code{NULL} uses a correlation of \code{0.5} between within-subject
+\code{\link[=unbalanced_covariance]{unbalanced_covariance()}}. It can only be supplied when \code{design} has
+within-subject factors. The default \code{NULL} uses a correlation of \code{0.5}
+between within-subject
 measurements. Standard deviations always come from \code{design} and may
 differ between between-subject cells. If the term's population
 covariance is non-spherical for any cell, \code{power_sim} is based on each
@@ -80,11 +79,11 @@ design <- cell_design(
   group = "control", time = "pre",  n = 12, m = 10, sd = 2.0,
   group = "control", time = "post", n = 12, m = 11, sd = 2.2,
   group = "treatment", time = "pre",  n = 18, m = 10, sd = 2.4,
-  group = "treatment", time = "post", n = 18, m = 13, sd = 2.8
+  group = "treatment", time = "post", n = 18, m = 13, sd = 2.8,
+  within = "time"
 )
 power_unbalanced(
   design = design,
-  within = "time",
   term = "group:time",
   covariance = unbalanced_covariance(
     correlations = c("pre:post" = 0.7)

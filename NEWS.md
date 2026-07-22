@@ -12,6 +12,24 @@
   Greenhouse--Geisser-corrected simulated p-value whenever that epsilon is
   below 1 (requires `ss_type` `"III"` or `"II"`; a warning is issued if
   `ss_type = "I"` is combined with a non-spherical design).
+* **Breaking (experimental):** `cell_design()` now takes a `within` argument
+  (character vector of within-subject factor names, or `NULL`) and stores it
+  on the returned design; `power_unbalanced()` no longer accepts `within` and
+  reads it from the design instead. Move `within = ...` from
+  `power_unbalanced()` into `cell_design()`.
+* `cell_design()` gained `default_n`, `default_m`, and `default_sd`. Supply
+  all three to auto-fill any missing cells in the complete factorial design;
+  supplying only some of the three is an error, and supplying none requires
+  every cell to be defined explicitly (as before).
+* `cell_design()` now reports the exact missing factor-level combinations
+  when a design is incomplete, instead of only a count, and errors clearly
+  when a factor has fewer than two observed levels (previously this only
+  surfaced later, inside `power_unbalanced()`, with an unhelpful low-level
+  contrast-fitting error).
+* The within-subject `n`-consistency check (that `n` is identical across all
+  within-subject rows of the same between-subject cell) now runs in
+  `cell_design()` at construction time; it previously only surfaced inside
+  `power_unbalanced()`.
 * Added the experimental, development-version-only `power_achieved()` function
   for simulation-based achieved-power estimation at a fixed sample size and
   partial eta squared.
@@ -30,6 +48,18 @@
   structures. These functions now derive a term-specific population
   Greenhouse--Geisser epsilon from that covariance and apply it to their
   calculated power.
+* `power_curve()`, `power_n()`, `power_achieved()`, `power_sensitivity()`,
+  `power_n_calc()`, `power_achieved_calc()`, `power_sensitivity_calc()`, and
+  `design_term_means()` now warn when `gpower = TRUE` is combined with a term
+  whose within-subject component has more than one degree of freedom (i.e. a
+  within factor with more than two levels). In that case `target_pes` under
+  `gpower = TRUE` does not equal the partial eta squared actually achieved --
+  this mirrors a property of G*Power's own "as in Cohen (1988)"
+  repeated-measures convention, which does not adjust for the number of
+  measurements, rather than a bug in this package (`gpower = TRUE` remains an
+  exact replica of G*Power's own noncentrality formula). Use the default
+  `gpower = FALSE` when `target_pes` should match your reported or expected
+  partial eta squared exactly.
 * When a supplied covariance yields a population Greenhouse--Geisser epsilon
   below 1, `power_curve()`, `power_n()`, `power_achieved()`, and
   `power_sensitivity()` now base `power_sim` on each simulated dataset's

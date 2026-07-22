@@ -86,12 +86,13 @@ test_that("power_unbalanced combines cell SDs with within correlations", {
     group = "control", time = "pre",  n = 7, m = 10, sd = 2.0,
     group = "control", time = "post", n = 7, m = 11, sd = 2.5,
     group = "treated", time = "pre",  n = 9, m = 10, sd = 3.0,
-    group = "treated", time = "post", n = 9, m = 13, sd = 4.0
+    group = "treated", time = "post", n = 9, m = 13, sd = 4.0,
+    within = "time"
   )
   covariance <- unbalanced_covariance(
     correlations = c("pre:post" = 0.6)
   )
-  spec <- anovapowersim:::prepare_unbalanced_means_design(design, "time")
+  spec <- anovapowersim:::prepare_unbalanced_means_design(design)
   spec$within_correlation <-
     anovapowersim:::resolve_unbalanced_correlation(covariance, spec)
   simulated <- anovapowersim:::simulate_unbalanced_means_data(
@@ -119,7 +120,6 @@ test_that("power_unbalanced combines cell SDs with within correlations", {
 
   result <- quiet_power_unbalanced(
     design = design,
-    within = "time",
     term = "group:time",
     covariance = covariance,
     n_sims = 4,
@@ -139,11 +139,11 @@ test_that("power_unbalanced combines cell SDs with within correlations", {
 test_that("power_unbalanced supports pure within designs and fixed seeds", {
   design <- cell_design(
     time = "pre",  n = 7, m = 0.0, sd = 1.0,
-    time = "post", n = 7, m = 0.7, sd = 1.2
+    time = "post", n = 7, m = 0.7, sd = 1.2,
+    within = "time"
   )
   args <- list(
     design = design,
-    within = "time",
     term = "time",
     n_sims = 5,
     progress = FALSE,
@@ -180,15 +180,14 @@ test_that("power_unbalanced supports SS type and parallel controls", {
 
 
 test_that("power_unbalanced validates design, covariance, and controls", {
-  mixed <- cell_design(
-    group = "a", time = "pre",  n = 5, m = 0, sd = 1,
-    group = "a", time = "post", n = 6, m = 1, sd = 1,
-    group = "b", time = "pre",  n = 7, m = 0, sd = 1,
-    group = "b", time = "post", n = 7, m = 2, sd = 1
-  )
   expect_error(
-    power_unbalanced(mixed, within = "time", term = "time",
-                     n_sims = 1, progress = FALSE),
+    cell_design(
+      group = "a", time = "pre",  n = 5, m = 0, sd = 1,
+      group = "a", time = "post", n = 6, m = 1, sd = 1,
+      group = "b", time = "pre",  n = 7, m = 0, sd = 1,
+      group = "b", time = "post", n = 7, m = 2, sd = 1,
+      within = "time"
+    ),
     "identical across"
   )
   between <- cell_design(
@@ -201,18 +200,19 @@ test_that("power_unbalanced validates design, covariance, and controls", {
                      n_sims = 1, progress = FALSE),
     "can only be supplied"
   )
-  within <- cell_design(
+  within_design <- cell_design(
     time = "pre", n = 5, m = 0, sd = 1,
-    time = "post", n = 5, m = 1, sd = 1
+    time = "post", n = 5, m = 1, sd = 1,
+    within = "time"
   )
   expect_error(
-    power_unbalanced(within, within = "time", term = "time",
+    power_unbalanced(within_design, term = "time",
                      covariance = within_covariance(),
                      n_sims = 1, progress = FALSE),
     "unbalanced_covariance"
   )
   expect_error(
-    power_unbalanced(within, within = "time", term = "time",
+    power_unbalanced(within_design, term = "time",
                      covariance = diag(2), n_sims = 1, progress = FALSE),
     "raw matrices are not accepted"
   )
@@ -258,9 +258,10 @@ test_that("unbalanced_term_epsilon uses the worst-case epsilon across cells", {
     group = "A", time = "t3", n = 10, m = 0, sd = 1,
     group = "B", time = "t1", n = 10, m = 0, sd = 1,
     group = "B", time = "t2", n = 10, m = 0, sd = 1,
-    group = "B", time = "t3", n = 10, m = 0, sd = 4
+    group = "B", time = "t3", n = 10, m = 0, sd = 4,
+    within = "time"
   )
-  spec <- anovapowersim:::prepare_unbalanced_means_design(design, "time")
+  spec <- anovapowersim:::prepare_unbalanced_means_design(design)
   spec$within_correlation <-
     anovapowersim:::resolve_unbalanced_correlation(NULL, spec)
   eps <- anovapowersim:::unbalanced_term_epsilon(spec, "time")
@@ -279,7 +280,7 @@ test_that("unbalanced_term_epsilon uses the worst-case epsilon across cells", {
     group = "B", n = 5, m = 1, sd = 1
   )
   between_spec <- anovapowersim:::prepare_unbalanced_means_design(
-    between_design, NULL
+    between_design
   )
   between_spec$within_correlation <-
     anovapowersim:::resolve_unbalanced_correlation(NULL, between_spec)
@@ -298,13 +299,13 @@ test_that("power_unbalanced GG-corrects power_sim under severe non-sphericity", 
     group = "B", time = "t1", n = 25, m = 0.0, sd = 1,
     group = "B", time = "t2", n = 25, m = 0.5, sd = 1,
     group = "B", time = "t3", n = 25, m = 1.0, sd = 1,
-    group = "B", time = "t4", n = 25, m = 1.5, sd = 4
+    group = "B", time = "t4", n = 25, m = 1.5, sd = 4,
+    within = "time"
   )
   covariance <- unbalanced_covariance(default_correlation = 0)
 
   corrected <- quiet_power_unbalanced(
     design = design,
-    within = "time",
     term = "time",
     covariance = covariance,
     n_sims = 800,
@@ -314,7 +315,6 @@ test_that("power_unbalanced GG-corrects power_sim under severe non-sphericity", 
   )
   uncorrected <- quiet_power_unbalanced(
     design = design,
-    within = "time",
     term = "time",
     covariance = covariance,
     n_sims = 800,
@@ -339,12 +339,12 @@ test_that("power_unbalanced warns when ss_type = 'I' meets a non-spherical desig
     group = "A", time = "t3", n = 10, m = 0, sd = 4,
     group = "B", time = "t1", n = 12, m = 0, sd = 1,
     group = "B", time = "t2", n = 12, m = 0, sd = 1,
-    group = "B", time = "t3", n = 12, m = 0, sd = 4
+    group = "B", time = "t3", n = 12, m = 0, sd = 4,
+    within = "time"
   )
   expect_warning(
     power_unbalanced(
       design = design,
-      within = "time",
       term = "time",
       n_sims = 1,
       ss_type = "I",
@@ -353,4 +353,127 @@ test_that("power_unbalanced warns when ss_type = 'I' meets a non-spherical desig
     ),
     "ss_type = \"I\""
   )
+})
+
+
+test_that("cell_design lists exact missing cells instead of a bare count", {
+  expect_error(
+    cell_design(
+      group = "a", time = "pre",  n = 10, m = 0, sd = 1,
+      group = "a", time = "post", n = 10, m = 1, sd = 1,
+      group = "b", time = "pre",  n = 10, m = 0, sd = 1,
+      within = "time"
+    ),
+    'group = "b", time = "post"',
+    fixed = TRUE
+  )
+})
+
+
+test_that("cell_design fills missing cells when all three defaults are supplied", {
+  filled <- cell_design(
+    group = "a", time = "pre",  n = 10, m = 0, sd = 1,
+    group = "a", time = "post", n = 10, m = 1, sd = 1,
+    group = "b", time = "pre",  n = 10, m = 0, sd = 1,
+    within = "time",
+    default_n = 10, default_m = 99, default_sd = 5
+  )
+  filled_row <- filled[filled$group == "b" & filled$time == "post", ]
+
+  expect_equal(nrow(filled), 4L)
+  expect_equal(filled_row$n, 10L)
+  expect_equal(filled_row$m, 99)
+  expect_equal(filled_row$sd, 5)
+})
+
+
+test_that("cell_design requires all three defaults together", {
+  common <- list(
+    group = "a", time = "pre",  n = 10, m = 0, sd = 1,
+    group = "a", time = "post", n = 10, m = 1, sd = 1,
+    group = "b", time = "pre",  n = 10, m = 0, sd = 1,
+    within = "time"
+  )
+  expect_error(
+    do.call(cell_design, c(common, list(default_n = 10))),
+    "Supply all of"
+  )
+  expect_error(
+    do.call(cell_design, c(common, list(default_n = 10, default_m = 0))),
+    "Supply all of"
+  )
+})
+
+
+test_that("default-filled cells still participate in the n-consistency check", {
+  expect_error(
+    cell_design(
+      group = "A", time = "pre",  n = 10, m = 0, sd = 1,
+      group = "A", time = "post", n = 10, m = 1, sd = 1,
+      group = "B", time = "pre",  n = 15, m = 0, sd = 1,
+      within = "time",
+      default_n = 99, default_m = 0, default_sd = 1
+    ),
+    "identical across"
+  )
+})
+
+
+test_that("cell_design errors early when a factor has fewer than 2 levels", {
+  expect_error(
+    cell_design(
+      group = "A", time = "pre",  n = 10, m = 0, sd = 1,
+      group = "A", time = "post", n = 10, m = 1, sd = 1,
+      within = "time"
+    ),
+    "group.*must have at least 2 levels"
+  )
+})
+
+
+test_that("cell_design stores within as a retrievable attribute", {
+  within_design <- cell_design(
+    group = "A", time = "pre",  n = 10, m = 0, sd = 1,
+    group = "A", time = "post", n = 10, m = 1, sd = 1,
+    group = "B", time = "pre",  n = 10, m = 0, sd = 1,
+    group = "B", time = "post", n = 10, m = 1, sd = 1,
+    within = "time"
+  )
+  between_design <- cell_design(
+    group = "A", n = 10, m = 0, sd = 1,
+    group = "B", n = 10, m = 1, sd = 1
+  )
+
+  expect_identical(attr(within_design, "within"), "time")
+  expect_identical(attr(between_design, "within"), character(0))
+})
+
+
+test_that("cell_design supports multiple within-subject factors end to end", {
+  design <- cell_design(
+    group = "A", time = "pre",  cond = "control", n = 10, m = 0.0, sd = 1,
+    group = "A", time = "pre",  cond = "treat",   n = 10, m = 0.5, sd = 1,
+    group = "A", time = "post", cond = "control", n = 10, m = 0.2, sd = 1,
+    group = "A", time = "post", cond = "treat",   n = 10, m = 1.0, sd = 1,
+    group = "B", time = "pre",  cond = "control", n = 15, m = 0.0, sd = 1,
+    group = "B", time = "pre",  cond = "treat",   n = 15, m = 0.6, sd = 1,
+    group = "B", time = "post", cond = "control", n = 15, m = 0.3, sd = 1,
+    group = "B", time = "post", cond = "treat",   n = 15, m = 1.4, sd = 1,
+    within = c("time", "cond")
+  )
+
+  expect_identical(attr(design, "within"), c("time", "cond"))
+
+  result <- quiet_power_unbalanced(
+    design = design,
+    term = "group:time:cond",
+    covariance = unbalanced_covariance(
+      correlations = c("pre_control:post_control" = 0.6)
+    ),
+    n_sims = 3,
+    progress = FALSE,
+    seed = 1
+  )
+  expect_s3_class(result, "anovapowersim_unbalanced_power")
+  expect_true(is.finite(result$power))
 })

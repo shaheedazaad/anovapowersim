@@ -16,6 +16,14 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/anovapowersim.html">Get started</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-guides" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Guides</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-guides"><li><a class="dropdown-item" href="../articles/fixed-sample-power.html">Fixed-sample power</a></li>
+    <li><a class="dropdown-item" href="../articles/unbalanced-designs.html">Power for unbalanced designs</a></li>
+    <li><a class="dropdown-item" href="../articles/covariance.html">Covariance and nonsphericity</a></li>
+    <li><a class="dropdown-item" href="../articles/calculated-power.html">Calculated power</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison-with-gpower.html">Comparison with G\*Power</a></li>
+  </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/shaheedazaad/anovapowersim/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -31,9 +39,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="main-functions">Main functions<a class="anchor" aria-label="anchor" href="#main-functions"></a></h2>
+      <h2 id="core-simulation">Core simulation<a class="anchor" aria-label="anchor" href="#core-simulation"></a></h2>
 
-      <div class="section-desc"><p>Functions for power analysis and simulation.</p></div>
+      <div class="section-desc"><p>Required-sample-size searches and power curves for balanced designs.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -42,13 +50,6 @@
 
       <dl><dt>
 
-          <code><a href="power_curve.html">power_curve()</a></code>
-
-        </dt>
-        <dd>Simulate ANOVA power from a balanced factorial design</dd>
-
-        <dt>
-
           <code><a href="power_n.html">power_n()</a></code>
 
         </dt>
@@ -56,10 +57,56 @@
 
         <dt>
 
+          <code><a href="power_curve.html">power_curve()</a></code>
+
+        </dt>
+        <dd>Simulate ANOVA power from a balanced factorial design</dd>
+
+        <dt>
+
+          <code><a href="plot_power_curve.html">plot_power_curve()</a></code>
+
+        </dt>
+        <dd>Plot a simulation-based power curve</dd>
+      </dl></div><div class="section level2">
+      <h2 id="fixed-sample-simulation">Fixed-sample simulation<a class="anchor" aria-label="anchor" href="#fixed-sample-simulation"></a></h2>
+
+      <div class="section-desc"><p>Achieved power and effect-size sensitivity at a fixed sample size.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
           <code><a href="power_achieved.html">power_achieved()</a></code>
 
         </dt>
         <dd>Estimate achieved ANOVA power at a fixed sample size</dd>
+
+        <dt>
+
+          <code><a href="power_sensitivity.html">power_sensitivity()</a></code>
+
+        </dt>
+        <dd>Estimate ANOVA effect-size sensitivity at a fixed sample size</dd>
+      </dl></div><div class="section level2">
+      <h2 id="calculated-power">Calculated power<a class="anchor" aria-label="anchor" href="#calculated-power"></a></h2>
+
+      <div class="section-desc"><p>Calculation-only analyses that skip simulations.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="power_n_calc.html">power_n_calc()</a></code>
+
+        </dt>
+        <dd>Calculate the sample size needed for target ANOVA power</dd>
 
         <dt>
 
@@ -70,19 +117,21 @@
 
         <dt>
 
-          <code><a href="power_sensitivity.html">power_sensitivity()</a></code>
-
-        </dt>
-        <dd>Estimate ANOVA effect-size sensitivity at a fixed sample size</dd>
-
-        <dt>
-
           <code><a href="power_sensitivity_calc.html">power_sensitivity_calc()</a></code>
 
         </dt>
         <dd>Calculate ANOVA effect-size sensitivity at a fixed sample size</dd>
+      </dl></div><div class="section level2">
+      <h2 id="unbalanced-designs">Unbalanced designs<a class="anchor" aria-label="anchor" href="#unbalanced-designs"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Fixed-design simulation with explicit sample sizes, means, and SDs.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="power_unbalanced.html">power_unbalanced()</a></code>
 
@@ -91,19 +140,72 @@
 
         <dt>
 
-          <code><a href="power_n_calc.html">power_n_calc()</a></code>
+          <code><a href="cell_design.html">cell_design()</a></code>
 
         </dt>
-        <dd>Calculate the sample size needed for target ANOVA power</dd>
+        <dd>Define cells for a means-based unbalanced ANOVA design</dd>
 
         <dt>
 
-          <code><a href="plot_power_curve.html">plot_power_curve()</a></code>
+          <code><a href="unbalanced_covariance.html">unbalanced_covariance()</a></code>
 
         </dt>
-        <dd>Plot a simulation-based power curve</dd>
+        <dd>Specify correlations for a means-based unbalanced design</dd>
+      </dl></div><div class="section level2">
+      <h2 id="design-components">Design components<a class="anchor" aria-label="anchor" href="#design-components"></a></h2>
+
+      <div class="section-desc"><p>Component functions for power analyses.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="balanced_anova_design.html">balanced_anova_design()</a></code>
+
+        </dt>
+        <dd>Create a balanced factorial ANOVA design specification</dd>
 
         <dt>
+
+          <code><a href="within_covariance.html">within_covariance()</a></code>
+
+        </dt>
+        <dd>Specify a within-subject covariance structure</dd>
+
+        <dt>
+
+          <code><a href="design_term_means.html">design_term_means()</a></code>
+
+        </dt>
+        <dd>Build calibrated default means for a design term</dd>
+
+        <dt>
+
+          <code><a href="simulate_design_dataset.html">simulate_design_dataset()</a></code>
+
+        </dt>
+        <dd>Simulate data from a balanced ANOVA design</dd>
+
+        <dt>
+
+          <code><a href="compute_scale_factor.html">compute_scale_factor()</a></code>
+
+        </dt>
+        <dd>Compute the mean-deviation scaling factor from a change in partial eta squared</dd>
+      </dl></div><div class="section level2">
+      <h2 id="output-methods">Output methods<a class="anchor" aria-label="anchor" href="#output-methods"></a></h2>
+
+      <div class="section-desc"><p>Printing and summarising power-analysis results.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="print.anovapowersim_curve.html">print(<i>&lt;anovapowersim_curve&gt;</i>)</a></code>
 
@@ -158,64 +260,6 @@
 
         </dt>
         <dd>Summarise simulated power for an unbalanced design</dd>
-      </dl></div><div class="section level2">
-      <h2 id="design-components">Design components<a class="anchor" aria-label="anchor" href="#design-components"></a></h2>
-
-      <div class="section-desc"><p>Component functions for power analyses.</p></div>
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="balanced_anova_design.html">balanced_anova_design()</a></code>
-
-        </dt>
-        <dd>Create a balanced factorial ANOVA design specification</dd>
-
-        <dt>
-
-          <code><a href="within_covariance.html">within_covariance()</a></code>
-
-        </dt>
-        <dd>Specify a within-subject covariance structure</dd>
-
-        <dt>
-
-          <code><a href="cell_design.html">cell_design()</a></code>
-
-        </dt>
-        <dd>Define cells for a means-based unbalanced ANOVA design</dd>
-
-        <dt>
-
-          <code><a href="unbalanced_covariance.html">unbalanced_covariance()</a></code>
-
-        </dt>
-        <dd>Specify correlations for a means-based unbalanced design</dd>
-
-        <dt>
-
-          <code><a href="design_term_means.html">design_term_means()</a></code>
-
-        </dt>
-        <dd>Build calibrated default means for a design term</dd>
-
-        <dt>
-
-          <code><a href="simulate_design_dataset.html">simulate_design_dataset()</a></code>
-
-        </dt>
-        <dd>Simulate data from a balanced ANOVA design</dd>
-
-        <dt>
-
-          <code><a href="compute_scale_factor.html">compute_scale_factor()</a></code>
-
-        </dt>
-        <dd>Compute the mean-deviation scaling factor from a change in partial eta squared</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

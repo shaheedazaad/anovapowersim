@@ -12,7 +12,17 @@
 #' version of `anovapowersim`. Its API may change.
 #'
 #' @param ... Repeated named cell definitions. Each cell must contain the same
-#'   factor names in the same order, plus `n`, `m`, and `sd`.
+#'   factor names in the same order, plus `n`, `m`, and `sd`. Every factor must
+#'   have at least 2 observed levels, and every combination of factor levels
+#'   must appear exactly once (or be filled automatically; see `default_n`).
+#' @param within Character vector naming factors in `...` that are measured
+#'   within subjects, or `NULL` for a purely between-subject design. Stored on
+#'   the returned object and read by [power_unbalanced()].
+#' @param default_n,default_m,default_sd Optional scalars used to fill any
+#'   missing cells in the complete factorial design. Supply all three to
+#'   auto-fill missing cells with these values; supply none to require every
+#'   cell to be defined explicitly (the default). Supplying only some of the
+#'   three is an error.
 #'
 #' @return An `anovapowersim_cell_design` tibble with one row per design cell.
 #'
@@ -21,12 +31,17 @@
 #'   group = "control", time = "pre",  n = 22, m = 10.0, sd = 2.0,
 #'   group = "control", time = "post", n = 22, m = 11.0, sd = 2.2,
 #'   group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
-#'   group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8
+#'   group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8,
+#'   within = "time"
 #' )
 #' design
 #'
 #' @export
-cell_design <- function(...) {
+cell_design <- function(...,
+                        within = NULL,
+                        default_n = NULL,
+                        default_m = NULL,
+                        default_sd = NULL) {
   dots <- list(...)
   nms <- names(dots)
   reserved <- c("n", "m", "sd")
@@ -106,24 +121,221 @@ cell_design <- function(...) {
   if (anyDuplicated(key)) {
     stop("Each design cell may be defined only once.", call. = FALSE)
   }
+
+  within <- validate_unbalanced_within(within, factor_names)
+
+  default_n <- validate_optional_default_n(default_n)
+  default_m <- validate_optional_default_m(default_m)
+  default_sd <- validate_optional_default_sd(default_sd)
+  defaults_supplied <- c(
+    !is.null(default_n), !is.null(default_m), !is.null(default_sd)
+  )
+  if (any(defaults_supplied) && !all(defaults_supplied)) {
+    stop(
+      "Supply all of `default_n`, `default_m`, and `default_sd` to fill ",
+      "missing cells automatically, or none of them.",
+      call. = FALSE
+    )
+  }
+  use_defaults <- all(defaults_supplied)
+
   factor_levels <- stats::setNames(
     lapply(factor_names, function(nm) unique(out[[nm]])),
     factor_names
   )
+  for (nm in factor_names) {
+    lv <- factor_levels[[nm]]
+    if (length(lv) < 2L) {
+      stop(
+        "Factor `", nm, "` must have at least 2 levels; only ",
+        paste(shQuote(lv), collapse = ", "),
+        " was supplied. Add cells for every level of `", nm,
+        "`, or remove it from the design if it is not meant to vary.",
+        call. = FALSE
+      )
+    }
+  }
+
   expected <- tidyr::expand_grid(!!!factor_levels)
-  missing_keys <- setdiff(interaction_key(expected, factor_names), key)
-  if (length(missing_keys)) {
+  expected_key <- interaction_key(expected, factor_names)
+  missing_idx <- which(!expected_key %in% key)
+
+  if (length(missing_idx)) {
+    if (use_defaults) {
+      fill <- expected[missing_idx, , drop = FALSE]
+      fill$n <- default_n
+      fill$m <- default_m
+      fill$sd <- default_sd
+      out <- dplyr::bind_rows(
+        out, fill[, c(factor_names, reserved), drop = FALSE]
+      )
+    } else {
+      missing_cells <- expected[missing_idx, , drop = FALSE]
+      labels <- vapply(seq_len(nrow(missing_cells)), function(i) {
+        paste(
+          paste0(factor_names, ' = "',
+                 unlist(missing_cells[i, factor_names]), '"'),
+          collapse = ", "
+        )
+      }, character(1))
+      stop(
+        "Every combination of factor levels must be defined exactly once. ",
+        "Missing cell", if (length(labels) == 1L) "" else "s", ":\n",
+        paste0("  ", labels, collapse = "\n"),
+        "\nSupply the missing cell", if (length(labels) == 1L) "" else "s",
+        ", or provide `default_n`, `default_m`, and `default_sd` to fill ",
+        "missing cells automatically.",
+        call. = FALSE
+      )
+    }
+  }
+
+  grid <- resolve_unbalanced_grid(out, factor_names, within)
+  n_matrix <- matrix(
+    grid$ordered$n, nrow = grid$n_between, ncol = grid$n_within, byrow = TRUE
+  )
+  inconsistent <- apply(n_matrix, 1L, function(x) length(unique(x)) != 1L)
+  if (any(inconsistent)) {
+    bad_rows <- which(inconsistent)
+    bad_labels <- if (length(grid$between)) {
+      vapply(bad_rows, function(r) {
+        paste(
+          paste0(grid$between, ' = "',
+                 as.character(unlist(grid$between_cells[r, ])), '"'),
+          collapse = ", "
+        )
+      }, character(1))
+    } else {
+      "the design"
+    }
     stop(
-      "Every combination of factor levels must be defined exactly once; ",
-      length(missing_keys), " design cell",
-      if (length(missing_keys) == 1L) " is" else "s are", " missing.",
+      "`n` must be identical across all within-subject rows belonging to ",
+      "the same between-subject cell. Inconsistent group",
+      if (length(bad_labels) == 1L) "" else "s", ": ",
+      paste(bad_labels, collapse = "; "), ".",
       call. = FALSE
     )
   }
 
+  out <- out[match(expected_key, interaction_key(out, factor_names)), ,
+             drop = FALSE]
   out <- tibble::as_tibble(out[, c(factor_names, reserved), drop = FALSE])
   class(out) <- c("anovapowersim_cell_design", class(out))
+  attr(out, "within") <- grid$within
   out
+}
+
+
+#' @keywords internal
+#' @noRd
+validate_unbalanced_within <- function(within, factor_names) {
+  if (is.null(within)) within <- character(0)
+  if (!is.character(within) || anyNA(within) || any(!nzchar(within)) ||
+      anyDuplicated(within)) {
+    stop("`within` must be NULL or a character vector of unique factor names.",
+         call. = FALSE)
+  }
+  unknown <- setdiff(within, factor_names)
+  if (length(unknown)) {
+    stop("Unknown factor", if (length(unknown) == 1L) "" else "s",
+         " in `within`: ", paste(shQuote(unknown), collapse = ", "), ".",
+         call. = FALSE)
+  }
+  within
+}
+
+
+#' @keywords internal
+#' @noRd
+validate_optional_default_n <- function(default_n) {
+  if (is.null(default_n)) return(NULL)
+  if (!is.numeric(default_n) || length(default_n) != 1L ||
+      !is.finite(default_n) || default_n < 1 ||
+      default_n != as.integer(default_n)) {
+    stop("`default_n` must be a single positive integer.", call. = FALSE)
+  }
+  as.integer(default_n)
+}
+
+
+#' @keywords internal
+#' @noRd
+validate_optional_default_m <- function(default_m) {
+  if (is.null(default_m)) return(NULL)
+  if (!is.numeric(default_m) || length(default_m) != 1L ||
+      !is.finite(default_m)) {
+    stop("`default_m` must be a single finite number.", call. = FALSE)
+  }
+  as.numeric(default_m)
+}
+
+
+#' @keywords internal
+#' @noRd
+validate_optional_default_sd <- function(default_sd) {
+  if (is.null(default_sd)) return(NULL)
+  if (!is.numeric(default_sd) || length(default_sd) != 1L ||
+      !is.finite(default_sd) || default_sd <= 0) {
+    stop("`default_sd` must be a single positive finite number.", call. = FALSE)
+  }
+  as.numeric(default_sd)
+}
+
+
+#' Partition factors into a between x within grid for an unbalanced design
+#'
+#' Shared by [cell_design()] (to check `n`-consistency at construction time)
+#' and `prepare_unbalanced_means_design()` (to build the design spec), so the
+#' between/within partitioning and row ordering are always derived identically.
+#'
+#' @keywords internal
+#' @noRd
+resolve_unbalanced_grid <- function(data, factor_names, within) {
+  between <- factor_names[!factor_names %in% within]
+  within <- factor_names[factor_names %in% within]
+  level_values <- stats::setNames(
+    lapply(factor_names, function(nm) unique(as.character(data[[nm]]))),
+    factor_names
+  )
+  levels <- stats::setNames(
+    lapply(factor_names, function(nm) {
+      factor(level_values[[nm]], levels = level_values[[nm]])
+    }),
+    factor_names
+  )
+  between_cells <- if (length(between)) {
+    tidyr::expand_grid(!!!levels[between])
+  } else {
+    tibble::tibble(.dummy_between = factor("all"))
+  }
+  within_cells <- if (length(within)) {
+    tidyr::expand_grid(!!!levels[within])
+  } else {
+    tibble::tibble(.dummy_within = factor("dv"))
+  }
+  ordered_grid <- if (length(between) && length(within)) {
+    tidyr::expand_grid(!!!levels[c(between, within)])
+  } else if (length(between)) {
+    tidyr::expand_grid(!!!levels[between])
+  } else {
+    tidyr::expand_grid(!!!levels[within])
+  }
+  design_key <- interaction_key(data, c(between, within))
+  grid_key <- interaction_key(ordered_grid, c(between, within))
+  ordered <- data[match(grid_key, design_key), , drop = FALSE]
+  n_between <- if (length(between)) nrow(between_cells) else 1L
+  n_within <- if (length(within)) nrow(within_cells) else 1L
+
+  list(
+    between = between,
+    within = within,
+    levels = levels,
+    between_cells = between_cells,
+    within_cells = within_cells,
+    n_between = n_between,
+    n_within = n_within,
+    ordered = ordered
+  )
 }
 
 
@@ -193,12 +405,13 @@ unbalanced_covariance <- function(default_correlation = 0.5,
 #' change.
 #'
 #' @param design A complete design table created by [cell_design()].
-#' @param within Character vector naming factors in `design` that are measured
-#'   within subjects. Use `NULL` for a purely between-subject design.
+#'   Within-subject factors are read from the design's `within` attribute
+#'   (set via [cell_design()]'s `within` argument), not supplied here.
 #' @param term Character scalar naming the ANOVA term to test.
 #' @param covariance Optional correlation specification created by
-#'   [unbalanced_covariance()]. It can only be supplied when `within` is used.
-#'   The default `NULL` uses a correlation of `0.5` between within-subject
+#'   [unbalanced_covariance()]. It can only be supplied when `design` has
+#'   within-subject factors. The default `NULL` uses a correlation of `0.5`
+#'   between within-subject
 #'   measurements. Standard deviations always come from `design` and may
 #'   differ between between-subject cells. If the term's population
 #'   covariance is non-spherical for any cell, `power_sim` is based on each
@@ -227,11 +440,11 @@ unbalanced_covariance <- function(default_correlation = 0.5,
 #'   group = "control", time = "pre",  n = 12, m = 10, sd = 2.0,
 #'   group = "control", time = "post", n = 12, m = 11, sd = 2.2,
 #'   group = "treatment", time = "pre",  n = 18, m = 10, sd = 2.4,
-#'   group = "treatment", time = "post", n = 18, m = 13, sd = 2.8
+#'   group = "treatment", time = "post", n = 18, m = 13, sd = 2.8,
+#'   within = "time"
 #' )
 #' power_unbalanced(
 #'   design = design,
-#'   within = "time",
 #'   term = "group:time",
 #'   covariance = unbalanced_covariance(
 #'     correlations = c("pre:post" = 0.7)
@@ -243,7 +456,6 @@ unbalanced_covariance <- function(default_correlation = 0.5,
 #'
 #' @export
 power_unbalanced <- function(design,
-                             within = NULL,
                              term,
                              covariance = NULL,
                              n_sims = 10000,
@@ -253,7 +465,7 @@ power_unbalanced <- function(design,
                              parallel = FALSE,
                              cores = NULL,
                              seed = NULL) {
-  spec <- prepare_unbalanced_means_design(design, within)
+  spec <- prepare_unbalanced_means_design(design)
   term <- resolve_design_term(term, spec)
   ss_type <- validate_ss_type(ss_type)
   assert_unit_interval(alpha, "alpha")
@@ -358,87 +570,41 @@ power_unbalanced <- function(design,
 
 #' @keywords internal
 #' @noRd
-prepare_unbalanced_means_design <- function(design, within = NULL) {
+prepare_unbalanced_means_design <- function(design) {
   if (!inherits(design, "anovapowersim_cell_design")) {
     stop("`design` must be created by cell_design().", call. = FALSE)
   }
   factor_names <- setdiff(names(design), c("n", "m", "sd"))
+  within <- attr(design, "within")
   if (is.null(within)) within <- character(0)
-  if (!is.character(within) || anyNA(within) || any(!nzchar(within)) ||
-      anyDuplicated(within)) {
-    stop("`within` must be NULL or a character vector of unique factor names.",
-         call. = FALSE)
-  }
-  unknown <- setdiff(within, factor_names)
-  if (length(unknown)) {
-    stop("Unknown factor", if (length(unknown) == 1L) "" else "s",
-         " in `within`: ", paste(shQuote(unknown), collapse = ", "), ".",
-         call. = FALSE)
-  }
-  between <- factor_names[!factor_names %in% within]
-  within <- factor_names[factor_names %in% within]
-  level_values <- stats::setNames(
-    lapply(factor_names, function(nm) unique(as.character(design[[nm]]))),
-    factor_names
+
+  grid <- resolve_unbalanced_grid(design, factor_names, within)
+  n_matrix <- matrix(
+    grid$ordered$n, nrow = grid$n_between, ncol = grid$n_within, byrow = TRUE
   )
-  levels <- stats::setNames(
-    lapply(factor_names, function(nm) {
-      factor(level_values[[nm]], levels = level_values[[nm]])
-    }),
-    factor_names
-  )
-  between_cells <- if (length(between)) {
-    tidyr::expand_grid(!!!levels[between])
-  } else {
-    tibble::tibble(.dummy_between = factor("all"))
-  }
-  within_cells <- if (length(within)) {
-    tidyr::expand_grid(!!!levels[within])
-  } else {
-    tibble::tibble(.dummy_within = factor("dv"))
-  }
-  ordered_grid <- if (length(between) && length(within)) {
-    tidyr::expand_grid(!!!levels[c(between, within)])
-  } else if (length(between)) {
-    tidyr::expand_grid(!!!levels[between])
-  } else {
-    tidyr::expand_grid(!!!levels[within])
-  }
-  design_key <- interaction_key(design, c(between, within))
-  grid_key <- interaction_key(ordered_grid, c(between, within))
-  ordered <- design[match(grid_key, design_key), , drop = FALSE]
-  n_between <- if (length(between)) nrow(between_cells) else 1L
-  n_within <- if (length(within)) nrow(within_cells) else 1L
-  n_matrix <- matrix(ordered$n, nrow = n_between, ncol = n_within, byrow = TRUE)
-  inconsistent <- apply(n_matrix, 1L, function(x) length(unique(x)) != 1L)
-  if (any(inconsistent)) {
-    stop(
-      "`n` must be identical across all within-subject rows belonging to ",
-      "the same between-subject cell.",
-      call. = FALSE
-    )
-  }
 
   spec <- list(
-    between = between,
-    within = within,
-    factor_names = c(between, within),
+    between = grid$between,
+    within = grid$within,
+    factor_names = c(grid$between, grid$within),
     level_counts = stats::setNames(
-      lengths(level_values[c(between, within)]), c(between, within)
+      vapply(grid$levels[c(grid$between, grid$within)], nlevels, integer(1)),
+      c(grid$between, grid$within)
     ),
-    levels = levels[c(between, within)],
-    between_cells = between_cells,
-    within_cells = within_cells,
-    n_between_cells = n_between,
-    n_within_cells = n_within,
+    levels = grid$levels[c(grid$between, grid$within)],
+    between_cells = grid$between_cells,
+    within_cells = grid$within_cells,
+    n_between_cells = grid$n_between,
+    n_within_cells = grid$n_within,
     cell_n = as.integer(n_matrix[, 1L]),
     cell_means = matrix(
-      ordered$m, nrow = n_between, ncol = n_within, byrow = TRUE
+      grid$ordered$m, nrow = grid$n_between, ncol = grid$n_within, byrow = TRUE
     ),
     cell_sds = matrix(
-      ordered$sd, nrow = n_between, ncol = n_within, byrow = TRUE
+      grid$ordered$sd, nrow = grid$n_between, ncol = grid$n_within,
+      byrow = TRUE
     ),
-    cell_design = ordered
+    cell_design = grid$ordered
   )
   class(spec) <- c(
     "anovapowersim_unbalanced_means_design_spec",

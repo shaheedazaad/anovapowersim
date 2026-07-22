@@ -62,10 +62,17 @@ the requested design.}
 or above \code{power} is also no more than \code{power + tol}, \code{power_n()} warns that
 the requested precision band was not reached.}
 
-\item{gpower}{Logical; if \code{TRUE}, calibrate means to the G*Power-style
+\item{gpower}{Logical; if \code{TRUE}, calibrate means to the G\emph{Power-style
 noncentrality convention \code{lambda = total_n * f^2}. The default \code{FALSE}
 calibrates the empirical reference dataset to \code{target_pes}, equivalent to
-\code{lambda = den_df * f^2} for the fitted ANOVA.}
+\code{lambda = den_df * f^2} for the fitted ANOVA. For a term whose
+within-subject component has more than one degree of freedom, \code{gpower}'s
+\code{target_pes} does not equal the partial eta squared actually achieved
+(this mirrors a property of G}Power's own "as in Cohen (1988)"
+repeated-measures convention, which does not adjust for the number of
+measurements); a warning is issued in that case. Use the default if you
+want \code{target_pes} to match your reported or expected partial eta squared
+exactly.}
 
 \item{progress}{Logical; if \code{TRUE}, show a text progress bar.}
 

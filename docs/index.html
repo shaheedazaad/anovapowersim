@@ -32,6 +32,16 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/anovapowersim.html">Get started</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-guides" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Guides</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-guides">
+<li><a class="dropdown-item" href="articles/fixed-sample-power.html">Fixed-sample power</a></li>
+    <li><a class="dropdown-item" href="articles/unbalanced-designs.html">Power for unbalanced designs</a></li>
+    <li><a class="dropdown-item" href="articles/covariance.html">Covariance and nonsphericity</a></li>
+    <li><a class="dropdown-item" href="articles/calculated-power.html">Calculated power</a></li>
+    <li><a class="dropdown-item" href="articles/comparison-with-gpower.html">Comparison with G\*Power</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
@@ -66,70 +76,6 @@
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>, <span class="co"># simulations will be run in parallel for speed</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span> <span class="co"># for reproducibility</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>In the development version, the experimental <code><a href="reference/power_achieved.html">power_achieved()</a></code> function estimates power for a chosen effect size at a fixed sample size, while the experimental <code><a href="reference/power_sensitivity.html">power_sensitivity()</a></code> function finds the minimum detectable partial eta squared. These functions are not yet available in the CRAN release.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/power_achieved.html">power_achieved</a></span><span class="op">(</span></span>
-<span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>group <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  term <span class="op">=</span> <span class="st">"group:time"</span>,</span>
-<span>  target_pes <span class="op">=</span> <span class="fl">0.08</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">30</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">123</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/power_sensitivity.html">power_sensitivity</a></span><span class="op">(</span></span>
-<span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>group <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  term <span class="op">=</span> <span class="st">"group:time"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">30</span>,</span>
-<span>  power <span class="op">=</span> <span class="fl">0.90</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">123</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>To skip simulations, use the experimental calculation-only counterparts. They use calculated noncentral-F power and support <code>gpower</code> and planned nonsphericity through <code>epsilon</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/power_achieved_calc.html">power_achieved_calc</a></span><span class="op">(</span></span>
-<span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>group <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  term <span class="op">=</span> <span class="st">"group:time"</span>,</span>
-<span>  target_pes <span class="op">=</span> <span class="fl">0.08</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">30</span>,</span>
-<span>  gpower <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  epsilon <span class="op">=</span> <span class="fl">0.80</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/power_sensitivity_calc.html">power_sensitivity_calc</a></span><span class="op">(</span></span>
-<span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>group <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  term <span class="op">=</span> <span class="st">"group:time"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">30</span>,</span>
-<span>  power <span class="op">=</span> <span class="fl">0.90</span>,</span>
-<span>  gpower <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  epsilon <span class="op">=</span> <span class="fl">0.80</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="power-for-unbalanced-designs">Power for unbalanced designs<a class="anchor" aria-label="anchor" href="#power-for-unbalanced-designs"></a>
-</h2>
-<p>The experimental, development-version-only <code><a href="reference/power_unbalanced.html">power_unbalanced()</a></code> function simulates one exact unbalanced allocation from population cell means and standard deviations. For repeated measures, <code><a href="reference/unbalanced_covariance.html">unbalanced_covariance()</a></code> supplies correlations only; each cell’s standard deviation remains defined in <code><a href="reference/cell_design.html">cell_design()</a></code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cell_design.html">cell_design</a></span><span class="op">(</span></span>
-<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">10.0</span>, sd <span class="op">=</span> <span class="fl">2.0</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"control"</span>,   time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">22</span>, m <span class="op">=</span> <span class="fl">11.0</span>, sd <span class="op">=</span> <span class="fl">2.2</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"pre"</span>,  n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">10.1</span>, sd <span class="op">=</span> <span class="fl">2.4</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"treatment"</span>, time <span class="op">=</span> <span class="st">"post"</span>, n <span class="op">=</span> <span class="fl">31</span>, m <span class="op">=</span> <span class="fl">12.4</span>, sd <span class="op">=</span> <span class="fl">2.8</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/power_unbalanced.html">power_unbalanced</a></span><span class="op">(</span></span>
-<span>  design <span class="op">=</span> <span class="va">design</span>,</span>
-<span>  within <span class="op">=</span> <span class="st">"time"</span>,</span>
-<span>  term <span class="op">=</span> <span class="st">"group:time"</span>,</span>
-<span>  covariance <span class="op">=</span> <span class="fu"><a href="reference/unbalanced_covariance.html">unbalanced_covariance</a></span><span class="op">(</span></span>
-<span>    correlations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pre:post"</span> <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  n_sims <span class="op">=</span> <span class="fl">5000</span>,</span>
-<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">123</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>This function is simulation-only. It reports simulated power and reference and simulation-based partial eta-squared summaries for the exact design; it does not return calculated power or extrapolate how the cell sizes should scale.</p>
 <pre class="text"><code><span><span class="co">#&gt;&lt;anovapowersim_curve&gt;</span></span>
 <span><span class="co">#&gt;  term:          'group:stim:cond'</span></span>
 <span><span class="co">#&gt;  target power:  0.900</span></span>
@@ -150,19 +96,38 @@
 <span><span class="co">#&gt;         41      82   5000      2    160 13.913      0.922     0.916</span></span>
 <span><span class="co">#&gt;         46      92   5000      2    180 15.652      0.949     0.947</span></span>
 <span><span class="co">#&gt;         62     124   5000      2    244 21.217      0.989     0.988</span></span></code></pre>
+<div class="section level2">
+<h2 id="additional-power-analyses">Additional power analyses<a class="anchor" aria-label="anchor" href="#additional-power-analyses"></a>
+</h2>
+<p>The development version includes several experimental power-analysis options. Their full examples and guidance are kept in the dedicated guides linked below.</p>
+<div class="section level3">
+<h3 id="achieved-power-and-sensitivity">Achieved power and sensitivity<a class="anchor" aria-label="anchor" href="#achieved-power-and-sensitivity"></a>
+</h3>
+<p>At a fixed sample size, <code><a href="reference/power_achieved.html">power_achieved()</a></code> estimates power for a chosen partial eta squared, while <code><a href="reference/power_sensitivity.html">power_sensitivity()</a></code> estimates the minimum detectable partial eta squared. See the <a href="https://shaheedazaad.github.io/anovapowersim/articles/fixed-sample-power.html">fixed-sample tutorial</a>.</p>
+</div>
+<div class="section level3">
+<h3 id="calculation-only-functions">Calculation-only functions<a class="anchor" aria-label="anchor" href="#calculation-only-functions"></a>
+</h3>
+<p>The <code>_calc()</code> functions skip simulations and use calculated noncentral-F power. They also support planned nonsphericity through <code>epsilon</code>. See the <a href="https://shaheedazaad.github.io/anovapowersim/articles/calculated-power.html">calculated-power tutorial</a>.</p>
+</div>
+<div class="section level3">
+<h3 id="power-for-unbalanced-designs">Power for unbalanced designs<a class="anchor" aria-label="anchor" href="#power-for-unbalanced-designs"></a>
+</h3>
+<p><code><a href="reference/power_unbalanced.html">power_unbalanced()</a></code> simulates one exact allocation from user-defined cell means, standard deviations, sample sizes, and within-subject correlations. It is simulation-only and does not extrapolate how unequal cell sizes should scale. See the <a href="https://shaheedazaad.github.io/anovapowersim/articles/unbalanced-designs.html">unbalanced-design tutorial</a>.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p><code>anovapowersim</code> can be installed from CRAN:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"anovapowersim"</span><span class="op">)</span></span></code></pre></div>
 <p>You can install the development version from GitHub:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"shaheedazaad/anovapowersim"</span><span class="op">)</span></span></code></pre></div>
 <p>Or, with <code>remotes</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"shaheedazaad/anovapowersim"</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -178,8 +143,8 @@
 <ul>
 <li>Covariates (ANCOVAs)</li>
 <li>Sample-size searches or power curves for unbalanced designs</li>
-<li>Sample-estimated Greenhouse-Geisser or Huynh-Feldt corrections in power simulations. Custom nonspherical covariance structures and their derived population Greenhouse-Geisser corrections are supported by <code><a href="reference/power_n.html">power_n()</a></code>, <code><a href="reference/power_curve.html">power_curve()</a></code>, <code><a href="reference/power_achieved.html">power_achieved()</a></code>, and <code><a href="reference/power_sensitivity.html">power_sensitivity()</a></code>, and planned epsilon corrections are supported by the calculation-only functions.</li>
-<li>Specific interaction shapes (based on means)</li>
+<li>Huynh-Feldt corrections in power simulations. Greenhouse-Geisser-corrected simulated tests are supported for sums-of-squares type II or III when a custom covariance implies <code>epsilon &lt; 1</code>; type I tests remain uncorrected.</li>
+<li>User-defined cell-mean patterns in the balanced target-PES functions. Exact means and specific interaction shapes are supported by <code><a href="reference/power_unbalanced.html">power_unbalanced()</a></code>.</li>
 <li>Simple main effects/pairwise comparisons</li>
 </ul>
 </div>

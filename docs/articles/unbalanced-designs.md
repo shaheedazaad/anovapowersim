@@ -1,0 +1,126 @@
+# Power for unbalanced designs
+
+``` r
+
+library(anovapowersim)
+```
+
+[`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md)
+is experimental and available only in the development version of
+`anovapowersim`. Use it when the exact allocation, population means, and
+standard deviations are already known. It simulates one fixed design; it
+does not search over sample sizes or return calculated power.
+
+## Define the cells
+
+Define every cell with
+[`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md).
+Factor values identify the cell, `n` is the number of subjects in its
+between-subject group, `m` is its population mean, and `sd` is its
+marginal population standard deviation. Name repeated- measures factors
+in `within`; all remaining factors are between-subject factors.
+
+For repeated-measures designs, the same `n` must appear on every
+within-subject row belonging to a given between-subject group.
+
+``` r
+
+unbalanced_design <- cell_design(
+  group = "control",   time = "pre",  n = 22, m = 10.0, sd = 2.0,
+  group = "control",   time = "post", n = 22, m = 11.0, sd = 2.2,
+  group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
+  group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8,
+  within = "time"
+)
+```
+
+The means define the complete effect pattern, including main effects and
+interactions. Standard deviations can differ across groups and
+within-subject cells.
+
+Every factor must have at least two observed levels, and every
+factor-level combination must be defined exactly once. If cells are
+missing,
+[`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md)
+reports which ones. Supply `default_n`, `default_m`, and `default_sd`
+together to fill missing cells automatically:
+
+``` r
+
+cell_design(
+  group = "control",   time = "pre",  n = 22, m = 10.0, sd = 2.0,
+  group = "control",   time = "post", n = 22, m = 11.0, sd = 2.2,
+  group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
+  within = "time",
+  default_n = 31, default_m = 12.4, default_sd = 2.8
+)
+```
+
+## Define within-subject correlations
+
+For repeated measures, use
+[`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md)
+to define correlations. It deliberately has no standard-deviation
+argument:
+[`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md)
+combines its correlations with the cell-specific `sd` values to
+construct a covariance matrix for each between-subject group.
+
+With one within-subject factor, pair names use its levels, such as
+`"pre:post"`.
+
+``` r
+
+power_unbalanced(
+  design = unbalanced_design,
+  term = "group:time",
+  covariance = unbalanced_covariance(
+    default_correlation = 0.5,
+    correlations = c("pre:post" = 0.7)
+  ),
+  n_sims = 5000,
+  parallel = TRUE,
+  seed = 123
+)
+```
+
+## Interpret the result
+
+The result reports simulated power, partial eta squared from a
+deterministic reference dataset matching the design assumptions, and the
+mean, median, and 95% interval of partial eta squared across successful
+simulations. These effect-size summaries describe the exact allocation,
+means, variances, correlations, tested term, and sums-of-squares type
+supplied by the user.
+
+## Multiple within-subject factors
+
+Name every repeated-measures factor in
+[`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md)
+and join their level combinations with underscores in correlation-pair
+names:
+
+``` r
+
+multi_within_design <- cell_design(
+  group = "A", time = "pre",  cond = "control", n = 10, m = 0.0, sd = 1,
+  group = "A", time = "pre",  cond = "treat",   n = 10, m = 0.5, sd = 1,
+  group = "A", time = "post", cond = "control", n = 10, m = 0.2, sd = 1,
+  group = "A", time = "post", cond = "treat",   n = 10, m = 1.0, sd = 1,
+  group = "B", time = "pre",  cond = "control", n = 15, m = 0.0, sd = 1,
+  group = "B", time = "pre",  cond = "treat",   n = 15, m = 0.6, sd = 1,
+  group = "B", time = "post", cond = "control", n = 15, m = 0.3, sd = 1,
+  group = "B", time = "post", cond = "treat",   n = 15, m = 1.4, sd = 1,
+  within = c("time", "cond")
+)
+
+power_unbalanced(
+  design = multi_within_design,
+  term = "group:time:cond",
+  covariance = unbalanced_covariance(
+    correlations = c("pre_control:post_control" = 0.6)
+  ),
+  n_sims = 5000,
+  seed = 123
+)
+```

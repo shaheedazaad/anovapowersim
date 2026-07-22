@@ -30,7 +30,13 @@
 #' @param n_max Maximum sample size per between-subject cell.
 #' @param gpower Logical; if `TRUE`, use the G*Power-style noncentrality
 #'   convention `lambda = total_n * f^2`. The default `FALSE` uses
-#'   `lambda = den_df * f^2`.
+#'   `lambda = den_df * f^2`. For a term whose within-subject component has
+#'   more than one degree of freedom, `gpower`'s `target_pes` does not equal
+#'   the partial eta squared actually achieved (this mirrors a property of
+#'   G*Power's own "as in Cohen (1988)" repeated-measures convention, which
+#'   does not adjust for the number of measurements); a warning is issued in
+#'   that case. Use the default if you want `target_pes` to match your
+#'   reported or expected partial eta squared exactly.
 #' @param epsilon Population nonsphericity correction for the within-subject
 #'   component of `term`. Must lie between the theoretical lower bound
 #'   `1 / within_term_df` and `1`. The default `1` assumes sphericity. Values
@@ -157,6 +163,7 @@ prepare_power_n_calc_inputs <- function(between, within, term, target_pes,
   if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
     stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
   }
+  warn_gpower_within_term_df(gpower = gpower, spec = spec, term = term)
   epsilon <- validate_analytic_epsilon(epsilon, spec = spec, term = term)
   if (!is.numeric(n_max) || length(n_max) != 1L ||
       n_max < 1 || n_max != as.integer(n_max)) {

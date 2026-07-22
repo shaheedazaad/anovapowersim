@@ -9,7 +9,13 @@ after all three reserved values have been supplied.
 ## Usage
 
 ``` r
-cell_design(...)
+cell_design(
+  ...,
+  within = NULL,
+  default_n = NULL,
+  default_m = NULL,
+  default_sd = NULL
+)
 ```
 
 ## Arguments
@@ -17,7 +23,25 @@ cell_design(...)
 - ...:
 
   Repeated named cell definitions. Each cell must contain the same
-  factor names in the same order, plus `n`, `m`, and `sd`.
+  factor names in the same order, plus `n`, `m`, and `sd`. Every factor
+  must have at least 2 observed levels, and every combination of factor
+  levels must appear exactly once (or be filled automatically; see
+  `default_n`).
+
+- within:
+
+  Character vector naming factors in `...` that are measured within
+  subjects, or `NULL` for a purely between-subject design. Stored on the
+  returned object and read by
+  [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md).
+
+- default_n, default_m, default_sd:
+
+  Optional scalars used to fill any missing cells in the complete
+  factorial design. Supply all three to auto-fill missing cells with
+  these values; supply none to require every cell to be defined
+  explicitly (the default). Supplying only some of the three is an
+  error.
 
 ## Value
 
@@ -37,7 +61,8 @@ design <- cell_design(
   group = "control", time = "pre",  n = 22, m = 10.0, sd = 2.0,
   group = "control", time = "post", n = 22, m = 11.0, sd = 2.2,
   group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
-  group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8
+  group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8,
+  within = "time"
 )
 design
 #> # A tibble: 4 × 5

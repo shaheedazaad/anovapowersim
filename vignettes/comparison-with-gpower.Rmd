@@ -1,0 +1,85 @@
+---
+title: "Comparison with G*Power"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Comparison with G*Power}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE
+)
+```
+
+```{r setup, message=FALSE}
+library(anovapowersim)
+```
+
+The balanced simulation and calculation-only functions accept
+`gpower = TRUE` when results should follow G\*Power's noncentrality convention.
+For within-subject designs, this corresponds to selecting G\*Power's
+**as in Cohen (1988)** option.
+
+## A typical 2 x 2 design
+
+In a 2 x 2 mixed design, the default and G\*Power conventions usually give very
+similar results. Here they differ by one participant per group:
+
+```{r two-by-two}
+default_2x2 <- power_n_calc(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  target_pes = 0.08,
+  power = 0.90
+)
+
+gpower_2x2 <- power_n_calc(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  target_pes = 0.08,
+  power = 0.90,
+  gpower = TRUE
+)
+
+c(default = default_2x2$n_needed, gpower = gpower_2x2$n_needed)
+```
+
+Set `gpower = TRUE` in `power_n()`, `power_curve()`, `power_achieved()`, or
+`power_sensitivity()` in the same way when running simulations.
+
+## More than three within-subject levels
+
+The conventions can diverge substantially when a within-subject term has more
+than three levels. With four within-subject levels, the same inputs produce:
+
+```{r four-levels}
+default_4 <- power_n_calc(
+  between = c(group = 2),
+  within = c(time = 4),
+  term = "group:time",
+  target_pes = 0.08,
+  power = 0.90
+)
+
+gpower_4 <- power_n_calc(
+  between = c(group = 2),
+  within = c(time = 4),
+  term = "group:time",
+  target_pes = 0.08,
+  power = 0.90,
+  gpower = TRUE
+)
+
+c(default = default_4$n_needed, gpower = gpower_4$n_needed)
+```
+
+In this case, use the package default, `gpower = FALSE`, so `target_pes`
+continues to match the partial eta squared you supplied. Use `gpower = TRUE`
+only when reproducing G\*Power's **as in Cohen (1988)** result is specifically
+required.

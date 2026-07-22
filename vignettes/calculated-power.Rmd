@@ -1,0 +1,132 @@
+---
+title: "Calculated power without simulations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Calculated power without simulations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE}
+library(anovapowersim)
+```
+
+The calculation-only functions provide fast power calculations for balanced
+factorial ANOVA designs. They use the noncentral F distribution directly and
+do not simulate datasets or fit ANOVA models.
+
+These functions are experimental and available only in the development
+version of `anovapowersim`:
+
+- `power_n_calc()` finds the sample size required for a target effect size and
+  power.
+- `power_achieved_calc()` calculates power for a fixed sample size and effect
+  size.
+- `power_sensitivity_calc()` finds the minimum detectable partial eta squared
+  for a fixed sample size and target power.
+
+The result objects use `power_calc` for calculated power. Their `n_sims` and
+`power_sim` fields are `NA` because no simulations are run.
+
+## Required sample size
+
+Use `power_n_calc()` when the sample size is unknown. As with `power_n()`, the
+reported `n_needed` is the number of subjects per between-subject cell. For a
+purely within-subject design, it is the total sample size.
+
+```{r required-sample-size}
+power_n_calc(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  target_pes = 0.08,
+  power = 0.90,
+  alpha = 0.05
+)
+```
+
+## Achieved power
+
+Use `power_achieved_calc()` when both the sample size and partial eta squared
+are fixed.
+
+```{r achieved-power}
+power_achieved_calc(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  target_pes = 0.08,
+  n = 30,
+  alpha = 0.05
+)
+```
+
+## Sensitivity
+
+Use `power_sensitivity_calc()` when the sample size is fixed but the minimum
+detectable effect size is unknown. The result's `pes_needed` is the calculated
+upper bracket that reaches the requested power.
+
+```{r sensitivity}
+power_sensitivity_calc(
+  between = c(group = 2),
+  within = c(time = 2),
+  term = "group:time",
+  n = 30,
+  power = 0.90,
+  pes_tol = 0.001,
+  alpha = 0.05
+)
+```
+
+## Planned nonsphericity
+
+For a term containing a within-subject factor, `epsilon` supplies a planned
+population nonsphericity correction. It defaults to `1`, which assumes
+sphericity. Values below `1` reduce the numerator degrees of freedom,
+denominator degrees of freedom, and noncentrality parameter used in the power
+calculation.
+
+The value must be at least the theoretical lower bound for the tested term,
+`1 / within_term_df`. It must remain `1` for a purely between-subject term.
+
+```{r epsilon}
+power_n_calc(
+  between = c(group = 2),
+  within = c(time = 3),
+  term = "group:time",
+  target_pes = 0.08,
+  power = 0.90,
+  epsilon = 0.70
+)
+```
+
+Calculation-only functions accept `epsilon`, not a `within_covariance()`
+object. Use the simulation-based functions when you want to specify a complete
+within-subject covariance structure and generate data from it.
+
+## Comparison with G\*Power
+
+The `gpower` option is shared by the balanced simulation and calculation-only
+functions. See the short
+[Comparison with G\*Power](comparison-with-gpower.html) guide for matching
+G\*Power and the case where the default should be preferred.
+
+## When to use simulations instead
+
+Calculated power is useful for quick planning, sensitivity checks, and
+comparison with other software. Prefer the simulation-based functions when
+you need:
+
+- a complete within-subject covariance structure;
+- simulated ANOVA fitting and Greenhouse--Geisser-adjusted tests;
+- direct comparison between calculated and simulated power; or
+- exact unequal sample sizes, cell means, and standard deviations through
+  `power_unbalanced()`.

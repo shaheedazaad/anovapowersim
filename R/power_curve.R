@@ -30,7 +30,14 @@
 #' @param gpower Logical; if `TRUE`, calibrate means to the G*Power-style
 #'   noncentrality convention `lambda = total_n * f^2`. The default `FALSE`
 #'   calibrates the empirical reference dataset to `target_pes`, equivalent to
-#'   `lambda = den_df * f^2` for the fitted ANOVA.
+#'   `lambda = den_df * f^2` for the fitted ANOVA. For a term whose
+#'   within-subject component has more than one degree of freedom, `gpower`'s
+#'   `target_pes` does not equal the partial eta squared actually achieved
+#'   (this mirrors a property of G*Power's own "as in Cohen (1988)"
+#'   repeated-measures convention, which does not adjust for the number of
+#'   measurements); a warning is issued in that case. Use the default if you
+#'   want `target_pes` to match your reported or expected partial eta squared
+#'   exactly.
 #' @param progress Logical; if `TRUE`, show a text progress bar.
 #' @param parallel Logical; if `TRUE`, run simulations for each sample size via
 #'   the `future` ecosystem.
@@ -489,8 +496,13 @@ balanced_anova_design <- function(between = NULL, within = NULL) {
 #'   is the total sample size.
 #' @param sd Common outcome standard deviation.
 #' @param r Compound-symmetric correlation among within-subject cells.
-#' @param gpower Logical; if `TRUE`, calibrate to the G*Power-style 
-#'   noncentrality convention `lambda = total_n * f^2` (using the 'as in Cohen (1988) option for within-subjects designs).
+#' @param gpower Logical; if `TRUE`, calibrate to the G*Power-style
+#'   noncentrality convention `lambda = total_n * f^2` (as in the "Cohen
+#'   (1988)" option for within-subjects designs in G*Power). For a term whose
+#'   within-subject component has more than one degree of freedom,
+#'   `target_pes` does not equal the partial eta squared actually achieved
+#'   under this convention (G*Power's own convention does not adjust for the
+#'   number of measurements either); a warning is issued in that case.
 #' @param ss_type Sums-of-squares type for the tested ANOVA term. `"III"` is
 #'   the default for order-invariant tests in unbalanced designs. Use `"I"` to
 #'   reproduce sequential `stats::aov()` tests.
@@ -523,6 +535,7 @@ design_term_means <- function(design, term, target_pes, n, sd = 1, r = 0.5,
   if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
     stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
   }
+  warn_gpower_within_term_df(gpower = gpower, spec = design, term = term)
   calibrate_design_means(
     spec = design,
     term = term,
@@ -944,6 +957,7 @@ prepare_balanced_power_inputs <- function(between, within, term, n_sims,
   if (!is.logical(gpower) || length(gpower) != 1L || is.na(gpower)) {
     stop("`gpower` must be TRUE or FALSE.", call. = FALSE)
   }
+  warn_gpower_within_term_df(gpower = gpower, spec = spec, term = term)
   if (!is.logical(progress) || length(progress) != 1L || is.na(progress)) {
     stop("`progress` must be TRUE or FALSE.", call. = FALSE)
   }
@@ -1029,6 +1043,34 @@ warn_ss_type_i_uncorrected_gg <- function(ss_type, epsilon) {
     "`power_calc` is Greenhouse-Geisser-corrected (epsilon = ",
     signif(epsilon, 3), "). Use `ss_type = \"II\"` or `\"III\"` so that ",
     "`power_sim` and `power_calc` estimate the same corrected test.",
+    call. = FALSE,
+    immediate. = TRUE
+  )
+  invisible(NULL)
+}
+
+
+#' Warn that gpower = TRUE does not calibrate target_pes for multi-df
+#' within-subject terms
+#'
+#' @keywords internal
+#' @noRd
+warn_gpower_within_term_df <- function(gpower, spec, term) {
+  if (!isTRUE(gpower)) return(invisible(NULL))
+  term_factors <- strsplit(term, ":", fixed = TRUE)[[1L]]
+  within_term_factors <- intersect(term_factors, spec$within)
+  if (!length(within_term_factors)) return(invisible(NULL))
+  within_term_df <- prod(spec$level_counts[within_term_factors] - 1L)
+  if (within_term_df <= 1L) return(invisible(NULL))
+  warning(
+    "`gpower = TRUE` for term '", term, "' does not calibrate `target_pes` ",
+    "to the partial eta squared you will actually observe in a fitted ",
+    "ANOVA, because its within-subject component has ", within_term_df,
+    " degrees of freedom (more than one). This mirrors a property of ",
+    "G*Power's own 'as in Cohen (1988)' repeated-measures convention, which ",
+    "does not adjust for the number of measurements. Use the default ",
+    "`gpower = FALSE` if you want `target_pes` to match your reported or ",
+    "expected partial eta squared exactly.",
     call. = FALSE,
     immediate. = TRUE
   )

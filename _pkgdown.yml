@@ -10,12 +10,25 @@ home:
 
 navbar:
   structure:
-    left:  [intro, reference, articles, news]
+    left:  [intro, guides, calculated, reference, news]
     right: [github, lightwitch]
   components:
     intro:
       text: Get started
       href: articles/anovapowersim.html
+    guides:
+      text: Guides
+      menu:
+      - text: Fixed-sample power
+        href: articles/fixed-sample-power.html
+      - text: Power for unbalanced designs
+        href: articles/unbalanced-designs.html
+      - text: Covariance and nonsphericity
+        href: articles/covariance.html
+      - text: Calculated power
+        href: articles/calculated-power.html
+      - text: Comparison with G\*Power
+        href: articles/comparison-with-gpower.html
     reference:
       text: Reference
       href: reference/index.html
@@ -24,19 +37,51 @@ navbar:
       href: news/index.html
 
 reference:
-  - title: Main functions
+  - title: Core simulation
     desc: >
-      Functions for power analysis and simulation.
+      Required-sample-size searches and power curves for balanced designs.
     contents:
-      - power_curve
       - power_n
-      - power_achieved
-      - power_achieved_calc
-      - power_sensitivity
-      - power_sensitivity_calc
-      - power_unbalanced
-      - power_n_calc
+      - power_curve
       - plot_power_curve
+
+  - title: Fixed-sample simulation
+    desc: >
+      Achieved power and effect-size sensitivity at a fixed sample size.
+    contents:
+      - power_achieved
+      - power_sensitivity
+
+  - title: Calculated power
+    desc: >
+      Calculation-only analyses that skip simulations.
+    contents:
+      - power_n_calc
+      - power_achieved_calc
+      - power_sensitivity_calc
+
+  - title: Unbalanced designs
+    desc: >
+      Fixed-design simulation with explicit sample sizes, means, and SDs.
+    contents:
+      - power_unbalanced
+      - cell_design
+      - unbalanced_covariance
+
+  - title: Design components
+    desc: >
+      Component functions for power analyses.
+    contents:
+      - balanced_anova_design
+      - within_covariance
+      - design_term_means
+      - simulate_design_dataset
+      - compute_scale_factor
+
+  - title: Output methods
+    desc: >
+      Printing and summarising power-analysis results.
+    contents:
       - print.anovapowersim_curve
       - summary.anovapowersim_curve
       - print.anovapowersim_achieved_power
@@ -46,20 +91,13 @@ reference:
       - print.anovapowersim_unbalanced_power
       - summary.anovapowersim_unbalanced_power
 
-  - title: Design components
-    desc: >
-      Component functions for power analyses.
-    contents:
-      - balanced_anova_design
-      - within_covariance
-      - cell_design
-      - unbalanced_covariance
-      - design_term_means
-      - simulate_design_dataset
-      - compute_scale_factor
-
 articles:
-  - title: Getting started
+  - title: Guides
     navbar: ~
     contents:
       - anovapowersim
+      - fixed-sample-power
+      - calculated-power
+      - unbalanced-designs
+      - covariance
+      - comparison-with-gpower

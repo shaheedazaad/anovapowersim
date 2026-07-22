@@ -4,11 +4,29 @@
 \alias{cell_design}
 \title{Define cells for a means-based unbalanced ANOVA design}
 \usage{
-cell_design(...)
+cell_design(
+  ...,
+  within = NULL,
+  default_n = NULL,
+  default_m = NULL,
+  default_sd = NULL
+)
 }
 \arguments{
 \item{...}{Repeated named cell definitions. Each cell must contain the same
-factor names in the same order, plus \code{n}, \code{m}, and \code{sd}.}
+factor names in the same order, plus \code{n}, \code{m}, and \code{sd}. Every factor must
+have at least 2 observed levels, and every combination of factor levels
+must appear exactly once (or be filled automatically; see \code{default_n}).}
+
+\item{within}{Character vector naming factors in \code{...} that are measured
+within subjects, or \code{NULL} for a purely between-subject design. Stored on
+the returned object and read by \code{\link[=power_unbalanced]{power_unbalanced()}}.}
+
+\item{default_n, default_m, default_sd}{Optional scalars used to fill any
+missing cells in the complete factorial design. Supply all three to
+auto-fill missing cells with these values; supply none to require every
+cell to be defined explicitly (the default). Supplying only some of the
+three is an error.}
 }
 \value{
 An \code{anovapowersim_cell_design} tibble with one row per design cell.
@@ -32,7 +50,8 @@ design <- cell_design(
   group = "control", time = "pre",  n = 22, m = 10.0, sd = 2.0,
   group = "control", time = "post", n = 22, m = 11.0, sd = 2.2,
   group = "treatment", time = "pre",  n = 31, m = 10.1, sd = 2.4,
-  group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8
+  group = "treatment", time = "post", n = 31, m = 12.4, sd = 2.8,
+  within = "time"
 )
 design
 

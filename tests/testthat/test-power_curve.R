@@ -1491,3 +1491,123 @@ test_that("power_n validates parallel controls", {
     "`cores` must not exceed"
   )
 })
+
+test_that("warn_gpower_within_term_df warns only for gpower = TRUE with within-term df > 1", {
+  spec_3 <- balanced_anova_design(within = c(time = 3))
+  spec_2 <- balanced_anova_design(within = c(time = 2))
+  spec_between <- balanced_anova_design(between = c(group = 2))
+  mixed_spec <- balanced_anova_design(
+    between = c(group = 2), within = c(time = 3)
+  )
+
+  expect_warning(
+    anovapowersim:::warn_gpower_within_term_df(TRUE, spec_3, "time"),
+    "gpower = TRUE"
+  )
+  expect_warning(
+    anovapowersim:::warn_gpower_within_term_df(TRUE, mixed_spec, "group:time"),
+    "gpower = TRUE"
+  )
+  expect_silent(
+    anovapowersim:::warn_gpower_within_term_df(FALSE, spec_3, "time")
+  )
+  expect_silent(
+    anovapowersim:::warn_gpower_within_term_df(TRUE, spec_2, "time")
+  )
+  expect_silent(
+    anovapowersim:::warn_gpower_within_term_df(TRUE, spec_between, "group")
+  )
+  expect_silent(
+    anovapowersim:::warn_gpower_within_term_df(TRUE, mixed_spec, "group")
+  )
+})
+
+test_that("gpower = TRUE warns for multi-df within terms across all gpower-accepting functions", {
+  # each incidental warning (target power not reached with a tiny n_max,
+  # power < .90 recommended, sim/calc disagreement from n_sims = 1 noise) is
+  # an expected side effect of keeping these calls fast; capture_warnings()
+  # checks only for the gpower-specific message among whatever fires.
+  expect_gpower_warning <- function(expr) {
+    warnings <- testthat::capture_warnings(expr)
+    expect_true(any(grepl("gpower = TRUE", warnings, fixed = TRUE)))
+  }
+  expect_no_gpower_warning <- function(expr) {
+    warnings <- testthat::capture_warnings(expr)
+    expect_false(any(grepl("gpower = TRUE", warnings, fixed = TRUE)))
+  }
+
+  # calculated-power functions (fast, no simulation)
+  expect_gpower_warning(
+    power_n_calc(
+      within = c(time = 3), term = "time", target_pes = 0.1, power = 0.5,
+      n_start = 4, n_max = 4, gpower = TRUE
+    )
+  )
+  expect_no_gpower_warning(
+    power_n_calc(
+      within = c(time = 2), term = "time", target_pes = 0.1, power = 0.5,
+      n_start = 4, n_max = 4, gpower = TRUE
+    )
+  )
+
+  expect_gpower_warning(
+    power_achieved_calc(
+      within = c(time = 3), term = "time", target_pes = 0.1, n = 4,
+      gpower = TRUE
+    )
+  )
+  expect_gpower_warning(
+    power_sensitivity_calc(
+      within = c(time = 3), term = "time", n = 4, power = 0.9,
+      pes_tol = 0.3, gpower = TRUE
+    )
+  )
+
+  expect_gpower_warning(
+    design_term_means(
+      balanced_anova_design(within = c(time = 3)), term = "time",
+      target_pes = 0.1, n = 4, gpower = TRUE
+    )
+  )
+  expect_no_gpower_warning(
+    design_term_means(
+      balanced_anova_design(within = c(time = 2)), term = "time",
+      target_pes = 0.1, n = 4, gpower = TRUE
+    )
+  )
+
+  # simulation-based functions
+  expect_gpower_warning(
+    power_curve(
+      within = c(time = 3), term = "time", target_pes = 0.1, n_range = 5,
+      n_sims = 1, gpower = TRUE, progress = FALSE
+    )
+  )
+  expect_no_gpower_warning(
+    power_curve(
+      within = c(time = 2), term = "time", target_pes = 0.1, n_range = 5,
+      n_sims = 1, gpower = TRUE, progress = FALSE
+    )
+  )
+
+  expect_gpower_warning(
+    power_n(
+      within = c(time = 3), term = "time", target_pes = 0.1, power = 0.5,
+      n_sims = 1, n_start = 4, n_max = 4, gpower = TRUE, progress = FALSE
+    )
+  )
+
+  expect_gpower_warning(
+    power_achieved(
+      within = c(time = 3), term = "time", target_pes = 0.1, n = 4,
+      n_sims = 1, gpower = TRUE, progress = FALSE
+    )
+  )
+
+  expect_gpower_warning(
+    power_sensitivity(
+      within = c(time = 3), term = "time", n = 4, power = 0.5,
+      n_sims = 1, pes_tol = 0.5, gpower = TRUE, progress = FALSE
+    )
+  )
+})
