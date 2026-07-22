@@ -326,7 +326,8 @@ test_that("direction warning is limited to implicit nonspherical multi-df simula
     covariance = test_covariance_spec_from_matrix(sigma3),
     ss_type = "I", progress = FALSE, seed = 1
   ))
-  expect_true(any(grepl("cannot supply a Greenhouse", type_i_warnings)))
+  expect_true(any(grepl("cannot provide GG-corrected", type_i_warnings,
+                        fixed = TRUE)))
   expect_true(any(grepl("relative cell-mean pattern", type_i_warnings,
                         fixed = TRUE)))
 })

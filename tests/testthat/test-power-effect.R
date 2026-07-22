@@ -47,6 +47,8 @@ test_that("power_achieved returns its dedicated class and fixed-N fields", {
   expect_equal(result$total_n, 10L)
   expect_equal(nrow(result$results), 1L)
   expect_true(all(c("achieved_power", "calculated_power") %in% names(result)))
+  expect_identical(result$sim_correction, "auto")
+  expect_identical(result$sim_correction_resolved, "none")
 })
 
 test_that("power_sensitivity returns an explicitly simulated upper bracket", {
@@ -68,6 +70,8 @@ test_that("power_sensitivity returns an explicitly simulated upper bracket", {
   upper <- result$results[result$results$target_pes == result$pes_needed, ]
   expect_gte(upper$power_sim[[1L]], result$power)
   expect_lte(result$bracket_width, result$pes_tol)
+  expect_identical(result$sim_correction, "auto")
+  expect_identical(result$sim_correction_resolved, "none")
   if (is.finite(result$pes_lower)) {
     lower <- result$results[result$results$target_pes == result$pes_lower, ]
     expect_lt(lower$power_sim[[1L]], result$power)
@@ -171,8 +175,10 @@ test_that("new result classes have dedicated print and summary methods", {
   )
 
   expect_output(print(achieved), "achieved power")
+  expect_output(print(achieved), "simulated test:.*uncorrected.*auto")
   expect_output(summary(achieved), "achieved-power summary")
   expect_output(print(sensitivity), "detectable pes")
+  expect_output(print(sensitivity), "simulated test:.*uncorrected.*auto")
   expect_output(summary(sensitivity), "sensitivity summary")
 })
 

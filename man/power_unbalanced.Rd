@@ -14,7 +14,8 @@ power_unbalanced(
   progress = interactive(),
   parallel = FALSE,
   cores = NULL,
-  seed = NULL
+  seed = NULL,
+  sim_correction = c("auto", "GG", "none")
 )
 }
 \arguments{
@@ -31,12 +32,9 @@ warning stating those defaults. For purely between-subject designs, use
 this argument to change the common SD; correlation settings are not
 applicable. When an \code{\link[=unbalanced_covariance]{unbalanced_covariance()}} specification omits some
 correlation pairs, a warning states that \code{default_correlation} is used
-only for those undefined pairs. If the term's population
-covariance is non-spherical, \code{power_sim} is based on each
-simulated dataset's Greenhouse--Geisser-corrected p-value rather than the
-uncorrected univariate test. This correction requires \code{ss_type} \code{"III"}
-or \code{"II"}; under \code{"I"}, simulated p-values remain uncorrected, and a
-warning is issued.}
+only for those undefined pairs. The resolved covariance determines the
+term-specific population Greenhouse--Geisser epsilon used by
+\code{sim_correction = "auto"}.}
 
 \item{n_sims}{Number of simulated datasets.}
 
@@ -53,6 +51,15 @@ a warning reports the factor order inherited from \code{\link[=cell_design]{cell
 \item{cores}{Optional positive integer number of parallel workers.}
 
 \item{seed}{Optional integer seed for reproducibility.}
+
+\item{sim_correction}{Sphericity correction for simulated p-values:
+\code{"auto"} (the default) uses Greenhouse--Geisser correction when the
+term-specific population epsilon is below \code{1 - 1e-8} and \code{ss_type} is
+\code{"II"} or \code{"III"}; \code{"GG"} requests correction for every simulated
+dataset; and \code{"none"} always uses the uncorrected univariate test.
+\code{"GG"} is an error with \code{ss_type = "I"}. For a between-only term or a
+within component with one degree of freedom, \code{"GG"} silently resolves to
+\code{"none"} because no sphericity correction applies.}
 }
 \value{
 An \code{anovapowersim_unbalanced_power} object. \verb{$power} and
@@ -63,7 +70,9 @@ also reports the common SD, simulated partial eta-squared distribution,
 and failed fits. Sample partial eta squared is upward-biased in finite
 samples, so \code{mean_pes_sim}, \code{median_pes_sim}, and the simulated interval
 are sampling diagnostics rather than estimates of the supplied population
-effect; use \verb{$partial_eta_squared} as the reference effect.
+effect; use \verb{$partial_eta_squared} as the reference effect. The object
+stores the requested \code{sim_correction} and applied
+\code{sim_correction_resolved} values.
 }
 \description{
 Estimates achieved power for exact, potentially unequal cell sizes and
@@ -81,6 +90,17 @@ that contain only other effects.
 \code{power_unbalanced()} is experimental and is available only in the
 development version of \code{anovapowersim}. Its API and reporting format may
 change.
+}
+
+\section{Simulated sphericity correction}{
+
+\code{sim_correction} governs only the simulated test. With \code{"GG"}, each dataset
+uses its own sample-estimated Greenhouse--Geisser epsilon from
+\code{car::Anova()}. Under a truly spherical population, that sample correction
+is mildly conservative. Power is estimated for the prespecified corrected
+or uncorrected test; conditional Mauchly-then-correct procedures are not
+simulated. Unlike the balanced simulation functions, \code{power_unbalanced()}
+does not report a \code{power_calc} diagnostic.
 }
 
 \examples{

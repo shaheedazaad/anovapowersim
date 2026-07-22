@@ -24,10 +24,15 @@
 #' @param ss_type Sums-of-squares type for the tested ANOVA term. `"III"` is
 #'   the default for order-invariant tests in unbalanced designs. Use `"I"` to
 #'   reproduce sequential `stats::aov()` tests. Greenhouse--Geisser-corrected
-#'   simulated p-values (see `covariance`) are only available for `"III"` and
-#'   `"II"`; under `"I"`, simulated p-values always use the uncorrected
-#'   univariate test, and a warning is issued if the supplied covariance
-#'   yields a population epsilon below `1`.
+#'   simulated p-values are available only for `"III"` and `"II"`.
+#' @param sim_correction Sphericity correction for simulated p-values:
+#'   `"auto"` (the default) uses Greenhouse--Geisser correction when the
+#'   term-specific population epsilon is below `1 - 1e-8` and `ss_type` is
+#'   `"II"` or `"III"`; `"GG"` requests correction for every simulated
+#'   dataset; and `"none"` always uses the uncorrected univariate test.
+#'   `"GG"` is an error with `ss_type = "I"`. For a between-only term or a
+#'   within component with one degree of freedom, `"GG"` silently resolves to
+#'   `"none"` because no sphericity correction applies.
 #' @param gpower Logical; if `TRUE`, calibrate means to the G*Power-style
 #'   noncentrality convention `lambda = total_n * f^2`. The default `FALSE`
 #'   calibrates the empirical reference dataset to `target_pes`, equivalent to
@@ -54,11 +59,9 @@
 #'   unequal correlations remain supported. For terms containing
 #'   within-subject factors, the resolved covariance matrix is also used to
 #'   derive a term-specific population Greenhouse--Geisser epsilon for
-#'   `power_calc`. If
-#'   that population epsilon is below `1`, `power_sim` is also based on each
-#'   simulated dataset's Greenhouse--Geisser-corrected p-value (from
-#'   `car::Anova()`) rather than the uncorrected univariate test, so `power_sim`
-#'   and `power_calc` estimate the same corrected test.
+#'   `power_calc`. With the default `sim_correction = "auto"`, a population
+#'   epsilon below `1 - 1e-8` also selects Greenhouse--Geisser-corrected
+#'   simulated p-values for `ss_type` `"II"` or `"III"`.
 #' @param means_pattern Optional relative cell-mean shape created by
 #'   [means_pattern()]. The sparse values are projected onto `term`, normalized,
 #'   and uniformly rescaled to reach `target_pes`. If `NULL`, simulations use
@@ -75,12 +78,28 @@
 #'   (`power_calc`), and simulated power (`power_sim`). The full-precision
 #'   `power_sim` value, not its printed three-decimal representation, is used
 #'   by adaptive searches. When `epsilon < 1`, the reported degrees of freedom
-#'   and noncentrality are the corrected values used for `power_calc`, and
-#'   `power_sim` (for `ss_type` `"III"`/`"II"`) is based on the
-#'   Greenhouse--Geisser-corrected simulated p-value rather than the
-#'   uncorrected univariate test. Balanced simulation result objects also
-#'   include `custom_means_pattern`, indicating whether the relative direction
-#'   was supplied explicitly.
+#'   and noncentrality are the corrected values used for `power_calc`. With the
+#'   default `sim_correction = "auto"`, `power_sim` uses the
+#'   Greenhouse--Geisser-corrected simulated p-value when
+#'   `epsilon < 1 - 1e-8` and `ss_type` is `"III"` or `"II"`; otherwise it
+#'   uses the uncorrected univariate test. Balanced simulation result objects
+#'   also include `custom_means_pattern`, indicating whether the relative
+#'   direction was supplied explicitly, plus `sim_correction` and
+#'   `sim_correction_resolved` for the requested and applied simulated-test
+#'   correction.
+#'
+#' @section Simulated sphericity correction:
+#' `sim_correction` changes only `power_sim`. When Greenhouse--Geisser
+#' correction is selected, each simulated dataset is tested using its own
+#' sample-estimated epsilon from `car::Anova()`. `power_calc` is unchanged and
+#' always models the population-epsilon-adjusted test. Consequently, forcing
+#' `sim_correction = "GG"` under a truly spherical population can make
+#' `power_sim` slightly smaller than `power_calc`, because sample-epsilon GG
+#' correction is mildly conservative under sphericity.
+#'
+#' Power is estimated for the prespecified corrected or uncorrected test.
+#' Conditional procedures that first run Mauchly's test and then decide whether
+#' to correct are not simulated.
 #'
 #' @section Examples:
 #' ```{r, eval = FALSE}
@@ -337,7 +356,6 @@ power_n <- function(between = NULL,
       target_power = power,
       alpha = alpha,
       ss_type = setup$ss_type,
-      sim_correction_resolved = setup$sim_correction_resolved,
       sd = sd,
       r = r,
       covariance = setup$covariance,
@@ -391,6 +409,7 @@ power_n <- function(between = NULL,
       n_sims = setup$n_sims,
       alpha = alpha,
       ss_type = setup$ss_type,
+      sim_correction_resolved = setup$sim_correction_resolved,
       sd = sd,
       r = r,
       covariance = setup$covariance,
@@ -1109,20 +1128,67 @@ validate_ss_type <- function(ss_type) {
 }
 
 
-#' Warn that ss_type = "I" cannot supply a Greenhouse-Geisser-corrected p-value
+#' Resolve the sphericity correction used for simulated tests
 #'
 #' @keywords internal
 #' @noRd
-warn_ss_type_i_uncorrected_gg <- function(ss_type, epsilon) {
-  if (!identical(ss_type, "I") || !isTRUE(epsilon < 1 - 1e-8)) {
+resolve_sim_correction <- function(sim_correction, ss_type, spec, term,
+                                   epsilon) {
+  requested <- match.arg(sim_correction, c("auto", "GG", "none"))
+  if (identical(requested, "GG") && identical(ss_type, "I")) {
+    stop(
+      "`sim_correction = \"GG\"` is not available with `ss_type = \"I\"` ",
+      "because Type I tests do not provide Greenhouse-Geisser-corrected ",
+      "p-values. Use `ss_type = \"II\"` or `\"III\"`, or set ",
+      "`sim_correction = \"none\"`.",
+      call. = FALSE
+    )
+  }
+
+  has_multi_df_within <- within_term_df(spec = spec, term = term) > 1L
+  resolved <- if (identical(requested, "GG")) {
+    if (has_multi_df_within) "GG" else "none"
+  } else if (identical(requested, "auto") &&
+             isTRUE(epsilon < 1 - 1e-8) &&
+             ss_type %in% c("II", "III")) {
+    "GG"
+  } else {
+    "none"
+  }
+
+  list(requested = requested, resolved = resolved)
+}
+
+
+#' Warn when an uncorrected simulated test is used under nonsphericity
+#'
+#' @keywords internal
+#' @noRd
+warn_uncorrected_nonsphericity <- function(sim_correction,
+                                           sim_correction_resolved,
+                                           ss_type, epsilon) {
+  if (!identical(sim_correction_resolved, "none") ||
+      !isTRUE(epsilon < 1 - 1e-8)) {
     return(invisible(NULL))
   }
+
+  type_i_note <- if (identical(ss_type, "I")) {
+    paste0(
+      " `ss_type = \"I\"` cannot provide GG-corrected p-values; use ",
+      "`ss_type = \"II\"` or `\"III\"` with `sim_correction = \"GG\"` ",
+      "to simulate the corrected test."
+    )
+  } else {
+    " Set `sim_correction = \"GG\"` to simulate the corrected test."
+  }
+
   warning(
-    "`ss_type = \"I\"` cannot supply a Greenhouse-Geisser-corrected p-value, ",
-    "so `power_sim` will use the uncorrected univariate test even though ",
-    "`power_calc` is Greenhouse-Geisser-corrected (epsilon = ",
-    signif(epsilon, 3), "). Use `ss_type = \"II\"` or `\"III\"` so that ",
-    "`power_sim` and `power_calc` estimate the same corrected test.",
+    "The population covariance is nonspherical (Greenhouse-Geisser epsilon = ",
+    signif(epsilon, 4), "), but the simulated test is uncorrected. Its true ",
+    "Type I error exceeds the nominal alpha under this covariance, so ",
+    "`power_sim` will typically exceed corrected power; that excess is alpha ",
+    "inflation, not real power.",
+    type_i_note,
     call. = FALSE,
     immediate. = TRUE
   )
@@ -1314,7 +1380,8 @@ message_long_serial_run <- function(n_sims, parallel) {
 #' @keywords internal
 #' @noRd
 run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
-                                  alpha, ss_type, sd, r, gpower,
+                                  alpha, ss_type, sim_correction_resolved,
+                                  sd, r, gpower,
                                   covariance = NULL,
                                   epsilon = 1,
                                   progress_bar = NULL,
@@ -1346,8 +1413,7 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     epsilon = epsilon,
     ss_type = ss_type
   )
-  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8) &&
-    ss_type %in% c("II", "III")
+  use_gg_correction <- identical(sim_correction_resolved, "GG")
   assert_reference_gg_p(
     stats = sanity,
     use_gg_correction = use_gg_correction,
@@ -1624,11 +1690,17 @@ warn_precision_band_not_reached <- function(curve, target, tol, n_needed) {
 
 #' @keywords internal
 #' @noRd
-warn_power_disagreement <- function(results, n_sims, threshold = 0.05) {
+warn_power_disagreement <- function(results, n_sims, threshold = 0.05,
+                                    sim_correction_resolved = NULL,
+                                    epsilon = 1) {
   if (!all(c("power_sim", "power_calc") %in% names(results))) return(invisible(NULL))
   diff <- abs(results$power_sim - results$power_calc)
   bad <- which(is.finite(diff) & diff > threshold)
   if (!length(bad)) return(invisible(NULL))
+  if (identical(sim_correction_resolved, "none") &&
+      isTRUE(epsilon < 1 - 1e-8)) {
+    return(invisible(NULL))
+  }
 
   point_label <- if ("target_pes" %in% names(results)) {
     "target_pes"

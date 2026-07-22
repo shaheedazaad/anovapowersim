@@ -46,7 +46,8 @@ power_achieved <- function(between = NULL,
                            cores = NULL,
                            seed = NULL,
                            covariance = NULL,
-                           means_pattern = NULL) {
+                           means_pattern = NULL,
+                           sim_correction = c("auto", "GG", "none")) {
   sd <- 1
   r <- 0.5
   setup <- prepare_power_curve_inputs(
@@ -64,7 +65,8 @@ power_achieved <- function(between = NULL,
     progress = progress,
     parallel = parallel,
     cores = cores,
-    means_pattern = means_pattern
+    means_pattern = means_pattern,
+    sim_correction = sim_correction
   )
   n <- validate_fixed_design_n(n, setup$spec)
   message_long_serial_run(setup$n_sims, setup$parallel)
@@ -85,6 +87,7 @@ power_achieved <- function(between = NULL,
     n_sims = setup$n_sims,
     alpha = alpha,
     ss_type = setup$ss_type,
+    sim_correction_resolved = setup$sim_correction_resolved,
     sd = sd,
     r = r,
     covariance = setup$covariance,
@@ -96,7 +99,11 @@ power_achieved <- function(between = NULL,
     resolved_means_pattern = setup$means_pattern
   )
   if (setup$parallel) tick_progress_bar(progress_bar)
-  warn_power_disagreement(row, setup$n_sims)
+  warn_power_disagreement(
+    row, setup$n_sims,
+    sim_correction_resolved = setup$sim_correction_resolved,
+    epsilon = setup$epsilon
+  )
 
   structure(
     list(
@@ -115,6 +122,8 @@ power_achieved <- function(between = NULL,
       custom_covariance = setup$custom_covariance,
       custom_means_pattern = setup$custom_means_pattern,
       ss_type = setup$ss_type,
+      sim_correction = setup$sim_correction,
+      sim_correction_resolved = setup$sim_correction_resolved,
       design = setup$spec,
       call = match.call()
     ),
@@ -181,7 +190,8 @@ power_sensitivity <- function(between = NULL,
                               cores = NULL,
                               seed = NULL,
                               covariance = NULL,
-                              means_pattern = NULL) {
+                              means_pattern = NULL,
+                              sim_correction = c("auto", "GG", "none")) {
   sd <- 1
   r <- 0.5
   setup <- prepare_balanced_power_inputs(
@@ -198,7 +208,8 @@ power_sensitivity <- function(between = NULL,
     progress = progress,
     parallel = parallel,
     cores = cores,
-    means_pattern = means_pattern
+    means_pattern = means_pattern,
+    sim_correction = sim_correction
   )
   assert_unit_interval(power, "power")
   if (power < 0.90) {
@@ -250,6 +261,7 @@ power_sensitivity <- function(between = NULL,
       n_sims = setup$n_sims,
       alpha = alpha,
       ss_type = setup$ss_type,
+      sim_correction_resolved = setup$sim_correction_resolved,
       sd = sd,
       r = r,
       covariance = setup$covariance,
@@ -273,7 +285,11 @@ power_sensitivity <- function(between = NULL,
     max_iter = max_iter,
     progress_bar = progress_bar
   )
-  warn_power_disagreement(search$results, setup$n_sims)
+  warn_power_disagreement(
+    search$results, setup$n_sims,
+    sim_correction_resolved = setup$sim_correction_resolved,
+    epsilon = setup$epsilon
+  )
 
   if (!search$reached) {
     warning(
@@ -325,6 +341,8 @@ power_sensitivity <- function(between = NULL,
       custom_covariance = setup$custom_covariance,
       custom_means_pattern = setup$custom_means_pattern,
       ss_type = setup$ss_type,
+      sim_correction = setup$sim_correction,
+      sim_correction_resolved = setup$sim_correction_resolved,
       design = setup$spec,
       call = match.call()
     ),

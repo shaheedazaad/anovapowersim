@@ -8,7 +8,8 @@ n_sims <- 10000L
 alpha <- 0.05
 
 run_null_case <- function(label, design, term, covariance = NULL,
-                          ss_type = "III", gg_corrected = FALSE, seed) {
+                          ss_type = "III", sim_correction = "auto",
+                          gg_corrected = FALSE, expect_liberal = FALSE, seed) {
   result <- suppressMessages(suppressWarnings(power_unbalanced(
     design = design,
     term = term,
@@ -16,6 +17,7 @@ run_null_case <- function(label, design, term, covariance = NULL,
     n_sims = n_sims,
     alpha = alpha,
     ss_type = ss_type,
+    sim_correction = sim_correction,
     progress = FALSE,
     seed = seed
   )))
@@ -23,7 +25,9 @@ run_null_case <- function(label, design, term, covariance = NULL,
     successes = round(result$power * result$valid_sims),
     trials = result$valid_sims
   )
-  passes <- if (gg_corrected) {
+  passes <- if (expect_liberal) {
+    result$power > 0.06
+  } else if (gg_corrected) {
     result$power <= 0.06
   } else {
     abs(result$power - alpha) <= 0.01
@@ -31,6 +35,7 @@ run_null_case <- function(label, design, term, covariance = NULL,
   data.frame(
     scenario = label,
     ss_type = ss_type,
+    sim_correction = sim_correction,
     gg_corrected = gg_corrected,
     rejection_rate = result$power,
     lower_95 = interval[["lower"]],
@@ -94,7 +99,13 @@ results <- rbind(
   ),
   run_null_case(
     "mixed nonspherical GG", mixed, "group:time",
-    covariance = nonspherical, gg_corrected = TRUE, seed = 302
+    covariance = nonspherical, sim_correction = "GG",
+    gg_corrected = TRUE, seed = 302
+  ),
+  run_null_case(
+    "mixed nonspherical uncorrected", mixed, "group:time",
+    covariance = nonspherical, sim_correction = "none",
+    expect_liberal = TRUE, seed = 303
   )
 )
 

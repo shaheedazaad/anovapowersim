@@ -1,5 +1,9 @@
 # anovapowersim (development version)
 
+* Added `sim_correction = c("auto", "GG", "none")` to all simulation power
+  functions. The default `"auto"` preserves existing behavior, while users can
+  now prespecify corrected or uncorrected simulated tests. Uncorrected tests
+  under nonsphericity warn that excess rejection reflects alpha inflation.
 * Fixed `power_n()` and `power_n_calc()` treating `n_start` as an implicit
   lower bound when power at that value already met the target. Both searches
   now probe the smallest valid sample size and refine the resulting lower

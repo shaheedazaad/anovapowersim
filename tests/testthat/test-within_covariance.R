@@ -500,17 +500,140 @@ test_that("power_curve GG-corrects power_sim to match power_calc under severe no
                corrected$results$power_calc)
 })
 
-test_that("warn_ss_type_i_uncorrected_gg only warns for ss_type = 'I' with epsilon < 1", {
-  expect_warning(
-    anovapowersim:::warn_ss_type_i_uncorrected_gg(ss_type = "I", epsilon = 0.8),
-    "ss_type = \"I\""
+test_that("simulated correction resolution validates modes and term scope", {
+  multi_df <- balanced_anova_design(within = c(time = 3))
+  one_df <- balanced_anova_design(within = c(time = 2))
+  between_only <- balanced_anova_design(between = c(group = 2))
+
+  expect_identical(
+    anovapowersim:::resolve_sim_correction(
+      "auto", "III", multi_df, "time", epsilon = 0.7
+    )$resolved,
+    "GG"
   )
-  expect_silent(
-    anovapowersim:::warn_ss_type_i_uncorrected_gg(ss_type = "I", epsilon = 1)
+  expect_identical(
+    anovapowersim:::resolve_sim_correction(
+      "auto", "III", multi_df, "time", epsilon = 1
+    )$resolved,
+    "none"
   )
-  expect_silent(
-    anovapowersim:::warn_ss_type_i_uncorrected_gg(ss_type = "III", epsilon = 0.5)
+  expect_identical(
+    anovapowersim:::resolve_sim_correction(
+      "GG", "III", one_df, "time", epsilon = 1
+    )$resolved,
+    "none"
   )
+  expect_identical(
+    anovapowersim:::resolve_sim_correction(
+      "GG", "III", between_only, "group", epsilon = 1
+    )$resolved,
+    "none"
+  )
+  expect_error(
+    anovapowersim:::resolve_sim_correction(
+      "GG", "I", multi_df, "time", epsilon = 0.7
+    ),
+    'sim_correction = "GG".*ss_type = "I".*ss_type = "II".*"III".*sim_correction = "none"'
+  )
+  expect_error(
+    anovapowersim:::resolve_sim_correction(
+      "HF", "III", multi_df, "time", epsilon = 0.7
+    ),
+    "one of"
+  )
+})
+
+test_that("auto preserves correction behavior and explicit modes are equivalent", {
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
+  dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
+  covariance <- test_covariance_spec_from_matrix(sigma)
+  common <- list(
+    within = c(time = 3), term = "time", target_pes = 0.14,
+    n_range = 6, n_sims = 12, covariance = covariance,
+    progress = FALSE, seed = 117
+  )
+
+  omitted <- do.call(quiet_covariance_power_curve, common)
+  auto <- do.call(
+    quiet_covariance_power_curve,
+    c(common, list(sim_correction = "auto"))
+  )
+  gg <- do.call(
+    quiet_covariance_power_curve,
+    c(common, list(sim_correction = "GG"))
+  )
+  spherical_auto <- quiet_covariance_power_curve(
+    within = c(time = 3), term = "time", target_pes = 0.14,
+    n_range = 6, n_sims = 12, progress = FALSE, seed = 118,
+    sim_correction = "auto"
+  )
+  spherical_omitted <- quiet_covariance_power_curve(
+    within = c(time = 3), term = "time", target_pes = 0.14,
+    n_range = 6, n_sims = 12, progress = FALSE, seed = 118
+  )
+  spherical_none <- quiet_covariance_power_curve(
+    within = c(time = 3), term = "time", target_pes = 0.14,
+    n_range = 6, n_sims = 12, progress = FALSE, seed = 118,
+    sim_correction = "none"
+  )
+  spherical_gg <- quiet_covariance_power_curve(
+    within = c(time = 3), term = "time", target_pes = 0.14,
+    n_range = 6, n_sims = 12, progress = FALSE, seed = 118,
+    sim_correction = "GG"
+  )
+
+  expect_identical(omitted$results, auto$results)
+  expect_identical(auto$results, gg$results)
+  expect_identical(spherical_omitted$results, spherical_auto$results)
+  expect_identical(spherical_auto$results, spherical_none$results)
+  expect_identical(auto$sim_correction, "auto")
+  expect_identical(auto$sim_correction_resolved, "GG")
+  expect_identical(gg$sim_correction, "GG")
+  expect_identical(gg$sim_correction_resolved, "GG")
+  expect_identical(spherical_none$sim_correction_resolved, "none")
+  expect_identical(spherical_gg$sim_correction_resolved, "GG")
+  expect_identical(spherical_gg$results$failed_sims, 0L)
+})
+
+test_that("GG requests are harmless for terms without an applicable correction", {
+  between <- quiet_covariance_power_curve(
+    between = c(group = 2), term = "group", target_pes = 0.1,
+    n_range = 4, n_sims = 2, progress = FALSE, seed = 119,
+    sim_correction = "GG"
+  )
+  one_df <- quiet_covariance_power_curve(
+    within = c(time = 2), term = "time", target_pes = 0.1,
+    n_range = 4, n_sims = 2, progress = FALSE, seed = 120,
+    sim_correction = "GG"
+  )
+
+  expect_identical(between$sim_correction, "GG")
+  expect_identical(between$sim_correction_resolved, "none")
+  expect_identical(one_df$sim_correction_resolved, "none")
+  expect_output(
+    print(one_df),
+    "simulated test:.*uncorrected.*GG requested.*no applicable"
+  )
+})
+
+test_that("uncorrected nonspherical tests warn without generic issue advice", {
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
+  dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
+  covariance <- test_covariance_spec_from_matrix(sigma)
+  pattern <- means_pattern(time = 1, value = -1, time = 3, value = 1)
+
+  warnings <- testthat::capture_warnings(power_curve(
+    within = c(time = 3), term = "time", target_pes = 0.14,
+    n_range = 5, n_sims = 2, covariance = covariance,
+    means_pattern = pattern, sim_correction = "none",
+    progress = FALSE, seed = 121
+  ))
+
+  expect_true(any(grepl("population covariance is nonspherical", warnings,
+                        ignore.case = TRUE)))
+  expect_true(any(grepl("alpha inflation, not real power", warnings,
+                        fixed = TRUE)))
+  expect_false(any(grepl("GitHub issue", warnings, fixed = TRUE)))
 })
 
 test_that("simulated p-value selection never falls back when GG is required", {
@@ -579,14 +702,10 @@ test_that("GG p-value selection works in a parallel balanced simulation", {
   expect_identical(result$results$failed_sims, 0L)
 })
 
-test_that("power_curve warns when ss_type = 'I' is combined with a non-spherical covariance", {
+test_that("auto with Type I and nonsphericity emits one correction warning", {
   sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
   dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
 
-  # ss_type = "I" also diverges from power_calc in a real way here (it stays
-  # uncorrected), so the pre-existing power_sim/power_calc disagreement
-  # warning legitimately co-fires alongside the new one; capture all
-  # warnings rather than asserting on a single one.
   result <- NULL
   warnings <- testthat::capture_warnings(
     result <- power_curve(
@@ -596,11 +715,18 @@ test_that("power_curve warns when ss_type = 'I' is combined with a non-spherical
       n_range = 5,
       n_sims = 1,
       covariance = test_covariance_spec_from_matrix(sigma),
+      means_pattern = means_pattern(
+        time = 1, value = -1,
+        time = 3, value = 1
+      ),
       ss_type = "I",
       progress = FALSE,
       seed = 1
     )
   )
-  expect_true(any(grepl("ss_type = \"I\"", warnings, fixed = TRUE)))
+  expect_length(warnings, 1L)
+  expect_match(warnings, 'ss_type = "I".*cannot provide GG-corrected')
   expect_identical(result$results$failed_sims, 0L)
+  expect_identical(result$sim_correction, "auto")
+  expect_identical(result$sim_correction_resolved, "none")
 })

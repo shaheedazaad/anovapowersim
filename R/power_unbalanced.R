@@ -453,17 +453,22 @@ unbalanced_covariance <- function(sd = 1,
 #'   this argument to change the common SD; correlation settings are not
 #'   applicable. When an [unbalanced_covariance()] specification omits some
 #'   correlation pairs, a warning states that `default_correlation` is used
-#'   only for those undefined pairs. If the term's population
-#'   covariance is non-spherical, `power_sim` is based on each
-#'   simulated dataset's Greenhouse--Geisser-corrected p-value rather than the
-#'   uncorrected univariate test. This correction requires `ss_type` `"III"`
-#'   or `"II"`; under `"I"`, simulated p-values remain uncorrected, and a
-#'   warning is issued.
+#'   only for those undefined pairs. The resolved covariance determines the
+#'   term-specific population Greenhouse--Geisser epsilon used by
+#'   `sim_correction = "auto"`.
 #' @param n_sims Number of simulated datasets.
 #' @param alpha Significance threshold.
 #' @param ss_type Sums-of-squares type: `"III"`, `"II"`, or `"I"`.
 #'   For unequal-N designs, `"I"` uses sequential, order-dependent hypotheses;
 #'   a warning reports the factor order inherited from [cell_design()].
+#' @param sim_correction Sphericity correction for simulated p-values:
+#'   `"auto"` (the default) uses Greenhouse--Geisser correction when the
+#'   term-specific population epsilon is below `1 - 1e-8` and `ss_type` is
+#'   `"II"` or `"III"`; `"GG"` requests correction for every simulated
+#'   dataset; and `"none"` always uses the uncorrected univariate test.
+#'   `"GG"` is an error with `ss_type = "I"`. For a between-only term or a
+#'   within component with one degree of freedom, `"GG"` silently resolves to
+#'   `"none"` because no sphericity correction applies.
 #' @param progress Logical; if `TRUE`, show a text progress bar.
 #' @param parallel Logical; if `TRUE`, run simulations in parallel.
 #' @param cores Optional positive integer number of parallel workers.
@@ -477,7 +482,18 @@ unbalanced_covariance <- function(sd = 1,
 #'   and failed fits. Sample partial eta squared is upward-biased in finite
 #'   samples, so `mean_pes_sim`, `median_pes_sim`, and the simulated interval
 #'   are sampling diagnostics rather than estimates of the supplied population
-#'   effect; use `$partial_eta_squared` as the reference effect.
+#'   effect; use `$partial_eta_squared` as the reference effect. The object
+#'   stores the requested `sim_correction` and applied
+#'   `sim_correction_resolved` values.
+#'
+#' @section Simulated sphericity correction:
+#' `sim_correction` governs only the simulated test. With `"GG"`, each dataset
+#' uses its own sample-estimated Greenhouse--Geisser epsilon from
+#' `car::Anova()`. Under a truly spherical population, that sample correction
+#' is mildly conservative. Power is estimated for the prespecified corrected
+#' or uncorrected test; conditional Mauchly-then-correct procedures are not
+#' simulated. Unlike the balanced simulation functions, `power_unbalanced()`
+#' does not report a `power_calc` diagnostic.
 #'
 #' @examples
 #' \donttest{
@@ -510,7 +526,8 @@ power_unbalanced <- function(design,
                              progress = interactive(),
                              parallel = FALSE,
                              cores = NULL,
-                             seed = NULL) {
+                             seed = NULL,
+                             sim_correction = c("auto", "GG", "none")) {
   spec <- prepare_unbalanced_means_design(design)
   term <- resolve_design_term(term, spec)
   ss_type <- validate_ss_type(ss_type)
@@ -559,15 +576,26 @@ power_unbalanced <- function(design,
   )
   validate_calibration_n(spec$cell_n, spec, "design$n")
   epsilon <- unbalanced_term_epsilon(spec, term)
-  warn_ss_type_i_uncorrected_gg(ss_type = ss_type, epsilon = epsilon)
+  correction <- resolve_sim_correction(
+    sim_correction = sim_correction,
+    ss_type = ss_type,
+    spec = spec,
+    term = term,
+    epsilon = epsilon
+  )
+  warn_uncorrected_nonsphericity(
+    sim_correction = correction$requested,
+    sim_correction_resolved = correction$resolved,
+    ss_type = ss_type,
+    epsilon = epsilon
+  )
   message_long_serial_run(as.integer(n_sims), parallel)
 
   reference <- simulate_unbalanced_means_data(spec, empirical = TRUE)
   reference_stats <- fit_design_term_stats(
     reference, spec, term, ss_type = ss_type
   )
-  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8) &&
-    ss_type %in% c("II", "III")
+  use_gg_correction <- identical(correction$resolved, "GG")
   assert_reference_gg_p(
     stats = reference_stats,
     use_gg_correction = use_gg_correction,
@@ -589,7 +617,7 @@ power_unbalanced <- function(design,
     n_sims = as.integer(n_sims),
     alpha = alpha,
     ss_type = ss_type,
-    epsilon = epsilon,
+    sim_correction_resolved = correction$resolved,
     progress_bar = if (parallel) NULL else progress_bar,
     parallel = parallel,
     cores = cores
@@ -647,6 +675,8 @@ power_unbalanced <- function(design,
       correlation = spec$within_correlation,
       custom_covariance = custom_covariance,
       ss_type = ss_type,
+      sim_correction = correction$requested,
+      sim_correction_resolved = correction$resolved,
       call = match.call()
     ),
     class = "anovapowersim_unbalanced_power"
@@ -881,7 +911,8 @@ simulate_unbalanced_means_data <- function(spec, empirical = FALSE) {
 #' @keywords internal
 #' @noRd
 run_unbalanced_means_simulations <- function(spec, term, n_sims, alpha,
-                                             ss_type, epsilon = 1,
+                                             ss_type,
+                                             sim_correction_resolved,
                                              progress_bar = NULL,
                                              parallel = FALSE, cores = NULL) {
   helpers <- parallel_worker_helpers(c(
@@ -907,8 +938,7 @@ run_unbalanced_means_simulations <- function(spec, term, n_sims, alpha,
   fit_one_stats <- helpers$fit_design_term_stats
   select_p <- helpers$select_simulated_p
   tick_progress <- helpers$tick_progress_bar
-  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8) &&
-    ss_type %in% c("II", "III")
+  use_gg_correction <- identical(sim_correction_resolved, "GG")
   simulate_one <- function(i) {
     sim <- simulate_one_dataset(spec, empirical = FALSE)
     tick_progress(progress_bar)
@@ -975,6 +1005,9 @@ print.anovapowersim_unbalanced_power <- function(x, ...) {
   cat("  between-cell n range:  ", x$min_cell_n, " to ",
       x$max_cell_n, "\n", sep = "")
   cat("  simulations:           ", x$n_sims, "\n", sep = "")
+  cat("  simulated test:        ", simulated_test_label(
+    x$sim_correction, x$sim_correction_resolved
+  ), "\n", sep = "")
   cat("  common SD:             ", format(x$sd), "\n", sep = "")
   cat("  simulated power:       ", sprintf("%.3f", x$power), "\n",
       sep = "")
@@ -1033,6 +1066,9 @@ summary.anovapowersim_unbalanced_power <- function(object, ...) {
     failed_simulations = as.character(object$failed_sims),
     common_sd = format(object$sd),
     simulated_power = sprintf("%.3f", object$power),
+    simulated_test = simulated_test_label(
+      object$sim_correction, object$sim_correction_resolved
+    ),
     reference_partial_eta_squared = sprintf(
       "%.4f", object$partial_eta_squared
     ),

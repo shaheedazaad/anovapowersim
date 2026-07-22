@@ -1,3 +1,25 @@
+#' Describe the simulated test used by a result object
+#'
+#' @keywords internal
+#' @noRd
+simulated_test_label <- function(sim_correction, sim_correction_resolved) {
+  test <- if (identical(sim_correction_resolved, "GG")) {
+    "GG-corrected"
+  } else {
+    "uncorrected"
+  }
+  source <- if (identical(sim_correction, "auto")) {
+    "auto"
+  } else if (identical(sim_correction, "GG") &&
+             identical(sim_correction_resolved, "none")) {
+    "GG requested; no applicable multi-df within component"
+  } else {
+    "user-set"
+  }
+  paste0(test, " (", source, ")")
+}
+
+
 #' Print an anovapowersim power curve
 #'
 #' Compact one-screen summary: target, term, effective effect size,
@@ -33,6 +55,11 @@ print.anovapowersim_curve <- function(x, ...) {
     cat("  calculation:   calculated power only\n", sep = "")
   } else {
     cat("  sims per cell size: ", x$n_sims, "\n", sep = "")
+  }
+  if (!calc_only && !is.null(x$sim_correction_resolved)) {
+    cat("  simulated test: ", simulated_test_label(
+      x$sim_correction, x$sim_correction_resolved
+    ), "\n", sep = "")
   }
   if (!calc_only && !is.null(x$custom_means_pattern)) {
     cat("  means pattern: ",
@@ -119,6 +146,15 @@ summary.anovapowersim_curve <- function(object, ...) {
       after = 4L
     )
   }
+  if (!calc_only && !is.null(object$sim_correction_resolved)) {
+    header <- append(
+      header,
+      c(simulated_test = simulated_test_label(
+        object$sim_correction, object$sim_correction_resolved
+      )),
+      after = 4L
+    )
+  }
   if (!is.null(object$epsilon) && is.finite(object$epsilon) &&
       object$epsilon < 1) {
     header <- append(
@@ -179,6 +215,11 @@ print.anovapowersim_achieved_power <- function(x, ...) {
     cat("  calculation:      calculated power only\n")
   } else {
     cat("  simulations:      ", x$n_sims, "\n", sep = "")
+  }
+  if (!calc_only && !is.null(x$sim_correction_resolved)) {
+    cat("  simulated test:   ", simulated_test_label(
+      x$sim_correction, x$sim_correction_resolved
+    ), "\n", sep = "")
   }
   if (!calc_only && !is.null(x$custom_means_pattern)) {
     cat("  means pattern:    ",
@@ -246,6 +287,15 @@ summary.anovapowersim_achieved_power <- function(object, ...) {
       } else {
         "default linear/Kronecker"
       }),
+      after = 5L
+    )
+  }
+  if (!calc_only && !is.null(object$sim_correction_resolved)) {
+    header <- append(
+      header,
+      c(simulated_test = simulated_test_label(
+        object$sim_correction, object$sim_correction_resolved
+      )),
       after = 5L
     )
   }
@@ -318,6 +368,11 @@ print.anovapowersim_sensitivity <- function(x, ...) {
     cat("  calculation:      calculated power only\n")
   } else {
     cat("  simulations/point:", x$n_sims, "\n", sep = " ")
+  }
+  if (!calc_only && !is.null(x$sim_correction_resolved)) {
+    cat("  simulated test:   ", simulated_test_label(
+      x$sim_correction, x$sim_correction_resolved
+    ), "\n", sep = "")
   }
   if (!calc_only && !is.null(x$custom_means_pattern)) {
     cat("  means pattern:    ",
@@ -392,6 +447,15 @@ summary.anovapowersim_sensitivity <- function(object, ...) {
       } else {
         "default linear/Kronecker"
       }),
+      after = 5L
+    )
+  }
+  if (!calc_only && !is.null(object$sim_correction_resolved)) {
+    header <- append(
+      header,
+      c(simulated_test = simulated_test_label(
+        object$sim_correction, object$sim_correction_resolved
+      )),
       after = 5L
     )
   }

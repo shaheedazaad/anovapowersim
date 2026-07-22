@@ -101,6 +101,8 @@ test_that("power_unbalanced handles unequal-N pure-between designs", {
                 result$partial_eta_squared <= 1)
   expect_false(any(c("power_calc", "calculated_power", "ncp") %in%
                      names(result$results)))
+  expect_identical(result$sim_correction, "auto")
+  expect_identical(result$sim_correction_resolved, "none")
 })
 
 
@@ -342,11 +344,13 @@ test_that("unbalanced power prints and summarises the common SD", {
 
   expect_output(print(result), "common SD")
   expect_output(print(result), "simulated power")
+  expect_output(print(result), "simulated test:.*uncorrected.*auto")
   expect_output(
     print(result),
     "sample pes is upward-biased.*diagnostics, not the population/reference"
   )
   expect_output(summary(result), "common_sd")
+  expect_output(summary(result), "simulated_test:.*uncorrected.*auto")
   expect_output(
     summary(result),
     "sample pes is upward-biased.*diagnostics, not the population/reference"
@@ -461,10 +465,26 @@ test_that("power_unbalanced GG-corrects equal-variance nonsphericity", {
     progress = FALSE,
     seed = 123
   )
+  explicit_auto <- quiet_power_unbalanced(
+    design = design,
+    term = "time",
+    covariance = covariance,
+    n_sims = 10,
+    ss_type = "III",
+    sim_correction = "auto",
+    progress = FALSE,
+    seed = 123
+  )
 
   expect_lt(corrected$epsilon, 1)
   expect_true(is.finite(corrected$power))
   expect_identical(corrected$failed_sims, 0L)
+  expect_identical(corrected$power, explicit_auto$power)
+  expect_identical(corrected$valid_sims, explicit_auto$valid_sims)
+  expect_identical(corrected$failed_sims, explicit_auto$failed_sims)
+  expect_equal(corrected$results, explicit_auto$results, tolerance = 1e-12)
+  expect_identical(corrected$sim_correction, "auto")
+  expect_identical(corrected$sim_correction_resolved, "GG")
   warnings <- testthat::capture_warnings(
     power_unbalanced(
       design = design,
@@ -478,6 +498,36 @@ test_that("power_unbalanced GG-corrects equal-variance nonsphericity", {
   )
   expect_true(any(grepl("ss_type = \"I\"", warnings, fixed = TRUE)))
   expect_true(any(grepl("undefined pairs", warnings, fixed = TRUE)))
+})
+
+
+test_that("power_unbalanced validates explicit simulated correction", {
+  design <- cell_design(
+    time = "t1", n = 6, m = 0,
+    time = "t2", n = 6, m = 0.5,
+    time = "t3", n = 6, m = 1,
+    within = "time"
+  )
+  covariance <- unbalanced_covariance(
+    sd = 1,
+    default_correlation = 0,
+    correlations = c("t1:t2" = 0.8)
+  )
+
+  expect_error(
+    quiet_power_unbalanced(
+      design, term = "time", covariance = covariance, n_sims = 1,
+      ss_type = "I", sim_correction = "GG", progress = FALSE
+    ),
+    'sim_correction = "GG".*ss_type = "I"'
+  )
+  expect_error(
+    quiet_power_unbalanced(
+      design, term = "time", covariance = covariance, n_sims = 1,
+      sim_correction = "HF", progress = FALSE
+    ),
+    "one of"
+  )
 })
 
 

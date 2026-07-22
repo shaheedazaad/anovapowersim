@@ -19,6 +19,19 @@ test_that("power_n defaults to 90 percent power", {
   expect_equal(formals(power_n)$n_max, 5000)
 })
 
+test_that("simulation APIs expose auto correction by default", {
+  simulation_functions <- list(
+    power_curve, power_n, power_achieved, power_sensitivity, power_unbalanced
+  )
+  for (fn in simulation_functions) {
+    expect_identical(
+      formals(fn)$sim_correction,
+      quote(c("auto", "GG", "none"))
+    )
+  }
+  expect_null(formals(power_n_calc)$sim_correction)
+})
+
 test_that("power_n_calc is exported and defaults to 90 percent power", {
   expect_true("power_n_calc" %in% getNamespaceExports("anovapowersim"))
   expect_equal(formals(power_n_calc)$power, 0.90)
@@ -218,6 +231,8 @@ test_that("power_curve simulates a balanced mixed design", {
   expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
   expect_equal(pc$target_pes, 0.20721)
   expect_equal(pc$ss_type, "III")
+  expect_identical(pc$sim_correction, "auto")
+  expect_identical(pc$sim_correction_resolved, "none")
 })
 
 test_that("ss_type is validated and stored", {
@@ -246,6 +261,23 @@ test_that("ss_type is validated and stored", {
   )
 })
 
+test_that("sim_correction is validated by public balanced APIs", {
+  expect_error(
+    quiet_power_curve(
+      within = c(time = 3), term = "time", target_pes = 0.1,
+      n_range = 5, n_sims = 1, sim_correction = "HF"
+    ),
+    "one of"
+  )
+  expect_error(
+    quiet_power_curve(
+      within = c(time = 3), term = "time", target_pes = 0.1,
+      n_range = 5, n_sims = 1, ss_type = "I", sim_correction = "GG"
+    ),
+    'sim_correction = "GG".*ss_type = "I"'
+  )
+})
+
 test_that("printed output uses concise public labels", {
   pc <- quiet_power_curve(
     between = c(color = 2),
@@ -263,6 +295,7 @@ test_that("printed output uses concise public labels", {
   expect_false(any(grepl("G\\*Power NCP", printed)))
   expect_false(any(grepl("G\\*Power convention", printed)))
   expect_true(any(grepl("\\b[0-9]\\.[0-9]{3}\\b", printed)))
+  expect_snapshot_output(print(pc))
 
   pc_gpower <- quiet_power_curve(
     between = c(color = 2),
@@ -312,6 +345,7 @@ test_that("power_n_calc print output does not report simulations", {
   summarized <- capture.output(summary(pc))
 
   expect_false(any(grepl("sims per cell size", printed, fixed = TRUE)))
+  expect_false(any(grepl("simulated test", printed, fixed = TRUE)))
   expect_true(any(grepl("calculation:   calculated power only", printed,
                        fixed = TRUE)))
   expect_true(any(grepl("calculated-power summary", summarized,
@@ -1458,6 +1492,8 @@ test_that("power_n adaptively searches for required n", {
   expect_equal(pc$power, 0.8)
   expect_true(is.na(pc$n_needed) || pc$n_needed <= 40L)
   expect_true(is.na(pc$n_needed) || pc$n_needed %in% pc$results$n_per_cell)
+  expect_identical(pc$sim_correction, "auto")
+  expect_identical(pc$sim_correction_resolved, "none")
 })
 
 test_that("power_n is reproducible with a seed", {
