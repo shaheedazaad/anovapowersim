@@ -29,6 +29,23 @@ test_that("means_pattern validates its sparse syntax", {
   )
 })
 
+test_that("custom pattern semantics are explained once per session", {
+  design <- balanced_anova_design(within = c(time = 2))
+  pattern <- means_pattern(time = 1, value = -10, time = 2, value = 10)
+
+  expect_message(
+    design_term_means(
+      design, term = "time", target_pes = 0.15, n = 4,
+      means_pattern = pattern
+    ),
+    "shape-only.*term 'time'.*target_pes = 0.15.*literal `m` values"
+  )
+  expect_silent(design_term_means(
+    design, term = "time", target_pes = 0.20, n = 4,
+    means_pattern = pattern
+  ))
+})
+
 test_that("sparse patterns fill zero cells, broadcast, and preserve ordering", {
   within_design <- balanced_anova_design(within = c(time = 4))
   sparse <- means_pattern(time = 3, value = 1)
@@ -295,7 +312,8 @@ test_that("direction warning is limited to implicit nonspherical multi-df simula
   warnings <- testthat::capture_warnings(
     result <- power_curve(
       within = c(time = 3), term = "time", target_pes = .1,
-      n_range = 4, n_sims = 1, covariance = sigma3,
+      n_range = 4, n_sims = 1,
+      covariance = test_covariance_spec_from_matrix(sigma3),
       means_pattern = custom, progress = FALSE, seed = 1
     )
   )
@@ -304,7 +322,8 @@ test_that("direction warning is limited to implicit nonspherical multi-df simula
 
   type_i_warnings <- testthat::capture_warnings(power_curve(
     within = c(time = 3), term = "time", target_pes = .1,
-    n_range = 4, n_sims = 1, covariance = sigma3,
+    n_range = 4, n_sims = 1,
+    covariance = test_covariance_spec_from_matrix(sigma3),
     ss_type = "I", progress = FALSE, seed = 1
   ))
   expect_true(any(grepl("cannot supply a Greenhouse", type_i_warnings)))

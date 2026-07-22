@@ -147,7 +147,7 @@ test_that("fixed-N APIs retain covariance and analysis controls", {
     target_pes = 0.15,
     n = 5,
     n_sims = 3,
-    covariance = sigma,
+    covariance = test_covariance_spec_from_matrix(sigma),
     ss_type = "I",
     gpower = TRUE,
     progress = FALSE,

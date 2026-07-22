@@ -14,13 +14,16 @@ must appear exactly once (or be filled automatically; see \code{default_n}).}
 
 \item{within}{Character vector naming factors in \code{...} that are measured
 within subjects, or \code{NULL} for a purely between-subject design. Stored on
-the returned object and read by \code{\link[=power_unbalanced]{power_unbalanced()}}.}
+the returned object and read by \code{\link[=power_unbalanced]{power_unbalanced()}}. Within-cell names
+used by \code{\link[=unbalanced_covariance]{unbalanced_covariance()}} join level values with \verb{_}; these names
+must be unique, and within-factor levels must not contain \code{:}.}
 
 \item{default_n, default_m}{Optional scalars used to fill any missing cells
 in the complete factorial design. Supply both to
 auto-fill missing cells with these values; supply none to require every
 cell to be defined explicitly (the default). Supplying only one is an
-error.}
+error. When cells are auto-filled, a message reports their count and exact
+factor-level combinations so that unintended levels can be spotted.}
 }
 \value{
 An \code{anovapowersim_cell_design} tibble with one row per design cell.
@@ -30,6 +33,13 @@ Creates the complete cell table used by \code{\link[=power_unbalanced]{power_unb
 defined by its factor levels, sample size (\code{n}), and population mean (\code{m}).
 End each cell after both reserved values have been supplied. The common
 population standard deviation belongs in \code{\link[=unbalanced_covariance]{unbalanced_covariance()}}.
+}
+\details{
+The \code{m} values are literal population cell means: their magnitudes and all
+effects they contain are used as supplied. This differs from
+\code{\link[=means_pattern]{means_pattern()}}, whose values specify only a relative shape that balanced
+simulation functions project onto the tested term, normalize, and rescale
+to \code{target_pes}.
 }
 \section{Lifecycle}{
 
@@ -49,4 +59,8 @@ design <- cell_design(
 )
 design
 
+}
+\seealso{
+\code{\link[=means_pattern]{means_pattern()}} for shape-only patterns used by balanced
+simulation functions.
 }

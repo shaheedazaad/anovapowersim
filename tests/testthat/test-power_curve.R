@@ -337,6 +337,35 @@ test_that("power_n_calc reports the smallest calculated n meeting target", {
   expect_equal(pc$total_n_needed, pc$n_needed * 2L)
 })
 
+test_that("power_n_calc searches below an adequate n_start", {
+  baseline <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.2,
+    power = 0.90,
+    n_max = 100
+  )
+  pc <- quiet_power_n_calc(
+    between = c(group = 2),
+    within = c(time = 2),
+    term = "group:time",
+    target_pes = 0.2,
+    power = 0.90,
+    n_start = 100,
+    n_max = 100
+  )
+
+  expect_equal(pc$n_needed, baseline$n_needed)
+  expect_lt(pc$n_needed, 100L)
+  expect_true(all(c(pc$n_needed - 1L, pc$n_needed, 100L) %in%
+                  pc$results$n_per_cell))
+  previous_power <- pc$results$power_calc[
+    pc$results$n_per_cell == pc$n_needed - 1L
+  ]
+  expect_lt(previous_power, pc$power)
+})
+
 test_that("power_n_calc does not exhaustively visit n_max after finding target", {
   pc <- quiet_power_n_calc(
     between = c(cond = 2),
@@ -599,11 +628,14 @@ test_that("power_n_calc matches car-backed calculated power for balanced designs
       seed = 123
     )
 
-    expect_equal(calc$results$num_df, car_backed$results$num_df)
-    expect_equal(calc$results$den_df, car_backed$results$den_df)
-    expect_equal(calc$results$ncp, car_backed$results$ncp, tolerance = 0.001)
+    car_at_n <- car_backed$results[
+      car_backed$results$n_per_cell == n, , drop = FALSE
+    ]
+    expect_equal(calc$results$num_df, car_at_n$num_df)
+    expect_equal(calc$results$den_df, car_at_n$den_df)
+    expect_equal(calc$results$ncp, car_at_n$ncp, tolerance = 0.001)
     expect_equal(round(calc$results$power_calc, 3),
-                 car_backed$results$power_calc,
+                 car_at_n$power_calc,
                  tolerance = 1e-12)
   }
 
@@ -695,17 +727,40 @@ test_that("adaptive search uses one-sided precision above target", {
   expect_equal(anovapowersim:::estimate_design_n_needed(below_curve, 0.80),
                14L)
 
-  in_band <- make_power_search_runner(c(`10` = 0.82))
+  in_band <- make_power_search_runner(c(
+    `2` = 0.70,
+    `8` = 0.79,
+    `9` = 0.81,
+    `10` = 0.82
+  ))
   in_band_curve <- anovapowersim:::adaptive_design_search(
     run_one = in_band$run_one,
     target = 0.80,
     n_start = 10,
     n_max = 20,
-    tol = 0.03
+    tol = 0.03,
+    n_min = 2
   )
 
-  expect_equal(in_band$visited, 10L)
-  expect_equal(in_band_curve$n_per_cell, 10L)
+  expect_equal(in_band$visited, c(10L, 2L, 9L, 8L))
+  expect_equal(in_band_curve$n_per_cell, c(2L, 8L, 9L, 10L))
+  expect_equal(anovapowersim:::estimate_design_n_needed(in_band_curve, 0.80),
+               9L)
+})
+
+test_that("adaptive search searches below n_start when it already reaches target", {
+  runner <- make_formula_power_search_runner(function(n) n / 100)
+  curve <- anovapowersim:::adaptive_design_search(
+    run_one = runner$run_one,
+    target = 0.40,
+    n_start = 100,
+    n_max = 100,
+    tol = 0.03,
+    n_min = 2
+  )
+
+  expect_equal(runner$visited, c(100L, 2L, 40L, 39L))
+  expect_equal(anovapowersim:::estimate_design_n_needed(curve, 0.40), 40L)
 })
 
 test_that("adaptive search simulates interpolated candidates after overshoot", {

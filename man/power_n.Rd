@@ -53,9 +53,10 @@ simulated p-values (see \code{covariance}) are only available for \code{"III"} a
 univariate test, and a warning is issued if the supplied covariance
 yields a population epsilon below \code{1}.}
 
-\item{n_start}{Starting sample size per between-subject cell. If \code{NULL},
-starts at the smallest value that can support empirical calibration for
-the requested design.}
+\item{n_start}{Starting sample size per between-subject cell, not a lower
+bound for the search. If \code{NULL}, an initial value is estimated from
+calculated power and constrained to values that support empirical
+calibration for the requested design.}
 
 \item{n_max}{Maximum sample size per between-subject cell.}
 
@@ -82,19 +83,19 @@ cores, with a minimum of one.}
 
 \item{seed}{Optional integer seed for reproducibility.}
 
-\item{covariance}{Optional within-subject covariance specification from
-\code{\link[=within_covariance]{within_covariance()}} or a numeric covariance matrix. The default \code{NULL}
-uses standard deviations of \code{1} and a compound-symmetric correlation of
-\code{0.5} and issues a warning stating those defaults. A
+\item{covariance}{Optional within-subject covariance specification created
+by \code{\link[=within_covariance]{within_covariance()}}. Raw covariance matrices are not accepted, which
+avoids silently assuming a within-cell order. The default \code{NULL} uses
+standard deviations of \code{1} and a compound-symmetric correlation of \code{0.5}
+and issues a warning stating those defaults. A
 \code{\link[=within_covariance]{within_covariance()}} specification issues a warning when correlation
 pairs are omitted: its \code{default_correlation} applies only to those
 undefined pairs, while explicitly defined correlations are unchanged.
-All measurements must have one common marginal variance. A supplied matrix
-must therefore have equal diagonal entries and one row and column per
-within-subject cell; named matrices are reordered to the design's cell
-order. Unequal correlations remain supported. For terms
-containing within-subject factors, the matrix is also used to derive a
-term-specific population Greenhouse--Geisser epsilon for \code{power_calc}. If
+All measurements use the specification's common marginal variance, while
+unequal correlations remain supported. For terms containing
+within-subject factors, the resolved covariance matrix is also used to
+derive a term-specific population Greenhouse--Geisser epsilon for
+\code{power_calc}. If
 that population epsilon is below \code{1}, \code{power_sim} is also based on each
 simulated dataset's Greenhouse--Geisser-corrected p-value (from
 \code{car::Anova()}) rather than the uncorrected univariate test, so \code{power_sim}
@@ -120,9 +121,11 @@ precision band was not reached.
 \description{
 Adaptive simulation search for the per-between-cell sample size needed to
 reach a requested power for a balanced factorial ANOVA design. The search
-doubles upward from \code{n_start} until it brackets the target or reaches
-\code{n_max}, then refines the bracket using interpolation with midpoint
-bisection as a fallback.
+searches upward from \code{n_start} until it brackets the target or reaches
+\code{n_max}. If \code{n_start} already reaches the target, the search probes the
+smallest sample size supported by the design to establish a lower bracket.
+It then refines the bracket using interpolation with midpoint bisection as
+a fallback.
 }
 \section{Examples}{
 

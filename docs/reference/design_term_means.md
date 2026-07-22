@@ -78,6 +78,16 @@ design_term_means(
 A numeric matrix of cell means, with rows indexing between cells and
 columns indexing within cells.
 
+## Covariance limitation
+
+This manual helper does not accept
+[`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+specifications. Calibration always uses the compound-symmetric covariance
+defined by `sd` and `r`. Consequently, its calibrated means can differ from
+those used by `power_curve()`, `power_n()`, or `power_achieved()` with a custom
+`covariance`, because covariance affects the reference residual sum of squares
+and therefore the mean scale factor.
+
 ## Examples
 
 ``` r

@@ -12,3 +12,4 @@
 ^means_pattern_plan\.md$
 ^.*\.tar\.gz$
 ^.*\.Rcheck$
+^\.claude$

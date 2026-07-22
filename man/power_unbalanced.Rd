@@ -42,7 +42,9 @@ warning is issued.}
 
 \item{alpha}{Significance threshold.}
 
-\item{ss_type}{Sums-of-squares type: \code{"III"}, \code{"II"}, or \code{"I"}.}
+\item{ss_type}{Sums-of-squares type: \code{"III"}, \code{"II"}, or \code{"I"}.
+For unequal-N designs, \code{"I"} uses sequential, order-dependent hypotheses;
+a warning reports the factor order inherited from \code{\link[=cell_design]{cell_design()}}.}
 
 \item{progress}{Logical; if \code{TRUE}, show a text progress bar.}
 
@@ -58,13 +60,19 @@ An \code{anovapowersim_unbalanced_power} object. \verb{$power} and
 term effect size in a deterministic reference dataset. \verb{$epsilon} is the
 population Greenhouse--Geisser epsilon for the tested term. \verb{$results}
 also reports the common SD, simulated partial eta-squared distribution,
-and failed fits.
+and failed fits. Sample partial eta squared is upward-biased in finite
+samples, so \code{mean_pes_sim}, \code{median_pes_sim}, and the simulated interval
+are sampling diagnostics rather than estimates of the supplied population
+effect; use \verb{$partial_eta_squared} as the reference effect.
 }
 \description{
 Estimates achieved power for exact, potentially unequal cell sizes and
 user-supplied population means under one common standard deviation. This
 function is simulation-only: it does not calculate power from a noncentral
-F distribution and does not scale the supplied sample sizes.
+F distribution and does not scale the supplied sample sizes. A warning is
+issued when the deterministic reference data imply essentially zero effect
+for the tested term, which often indicates a typo, a wrong \code{term}, or means
+that contain only other effects.
 }
 \section{Lifecycle}{
 

@@ -56,6 +56,16 @@ linear/Kronecker default) for one ANOVA term and scales it so an exact
 reference dataset has the requested partial eta squared under the supplied
 balanced design assumptions.
 }
+\section{Covariance limitation}{
+
+This manual helper does not accept \code{\link[=within_covariance]{within_covariance()}} specifications.
+Calibration always uses the compound-symmetric covariance defined by \code{sd}
+and \code{r}. Consequently, its calibrated means can differ from those used by
+\code{\link[=power_curve]{power_curve()}}, \code{\link[=power_n]{power_n()}}, or \code{\link[=power_achieved]{power_achieved()}} with a custom
+\code{covariance}, because the covariance affects the reference residual sum of
+squares and therefore the mean scale factor.
+}
+
 \examples{
 d <- balanced_anova_design(between = c(group = 2), within = c(time = 2))
 design_term_means(d, term = "group:time", target_pes = 0.2, n = 20)

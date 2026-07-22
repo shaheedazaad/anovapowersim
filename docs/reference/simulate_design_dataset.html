@@ -90,6 +90,15 @@ so the generated sample closely matches the requested means/covariance.</p></dd>
     <p>A tibble ready for <code><a href="https://rdrr.io/r/stats/aov.html" class="external-link">stats::aov()</a></code> with columns <code>id</code>, factor
 columns, and <code>value</code>.</p>
     </div>
+    <div class="section level2">
+    <h2 id="covariance-limitation">Covariance limitation<a class="anchor" aria-label="anchor" href="#covariance-limitation"></a></h2>
+
+
+<p>This manual helper does not accept <code><a href="within_covariance.html">within_covariance()</a></code> specifications. It
+always simulates from the compound-symmetric covariance defined by <code>sd</code> and
+<code>r</code>. It therefore cannot reproduce a balanced power-function call that uses
+a custom <code>covariance</code>; use the power functions directly for that workflow.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -98,14 +107,14 @@ columns, and <code>value</code>.</p>
 <span class="r-in"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu">simulate_design_dataset</span><span class="op">(</span><span class="va">d</span>, n <span class="op">=</span> <span class="fl">20</span>, means <span class="op">=</span> <span class="va">m</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sim</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id    group   value time </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 1     group1  1.78  time1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1     group1  1.04  time2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2     group1  1.18  time1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2     group1 -<span style="color: #BB0000;">0.840</span> time2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 3     group1  2.61  time1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 3     group1  0.639 time2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   id    group    value time </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 1     group1  2.11   time1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1     group1  0.701  time2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2     group1  0.599  time1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2     group1 -<span style="color: #BB0000;">0.341</span>  time2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 3     group1 -<span style="color: #BB0000;">0.267</span>  time1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 3     group1 -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">7</span> time2</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

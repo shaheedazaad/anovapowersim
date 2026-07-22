@@ -30,6 +30,14 @@ Generates one long-format dataset from a balanced design. Supply means from
 \code{\link[=design_term_means]{design_term_means()}} or any conformable matrix with one row per
 between-subject cell and one column per within-subject cell.
 }
+\section{Covariance limitation}{
+
+This manual helper does not accept \code{\link[=within_covariance]{within_covariance()}} specifications. It
+always simulates from the compound-symmetric covariance defined by \code{sd} and
+\code{r}. It therefore cannot reproduce a balanced power-function call that uses
+a custom \code{covariance}; use the power functions directly for that workflow.
+}
+
 \examples{
 d <- balanced_anova_design(between = c(group = 2), within = c(time = 2))
 m <- design_term_means(d, term = "group:time", target_pes = 0.2, n = 20)

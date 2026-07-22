@@ -225,6 +225,40 @@ test_that("power_curve and power_n accept and retain custom covariance", {
   }
 })
 
+test_that("balanced power functions reject raw covariance matrices", {
+  sigma <- matrix(c(1, 0.5, 0.5, 1), nrow = 2)
+
+  expect_error(
+    power_curve(
+      within = c(time = 2), term = "time", target_pes = 0.1,
+      n_range = 3, n_sims = 1, covariance = sigma, progress = FALSE
+    ),
+    "must be created by within_covariance.*raw covariance matrices"
+  )
+  expect_error(
+    power_n(
+      within = c(time = 2), term = "time", target_pes = 0.1,
+      n_sims = 1, n_start = 3, n_max = 3, covariance = sigma,
+      progress = FALSE
+    ),
+    "must be created by within_covariance.*raw covariance matrices"
+  )
+  expect_error(
+    power_achieved(
+      within = c(time = 2), term = "time", target_pes = 0.1,
+      n = 3, n_sims = 1, covariance = sigma, progress = FALSE
+    ),
+    "must be created by within_covariance.*raw covariance matrices"
+  )
+  expect_error(
+    power_sensitivity(
+      within = c(time = 2), term = "time", n = 3, n_sims = 1,
+      pes_tol = 0.5, covariance = sigma, progress = FALSE
+    ),
+    "must be created by within_covariance.*raw covariance matrices"
+  )
+})
+
 test_that("the balanced simulator uses the resolved covariance matrix", {
   design <- balanced_anova_design(within = c(time = 3))
   sigma <- matrix(
@@ -337,7 +371,7 @@ test_that("covariance-corrected power_calc matches power_n_calc", {
     target_pes = 0.15,
     n_range = 8,
     n_sims = 2,
-    covariance = sigma,
+    covariance = test_covariance_spec_from_matrix(sigma),
     progress = FALSE,
     seed = 42
   )
@@ -373,7 +407,7 @@ test_that("power_n retains and applies covariance-derived epsilon", {
     n_sims = 2,
     n_start = 8,
     n_max = 8,
-    covariance = sigma,
+    covariance = test_covariance_spec_from_matrix(sigma),
     progress = FALSE,
     seed = 42
   )
@@ -433,7 +467,7 @@ test_that("power_curve GG-corrects power_sim to match power_calc under severe no
     target_pes = 0.15,
     n_range = 25,
     n_sims = 1500,
-    covariance = sigma,
+    covariance = test_covariance_spec_from_matrix(sigma),
     progress = FALSE,
     seed = 55
   )
@@ -443,13 +477,15 @@ test_that("power_curve GG-corrects power_sim to match power_calc under severe no
     target_pes = 0.15,
     n_range = 25,
     n_sims = 1500,
-    covariance = sigma,
+    covariance = test_covariance_spec_from_matrix(sigma),
     ss_type = "I",
     progress = FALSE,
     seed = 55
   )
 
   expect_equal(corrected$epsilon, 0.7244823, tolerance = 1e-6)
+  expect_identical(corrected$results$failed_sims, 0L)
+  expect_identical(uncorrected$results$failed_sims, 0L)
   expect_equal(
     corrected$results$power_sim,
     corrected$results$power_calc,
@@ -477,6 +513,72 @@ test_that("warn_ss_type_i_uncorrected_gg only warns for ss_type = 'I' with epsil
   )
 })
 
+test_that("simulated p-value selection never falls back when GG is required", {
+  stats <- list(p_value = 0.4, p_value_gg = 0.2)
+
+  expect_identical(
+    anovapowersim:::select_simulated_p(stats, use_gg_correction = TRUE),
+    0.2
+  )
+  stats$p_value_gg <- NA_real_
+  expect_identical(
+    anovapowersim:::select_simulated_p(stats, use_gg_correction = TRUE),
+    NA_real_
+  )
+  stats$p_value_gg <- Inf
+  expect_identical(
+    anovapowersim:::select_simulated_p(stats, use_gg_correction = TRUE),
+    NA_real_
+  )
+  expect_identical(
+    anovapowersim:::select_simulated_p(stats, use_gg_correction = FALSE),
+    0.4
+  )
+})
+
+test_that("reference fits fail fast when a required GG p-value is missing", {
+  finite <- list(p_value = 0.4, p_value_gg = 0.2)
+  missing <- list(p_value = 0.4, p_value_gg = NA_real_)
+
+  expect_silent(
+    anovapowersim:::assert_reference_gg_p(
+      finite, use_gg_correction = TRUE, term = "time"
+    )
+  )
+  expect_silent(
+    anovapowersim:::assert_reference_gg_p(
+      missing, use_gg_correction = FALSE, term = "time"
+    )
+  )
+  expect_error(
+    anovapowersim:::assert_reference_gg_p(
+      missing, use_gg_correction = TRUE, term = "time"
+    ),
+    "Internal error.*term 'time'.*file a bug report"
+  )
+})
+
+test_that("GG p-value selection works in a parallel balanced simulation", {
+  sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
+  dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
+
+  result <- quiet_covariance_power_curve(
+    within = c(time = 3),
+    term = "time",
+    target_pes = 0.14,
+    n_range = 5,
+    n_sims = 2,
+    covariance = test_covariance_spec_from_matrix(sigma),
+    progress = FALSE,
+    parallel = TRUE,
+    cores = 1,
+    seed = 91
+  )
+
+  expect_lt(result$epsilon, 1)
+  expect_identical(result$results$failed_sims, 0L)
+})
+
 test_that("power_curve warns when ss_type = 'I' is combined with a non-spherical covariance", {
   sigma <- matrix(c(1, 0.8, 0, 0.8, 1, 0, 0, 0, 1), nrow = 3)
   dimnames(sigma) <- list(paste0("time", 1:3), paste0("time", 1:3))
@@ -485,18 +587,20 @@ test_that("power_curve warns when ss_type = 'I' is combined with a non-spherical
   # uncorrected), so the pre-existing power_sim/power_calc disagreement
   # warning legitimately co-fires alongside the new one; capture all
   # warnings rather than asserting on a single one.
+  result <- NULL
   warnings <- testthat::capture_warnings(
-    power_curve(
+    result <- power_curve(
       within = c(time = 3),
       term = "time",
       target_pes = 0.14,
       n_range = 5,
       n_sims = 1,
-      covariance = sigma,
+      covariance = test_covariance_spec_from_matrix(sigma),
       ss_type = "I",
       progress = FALSE,
       seed = 1
     )
   )
   expect_true(any(grepl("ss_type = \"I\"", warnings, fixed = TRUE)))
+  expect_identical(result$results$failed_sims, 0L)
 })

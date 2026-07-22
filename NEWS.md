@@ -1,5 +1,33 @@
 # anovapowersim (development version)
 
+* Fixed `power_n()` and `power_n_calc()` treating `n_start` as an implicit
+  lower bound when power at that value already met the target. Both searches
+  now probe the smallest valid sample size and refine the resulting lower
+  bracket before reporting `n_needed`.
+* Balanced simulation functions now issue a once-per-session message when a
+  custom `means_pattern` is resolved, clarifying that its values are projected,
+  normalized, and rescaled to `target_pes`, unlike the literal means supplied
+  through `cell_design()`. Both documentation pages now cross-reference this
+  semantic distinction.
+* `cell_design()` now messages the count and exact factor-level combinations
+  of cells created by `default_n` and `default_m`, making accidental factor
+  levels visible instead of silently expanding the design.
+* `power_unbalanced()` now warns when the deterministic reference data imply
+  essentially zero partial eta squared for the tested term, pointing users to
+  possible mean typos or a mismatched `term`.
+* Unbalanced within-subject designs now reject `:` in level values and reject
+  duplicate cell names produced by joining multi-factor levels with `_`, with
+  errors that identify the problematic levels or colliding cells before any
+  correlations are assigned.
+* Unbalanced power print and summary output now explain that simulated sample
+  partial eta squared is upward-biased and that its mean, median, and interval
+  are diagnostics rather than population/reference effects.
+* `power_unbalanced()` now warns when `ss_type = "I"` is used with unequal
+  sample sizes, explains that sequential sums of squares are order-dependent,
+  and reports the factor order inherited from `cell_design()`.
+* Balanced simulation power functions now require custom covariance inputs to
+  be created by `within_covariance()` and reject raw matrices, eliminating
+  ambiguous assumptions about within-cell row and column order.
 * Added `means_pattern()` and an optional `means_pattern` argument to
   `power_curve()`, `power_n()`, `power_achieved()`, `power_sensitivity()`, and
   `design_term_means()`. Sparse relative cell values accept one-based indices

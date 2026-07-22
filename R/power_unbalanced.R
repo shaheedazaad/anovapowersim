@@ -5,6 +5,12 @@
 #' End each cell after both reserved values have been supplied. The common
 #' population standard deviation belongs in [unbalanced_covariance()].
 #'
+#' The `m` values are literal population cell means: their magnitudes and all
+#' effects they contain are used as supplied. This differs from
+#' [means_pattern()], whose values specify only a relative shape that balanced
+#' simulation functions project onto the tested term, normalize, and rescale
+#' to `target_pes`.
+#'
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
@@ -17,14 +23,20 @@
 #'   must appear exactly once (or be filled automatically; see `default_n`).
 #' @param within Character vector naming factors in `...` that are measured
 #'   within subjects, or `NULL` for a purely between-subject design. Stored on
-#'   the returned object and read by [power_unbalanced()].
+#'   the returned object and read by [power_unbalanced()]. Within-cell names
+#'   used by [unbalanced_covariance()] join level values with `_`; these names
+#'   must be unique, and within-factor levels must not contain `:`.
 #' @param default_n,default_m Optional scalars used to fill any missing cells
 #'   in the complete factorial design. Supply both to
 #'   auto-fill missing cells with these values; supply none to require every
 #'   cell to be defined explicitly (the default). Supplying only one is an
-#'   error.
+#'   error. When cells are auto-filled, a message reports their count and exact
+#'   factor-level combinations so that unintended levels can be spotted.
 #'
 #' @return An `anovapowersim_cell_design` tibble with one row per design cell.
+#'
+#' @seealso [means_pattern()] for shape-only patterns used by balanced
+#'   simulation functions.
 #'
 #' @examples
 #' design <- cell_design(
@@ -161,22 +173,29 @@ cell_design <- function(...,
   missing_idx <- which(!expected_key %in% key)
 
   if (length(missing_idx)) {
+    missing_cells <- expected[missing_idx, , drop = FALSE]
+    labels <- vapply(seq_len(nrow(missing_cells)), function(i) {
+      paste(
+        paste0(factor_names, ' = "',
+               unlist(missing_cells[i, factor_names]), '"'),
+        collapse = ", "
+      )
+    }, character(1))
     if (use_defaults) {
-      fill <- expected[missing_idx, , drop = FALSE]
+      message(
+        "Auto-filled ", length(labels), " missing cell",
+        if (length(labels) == 1L) "" else "s",
+        " using `default_n = ", default_n, "` and `default_m = ",
+        format(default_m, trim = TRUE), "`:\n",
+        paste0("  ", labels, collapse = "\n")
+      )
+      fill <- missing_cells
       fill$n <- default_n
       fill$m <- default_m
       out <- dplyr::bind_rows(
         out, fill[, c(factor_names, reserved), drop = FALSE]
       )
     } else {
-      missing_cells <- expected[missing_idx, , drop = FALSE]
-      labels <- vapply(seq_len(nrow(missing_cells)), function(i) {
-        paste(
-          paste0(factor_names, ' = "',
-                 unlist(missing_cells[i, factor_names]), '"'),
-          collapse = ", "
-        )
-      }, character(1))
       stop(
         "Every combination of factor levels must be defined exactly once. ",
         "Missing cell", if (length(labels) == 1L) "" else "s", ":\n",
@@ -190,6 +209,10 @@ cell_design <- function(...,
   }
 
   grid <- resolve_unbalanced_grid(out, factor_names, within)
+  within_cell_names(list(
+    within = grid$within,
+    within_cells = grid$within_cells
+  ))
   n_matrix <- matrix(
     grid$ordered$n, nrow = grid$n_between, ncol = grid$n_within, byrow = TRUE
   )
@@ -346,6 +369,9 @@ resolve_unbalanced_grid <- function(data, factor_names, within) {
 #'   to those pairs.
 #' @param correlations Optional named numeric vector of pair-specific
 #'   correlations. Name pairs as `"cell1:cell2"`; pair order does not matter.
+#'   For multiple within factors, cell names join their level values with `_`.
+#'   Constructed names must be unique, and level values must not contain `:`
+#'   because it separates the two cells in a pair name.
 #'
 #' @return An `anovapowersim_unbalanced_covariance_spec` object.
 #'
@@ -404,7 +430,10 @@ unbalanced_covariance <- function(sd = 1,
 #' Estimates achieved power for exact, potentially unequal cell sizes and
 #' user-supplied population means under one common standard deviation. This
 #' function is simulation-only: it does not calculate power from a noncentral
-#' F distribution and does not scale the supplied sample sizes.
+#' F distribution and does not scale the supplied sample sizes. A warning is
+#' issued when the deterministic reference data imply essentially zero effect
+#' for the tested term, which often indicates a typo, a wrong `term`, or means
+#' that contain only other effects.
 #'
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
@@ -433,6 +462,8 @@ unbalanced_covariance <- function(sd = 1,
 #' @param n_sims Number of simulated datasets.
 #' @param alpha Significance threshold.
 #' @param ss_type Sums-of-squares type: `"III"`, `"II"`, or `"I"`.
+#'   For unequal-N designs, `"I"` uses sequential, order-dependent hypotheses;
+#'   a warning reports the factor order inherited from [cell_design()].
 #' @param progress Logical; if `TRUE`, show a text progress bar.
 #' @param parallel Logical; if `TRUE`, run simulations in parallel.
 #' @param cores Optional positive integer number of parallel workers.
@@ -443,7 +474,10 @@ unbalanced_covariance <- function(sd = 1,
 #'   term effect size in a deterministic reference dataset. `$epsilon` is the
 #'   population Greenhouse--Geisser epsilon for the tested term. `$results`
 #'   also reports the common SD, simulated partial eta-squared distribution,
-#'   and failed fits.
+#'   and failed fits. Sample partial eta squared is upward-biased in finite
+#'   samples, so `mean_pes_sim`, `median_pes_sim`, and the simulated interval
+#'   are sampling diagnostics rather than estimates of the supplied population
+#'   effect; use `$partial_eta_squared` as the reference effect.
 #'
 #' @examples
 #' \donttest{
@@ -480,6 +514,7 @@ power_unbalanced <- function(design,
   spec <- prepare_unbalanced_means_design(design)
   term <- resolve_design_term(term, spec)
   ss_type <- validate_ss_type(ss_type)
+  warn_unbalanced_type_i_order(ss_type = ss_type, spec = spec)
   assert_unit_interval(alpha, "alpha")
   if (!is.numeric(n_sims) || length(n_sims) != 1L || !is.finite(n_sims) ||
       n_sims < 1 || n_sims != as.integer(n_sims)) {
@@ -531,6 +566,14 @@ power_unbalanced <- function(design,
   reference_stats <- fit_design_term_stats(
     reference, spec, term, ss_type = ss_type
   )
+  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8) &&
+    ss_type %in% c("II", "III")
+  assert_reference_gg_p(
+    stats = reference_stats,
+    use_gg_correction = use_gg_correction,
+    term = term
+  )
+  warn_negligible_reference_effect(reference_stats$pes, term = term)
   if (!is.null(seed)) set.seed(seed)
 
   progress_bar <- make_progress_bar(
@@ -608,6 +651,49 @@ power_unbalanced <- function(design,
     ),
     class = "anovapowersim_unbalanced_power"
   )
+}
+
+
+#' Warn that sequential sums of squares depend on factor order under unequal N
+#'
+#' @keywords internal
+#' @noRd
+warn_unbalanced_type_i_order <- function(ss_type, spec) {
+  if (!identical(ss_type, "I") || length(unique(spec$cell_n)) <= 1L) {
+    return(invisible(NULL))
+  }
+
+  warning(
+    "`ss_type = \"I\"` uses sequential sums of squares in this unequal-N ",
+    "design, so the tested hypothesis depends on factor order. The factor ",
+    "order inherited from `cell_design()` is: ",
+    paste(spec$factor_names, collapse = ", "),
+    ". Use `ss_type = \"II\"` or `\"III\"` unless this sequential, ",
+    "order-dependent hypothesis is intentional.",
+    call. = FALSE,
+    immediate. = TRUE
+  )
+  invisible(NULL)
+}
+
+
+#' Warn when literal cell means contain essentially no tested-term effect
+#'
+#' @keywords internal
+#' @noRd
+warn_negligible_reference_effect <- function(pes, term, threshold = 1e-8) {
+  if (!is.finite(pes) || pes > threshold) return(invisible(NULL))
+
+  warning(
+    "The supplied `m` values imply essentially no effect for tested term '",
+    term, "' (reference partial eta squared = ", format(pes, digits = 3),
+    ", at or below ", format(threshold, scientific = TRUE), "). Check for ",
+    "typos, confirm `term`, and verify that the cell means contain the ",
+    "tested effect rather than only other main effects or interactions.",
+    call. = FALSE,
+    immediate. = TRUE
+  )
+  invisible(NULL)
 }
 
 
@@ -814,12 +900,15 @@ run_unbalanced_means_simulations <- function(spec, term, n_sims, alpha,
     "repeated_measures_wide_data",
     "make_cell_labels",
     "interaction_key",
+    "select_simulated_p",
     "tick_progress_bar"
   ))
   simulate_one_dataset <- helpers$simulate_unbalanced_means_data
   fit_one_stats <- helpers$fit_design_term_stats
+  select_p <- helpers$select_simulated_p
   tick_progress <- helpers$tick_progress_bar
-  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8)
+  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8) &&
+    ss_type %in% c("II", "III")
   simulate_one <- function(i) {
     sim <- simulate_one_dataset(spec, empirical = FALSE)
     tick_progress(progress_bar)
@@ -830,11 +919,7 @@ run_unbalanced_means_simulations <- function(spec, term, n_sims, alpha,
     if (is.null(stats) || !is.finite(stats$pes)) {
       return(list(reject = NA, pes = NA_real_))
     }
-    p_value <- if (use_gg_correction && is.finite(stats$p_value_gg)) {
-      stats$p_value_gg
-    } else {
-      stats$p_value
-    }
+    p_value <- select_p(stats, use_gg_correction)
     if (!is.finite(p_value)) return(list(reject = NA, pes = NA_real_))
     list(reject = isTRUE(p_value < alpha), pes = stats$pes)
   }
@@ -905,6 +990,9 @@ print.anovapowersim_unbalanced_power <- function(x, ...) {
   cat("  simulated pes 95%:     [",
       sprintf("%.4f", x$pes_sim_interval[[1L]]), ", ",
       sprintf("%.4f", x$pes_sim_interval[[2L]]), "]\n", sep = "")
+  cat("  pes note:              sample pes is upward-biased; simulated pes ",
+      "summaries are diagnostics, not the population/reference effect.\n",
+      sep = "")
   correlation_label <- if (!length(x$design_spec$within)) {
     "not applicable"
   } else if (isTRUE(x$custom_covariance)) {
@@ -976,6 +1064,9 @@ summary.anovapowersim_unbalanced_power <- function(object, ...) {
   for (nm in names(header)) {
     cat(sprintf("  %-38s %s\n", paste0(nm, ":"), header[[nm]]))
   }
+  cat("  note:                                  sample pes is upward-biased; ",
+      "simulated pes summaries are diagnostics, not the population/",
+      "reference effect.\n", sep = "")
   cat("\nCell design:\n")
   print(object$design, row.names = FALSE)
   cat("\nPower and effect-size diagnostics:\n")

@@ -124,6 +124,17 @@ deterministic linear/Kronecker default is used.</p></dd>
     <p>A numeric matrix of cell means, with rows indexing between cells and
 columns indexing within cells.</p>
     </div>
+    <div class="section level2">
+    <h2 id="covariance-limitation">Covariance limitation<a class="anchor" aria-label="anchor" href="#covariance-limitation"></a></h2>
+
+
+<p>This manual helper does not accept <code><a href="within_covariance.html">within_covariance()</a></code> specifications.
+Calibration always uses the compound-symmetric covariance defined by <code>sd</code>
+and <code>r</code>. Consequently, its calibrated means can differ from those used by
+<code><a href="power_curve.html">power_curve()</a></code>, <code><a href="power_n.html">power_n()</a></code>, or <code><a href="power_achieved.html">power_achieved()</a></code> with a custom
+<code>covariance</code>, because the covariance affects the reference residual sum of
+squares and therefore the mean scale factor.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

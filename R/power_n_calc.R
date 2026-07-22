@@ -24,9 +24,9 @@
 #' @param target_pes Target partial eta squared for `term`.
 #' @param power Desired target power.
 #' @param alpha Significance threshold.
-#' @param n_start Starting sample size per between-subject cell. If `NULL`,
-#'   starts from the smallest value with valid calculated-power degrees of
-#'   freedom.
+#' @param n_start Starting sample size per between-subject cell, not a lower
+#'   bound for the search. If `NULL`, starts from the smallest value with valid
+#'   calculated-power degrees of freedom.
 #' @param n_max Maximum sample size per between-subject cell.
 #' @param gpower Logical; if `TRUE`, use the G*Power-style noncentrality
 #'   convention `lambda = total_n * f^2`. The default `FALSE` uses
@@ -342,11 +342,21 @@ analytic_power_search <- function(spec, term, target_pes, target_power, alpha,
 
   lo <- NA_integer_
   hi <- NA_integer_
+  n_min <- minimum_analytic_n(spec)
   n <- as.integer(n_start)
   repeat {
     row <- run_one(n)
     if (is.finite(row$power_calc) && row$power_calc >= target_power) {
       hi <- n
+      if (is.na(lo) && n > n_min) {
+        lower_row <- run_one(n_min)
+        if (is.finite(lower_row$power_calc) &&
+            lower_row$power_calc >= target_power) {
+          hi <- n_min
+        } else {
+          lo <- n_min
+        }
+      }
       break
     }
     lo <- n

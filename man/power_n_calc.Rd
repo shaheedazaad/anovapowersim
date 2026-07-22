@@ -35,9 +35,9 @@ resolves to \code{"group:time"} when that is the design's factor order.}
 
 \item{alpha}{Significance threshold.}
 
-\item{n_start}{Starting sample size per between-subject cell. If \code{NULL},
-starts from the smallest value with valid calculated-power degrees of
-freedom.}
+\item{n_start}{Starting sample size per between-subject cell, not a lower
+bound for the search. If \code{NULL}, starts from the smallest value with valid
+calculated-power degrees of freedom.}
 
 \item{n_max}{Maximum sample size per between-subject cell.}
 

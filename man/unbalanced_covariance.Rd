@@ -16,7 +16,10 @@ many pairs were not defined and makes clear that this default applies only
 to those pairs.}
 
 \item{correlations}{Optional named numeric vector of pair-specific
-correlations. Name pairs as \code{"cell1:cell2"}; pair order does not matter.}
+correlations. Name pairs as \code{"cell1:cell2"}; pair order does not matter.
+For multiple within factors, cell names join their level values with \verb{_}.
+Constructed names must be unique, and level values must not contain \code{:}
+because it separates the two cells in a pair name.}
 }
 \value{
 An \code{anovapowersim_unbalanced_covariance_spec} object.

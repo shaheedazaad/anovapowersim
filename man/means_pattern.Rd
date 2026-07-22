@@ -34,6 +34,9 @@ lower-order component, or reversing every sign therefore leaves the same
 target-term direction (up to sign). Under nonsphericity, different
 directions within a multi-df term can nevertheless produce different
 simulated power.
+
+This differs from \code{\link[=cell_design]{cell_design()}}, where each \code{m} is a literal population
+mean whose magnitude directly determines the simulated effect.
 }
 \section{Default direction}{
 
@@ -59,4 +62,7 @@ interaction_shape <- means_pattern(
   group = "group2", time = "time3", value = -1
 )
 
+}
+\seealso{
+\code{\link[=cell_design]{cell_design()}} for unbalanced designs with literal cell means.
 }

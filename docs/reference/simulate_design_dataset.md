@@ -46,6 +46,15 @@ simulate_design_dataset(design, n, means, sd = 1, r = 0.5, empirical = FALSE)
 A tibble ready for [`stats::aov()`](https://rdrr.io/r/stats/aov.html)
 with columns `id`, factor columns, and `value`.
 
+## Covariance limitation
+
+This manual helper does not accept
+[`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+specifications. It always simulates from the compound-symmetric covariance
+defined by `sd` and `r`. It therefore cannot reproduce a balanced
+power-function call that uses a custom `covariance`; use the power functions
+directly for that workflow.
+
 ## Examples
 
 ``` r

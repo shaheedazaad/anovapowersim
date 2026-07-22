@@ -57,8 +57,10 @@ The package warns whenever these defaults are actually needed:
   pairs are undefined. `default_correlation` fills only those undefined pairs;
   correlations explicitly listed by the user are never replaced.
 
-A raw covariance matrix defines both variances and correlations directly and
-does not use these defaults. Its diagonal variances must all be equal.
+Balanced power functions do not accept raw covariance matrices. Always use
+`within_covariance()` so pair names identify the intended cells explicitly;
+this prevents an unnamed matrix from being silently interpreted in the
+package's generated within-cell order.
 
 ## Use the covariance specification
 
@@ -80,6 +82,15 @@ The custom covariance structure calibrates the target effect and generates
 every simulated dataset. The package projects the covariance into the tested
 term's contrast space and calculates a population Greenhouse--Geisser epsilon.
 `power_calc` applies this epsilon to its degrees of freedom and noncentrality.
+
+The exported manual helpers are currently different:
+`design_term_means()` and `simulate_design_dataset()` do not accept a
+`within_covariance()` object. They always use the compound-symmetric covariance
+defined by their `sd` and `r` arguments. Consequently,
+`design_term_means()` can return a different mean scale from a power-function
+call with custom covariance, because covariance changes the reference residual
+sum of squares used for calibration. The manual helpers therefore cannot be
+used to reproduce or inspect a custom-covariance power call exactly.
 
 When the population epsilon is below 1, `power_sim` uses each simulated
 dataset's sample-estimated Greenhouse--Geisser-adjusted p-value for sums-of-

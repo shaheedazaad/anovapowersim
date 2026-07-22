@@ -161,19 +161,19 @@ cores, with a minimum of one.</p></dd>
 
 
 <dt id="arg-covariance">covariance<a class="anchor" aria-label="anchor" href="#arg-covariance"></a></dt>
-<dd><p>Optional within-subject covariance specification from
-<code><a href="within_covariance.html">within_covariance()</a></code> or a numeric covariance matrix. The default <code>NULL</code>
-uses standard deviations of <code>1</code> and a compound-symmetric correlation of
-<code>0.5</code> and issues a warning stating those defaults. A
+<dd><p>Optional within-subject covariance specification created
+by <code><a href="within_covariance.html">within_covariance()</a></code>. Raw covariance matrices are not accepted, which
+avoids silently assuming a within-cell order. The default <code>NULL</code> uses
+standard deviations of <code>1</code> and a compound-symmetric correlation of <code>0.5</code>
+and issues a warning stating those defaults. A
 <code><a href="within_covariance.html">within_covariance()</a></code> specification issues a warning when correlation
 pairs are omitted: its <code>default_correlation</code> applies only to those
 undefined pairs, while explicitly defined correlations are unchanged.
-All measurements must have one common marginal variance. A supplied matrix
-must therefore have equal diagonal entries and one row and column per
-within-subject cell; named matrices are reordered to the design's cell
-order. Unequal correlations remain supported. For terms
-containing within-subject factors, the matrix is also used to derive a
-term-specific population Greenhouse–Geisser epsilon for <code>power_calc</code>. If
+All measurements use the specification's common marginal variance, while
+unequal correlations remain supported. For terms containing
+within-subject factors, the resolved covariance matrix is also used to
+derive a term-specific population Greenhouse–Geisser epsilon for
+<code>power_calc</code>. If
 that population epsilon is below <code>1</code>, <code>power_sim</code> is also based on each
 simulated dataset's Greenhouse–Geisser-corrected p-value (from
 <code><a href="https://rdrr.io/pkg/car/man/Anova.html" class="external-link">car::Anova()</a></code>) rather than the uncorrected univariate test, so <code>power_sim</code>

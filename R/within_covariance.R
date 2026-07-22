@@ -178,8 +178,88 @@ parse_correlation_pairs <- function(pair_names) {
 #' @noRd
 within_cell_names <- function(spec) {
   if (!length(spec$within)) return("outcome")
+  if (!is.character(spec$within) || anyNA(spec$within) ||
+      any(!nzchar(spec$within)) || anyDuplicated(spec$within)) {
+    stop(
+      "Within-subject factor names must be unique, non-missing character ",
+      "strings.",
+      call. = FALSE
+    )
+  }
+  if (!is.data.frame(spec$within_cells) ||
+      !all(spec$within %in% names(spec$within_cells))) {
+    stop(
+      "Within-subject cells must be a data frame containing every within-",
+      "subject factor.",
+      call. = FALSE
+    )
+  }
   values <- lapply(spec$within_cells[spec$within], as.character)
-  do.call(paste, c(values, sep = "_"))
+  valid_values <- vapply(
+    values,
+    function(x) is.character(x) && !anyNA(x) && all(nzchar(x)),
+    logical(1L)
+  )
+  if (!all(valid_values)) {
+    stop(
+      "Within-subject factor levels must resolve to non-missing, non-empty ",
+      "character strings.",
+      call. = FALSE
+    )
+  }
+
+  colon_levels <- unlist(Map(function(factor_name, x) {
+    bad <- unique(x[grepl(":", x, fixed = TRUE)])
+    if (!length(bad)) return(character(0))
+    paste0("`", factor_name, "` = ", vapply(bad, shQuote, character(1L)))
+  }, names(values), values), use.names = FALSE)
+  if (length(colon_levels)) {
+    stop(
+      "Within-subject factor levels must not contain ':' because ':' ",
+      "separates cell names in `correlations`. Problem level",
+      if (length(colon_levels) == 1L) "" else "s", ": ",
+      paste(colon_levels, collapse = ", "), ". Rename the level",
+      if (length(colon_levels) == 1L) "" else "s", " in `cell_design()`.",
+      call. = FALSE
+    )
+  }
+
+  cell_names <- do.call(paste, c(values, sep = "_"))
+  if (!is.character(cell_names) || anyNA(cell_names) ||
+      any(!nzchar(cell_names))) {
+    stop(
+      "Constructed within-subject cell names must be non-missing, non-empty ",
+      "character strings.",
+      call. = FALSE
+    )
+  }
+  if (anyDuplicated(cell_names)) {
+    duplicated_names <- unique(cell_names[
+      duplicated(cell_names) | duplicated(cell_names, fromLast = TRUE)
+    ])
+    collisions <- vapply(duplicated_names, function(cell_name) {
+      rows <- which(cell_names == cell_name)
+      sources <- vapply(rows, function(i) {
+        paste(
+          paste0(spec$within, " = ", vapply(
+            values,
+            function(x) shQuote(x[[i]]),
+            character(1L)
+          )),
+          collapse = ", "
+        )
+      }, character(1L))
+      paste0(shQuote(cell_name), " from ", paste(sources, collapse = " and "))
+    }, character(1L))
+    stop(
+      "Within-subject cell names are not unique after joining factor levels ",
+      "with '_'. Collision", if (length(collisions) == 1L) "" else "s",
+      ": ", paste(collisions, collapse = "; "), ". Rename the levels in ",
+      "`cell_design()` so every constructed cell name is unique.",
+      call. = FALSE
+    )
+  }
+  cell_names
 }
 
 

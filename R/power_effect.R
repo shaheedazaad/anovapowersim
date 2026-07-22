@@ -210,6 +210,10 @@ power_sensitivity <- function(between = NULL,
   pes_min <- bounds$pes_min
   pes_max <- bounds$pes_max
   pes_tol <- bounds$pes_tol
+  message_custom_means_pattern(
+    custom_means_pattern = setup$custom_means_pattern,
+    term = setup$term
+  )
   message_long_serial_run(setup$n_sims, setup$parallel)
 
   initial_pes <- estimate_calculated_pes_needed(

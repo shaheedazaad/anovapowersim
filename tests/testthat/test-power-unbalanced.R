@@ -132,6 +132,33 @@ test_that("power_unbalanced warns when covariance defaults are used", {
 })
 
 
+test_that("power_unbalanced warns when supplied means omit the tested effect", {
+  design <- cell_design(
+    group = "control", time = "pre",  n = 6, m = 0,
+    group = "control", time = "post", n = 6, m = 1,
+    group = "treated", time = "pre",  n = 8, m = 0,
+    group = "treated", time = "post", n = 8, m = 1,
+    within = "time"
+  )
+
+  expect_warning(
+    result <- power_unbalanced(
+      design,
+      term = "group:time",
+      covariance = unbalanced_covariance(
+        sd = 1,
+        correlations = c("pre:post" = 0.5)
+      ),
+      n_sims = 1,
+      progress = FALSE,
+      seed = 15
+    ),
+    "essentially no effect.*group:time.*partial eta squared"
+  )
+  expect_lte(result$partial_eta_squared, 1e-8)
+})
+
+
 test_that("unbalanced designs share one covariance across groups", {
   design <- cell_design(
     group = "control", time = "pre",  n = 7, m = 10,
@@ -315,10 +342,43 @@ test_that("unbalanced power prints and summarises the common SD", {
 
   expect_output(print(result), "common SD")
   expect_output(print(result), "simulated power")
+  expect_output(
+    print(result),
+    "sample pes is upward-biased.*diagnostics, not the population/reference"
+  )
   expect_output(summary(result), "common_sd")
+  expect_output(
+    summary(result),
+    "sample pes is upward-biased.*diagnostics, not the population/reference"
+  )
   suppressMessages(capture.output(summary_object <- summary(result)))
   expect_named(summary_object, c("header", "design", "results"))
   expect_equal(unname(summary_object$header[["common_sd"]]), "2")
+})
+
+
+test_that("Type I SS warns about factor order for unequal-N designs", {
+  design <- cell_design(
+    treatment = "A", site = "north", n = 5,  m = 0.0,
+    treatment = "A", site = "south", n = 7,  m = 0.2,
+    treatment = "B", site = "north", n = 9,  m = 1.0,
+    treatment = "B", site = "south", n = 11, m = 1.2
+  )
+
+  warnings <- testthat::capture_warnings(power_unbalanced(
+    design,
+    term = "treatment",
+    covariance = unbalanced_covariance(sd = 1),
+    n_sims = 1,
+    ss_type = "I",
+    progress = FALSE,
+    seed = 18
+  ))
+
+  expect_true(any(grepl(
+    "sequential sums of squares.*factor order.*treatment, site",
+    warnings
+  )))
 })
 
 
@@ -404,6 +464,7 @@ test_that("power_unbalanced GG-corrects equal-variance nonsphericity", {
 
   expect_lt(corrected$epsilon, 1)
   expect_true(is.finite(corrected$power))
+  expect_identical(corrected$failed_sims, 0L)
   warnings <- testthat::capture_warnings(
     power_unbalanced(
       design = design,
@@ -432,14 +493,14 @@ test_that("cell_design lists, fills, and validates missing cells", {
     fixed = TRUE
   )
 
-  filled <- cell_design(
+  filled <- suppressMessages(cell_design(
     group = "a", time = "pre",  n = 10, m = 0,
     group = "a", time = "post", n = 10, m = 1,
     group = "b", time = "pre",  n = 10, m = 0,
     within = "time",
     default_n = 10,
     default_m = 99
-  )
+  ))
   filled_row <- filled[filled$group == "b" & filled$time == "post", ]
   expect_equal(nrow(filled), 4L)
   expect_equal(filled_row$n, 10L)
@@ -463,16 +524,40 @@ test_that("cell_design lists, fills, and validates missing cells", {
 })
 
 
+test_that("cell_design reports exact cells created by defaults", {
+  messages <- testthat::capture_messages(
+    design <- cell_design(
+      group = "control", time = "pre",  n = 10, m = 0,
+      group = "contrl", time = "post",  n = 10, m = 1,
+      group = "treatment", time = "pre",  n = 10, m = 0,
+      group = "treatment", time = "post", n = 10, m = 1,
+      within = "time",
+      default_n = 10,
+      default_m = 99
+    )
+  )
+
+  expect_true(any(grepl("Auto-filled 2 missing cells", messages,
+                        fixed = TRUE)))
+  expect_true(any(grepl('group = "control", time = "post"', messages,
+                        fixed = TRUE)))
+  expect_true(any(grepl('group = "contrl", time = "pre"', messages,
+                        fixed = TRUE)))
+  expect_equal(nrow(design), 6L)
+  expect_true("contrl" %in% design$group)
+})
+
+
 test_that("default-filled cells participate in n-consistency checks", {
   expect_error(
-    cell_design(
+    suppressMessages(cell_design(
       group = "A", time = "pre",  n = 10, m = 0,
       group = "A", time = "post", n = 10, m = 1,
       group = "B", time = "pre",  n = 15, m = 0,
       within = "time",
       default_n = 99,
       default_m = 0
-    ),
+    )),
     "identical across"
   )
 })
@@ -501,6 +586,29 @@ test_that("cell_design validates factor levels and stores within factors", {
   )
   expect_identical(attr(within_design, "within"), "time")
   expect_identical(attr(between_design, "within"), character(0))
+})
+
+
+test_that("cell_design rejects unsafe constructed within-cell names", {
+  expect_error(
+    cell_design(
+      time = "pre:baseline", n = 5, m = 0,
+      time = "post", n = 5, m = 1,
+      within = "time"
+    ),
+    "must not contain ':'.*`time` = 'pre:baseline'"
+  )
+
+  expect_error(
+    cell_design(
+      first = "a_b", second = "c",   n = 5, m = 0,
+      first = "a_b", second = "b_c", n = 5, m = 1,
+      first = "a",   second = "c",   n = 5, m = 2,
+      first = "a",   second = "b_c", n = 5, m = 3,
+      within = c("first", "second")
+    ),
+    "not unique.*'a_b_c'.*first = 'a_b'.*second = 'c'.*first = 'a'.*second = 'b_c'"
+  )
 })
 
 

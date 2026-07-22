@@ -42,19 +42,19 @@
 #'   `parallel = TRUE`. If `NULL`, uses one fewer than the number of available
 #'   cores, with a minimum of one.
 #' @param seed Optional integer seed for reproducibility.
-#' @param covariance Optional within-subject covariance specification from
-#'   [within_covariance()] or a numeric covariance matrix. The default `NULL`
-#'   uses standard deviations of `1` and a compound-symmetric correlation of
-#'   `0.5` and issues a warning stating those defaults. A
+#' @param covariance Optional within-subject covariance specification created
+#'   by [within_covariance()]. Raw covariance matrices are not accepted, which
+#'   avoids silently assuming a within-cell order. The default `NULL` uses
+#'   standard deviations of `1` and a compound-symmetric correlation of `0.5`
+#'   and issues a warning stating those defaults. A
 #'   [within_covariance()] specification issues a warning when correlation
 #'   pairs are omitted: its `default_correlation` applies only to those
 #'   undefined pairs, while explicitly defined correlations are unchanged.
-#'   All measurements must have one common marginal variance. A supplied matrix
-#'   must therefore have equal diagonal entries and one row and column per
-#'   within-subject cell; named matrices are reordered to the design's cell
-#'   order. Unequal correlations remain supported. For terms
-#'   containing within-subject factors, the matrix is also used to derive a
-#'   term-specific population Greenhouse--Geisser epsilon for `power_calc`. If
+#'   All measurements use the specification's common marginal variance, while
+#'   unequal correlations remain supported. For terms containing
+#'   within-subject factors, the resolved covariance matrix is also used to
+#'   derive a term-specific population Greenhouse--Geisser epsilon for
+#'   `power_calc`. If
 #'   that population epsilon is below `1`, `power_sim` is also based on each
 #'   simulated dataset's Greenhouse--Geisser-corrected p-value (from
 #'   `car::Anova()`) rather than the uncorrected univariate test, so `power_sim`
@@ -137,7 +137,8 @@ power_curve <- function(between = NULL,
                         cores = NULL,
                         seed = NULL,
                         covariance = NULL,
-                        means_pattern = NULL) {
+                        means_pattern = NULL,
+                        sim_correction = c("auto", "GG", "none")) {
   sd <- 1
   r <- 0.5
   setup <- prepare_power_curve_inputs(
@@ -155,7 +156,8 @@ power_curve <- function(between = NULL,
     progress = progress,
     parallel = parallel,
     cores = cores,
-    means_pattern = means_pattern
+    means_pattern = means_pattern,
+    sim_correction = sim_correction
   )
   message_long_serial_run(setup$n_sims, setup$parallel)
 
@@ -179,6 +181,7 @@ power_curve <- function(between = NULL,
       n_sims = setup$n_sims,
       alpha = alpha,
       ss_type = setup$ss_type,
+      sim_correction_resolved = setup$sim_correction_resolved,
       sd = sd,
       r = r,
       covariance = setup$covariance,
@@ -194,7 +197,11 @@ power_curve <- function(between = NULL,
   }
 
   curve <- purrr::map_dfr(ns, run_one)
-  warn_power_disagreement(curve, setup$n_sims)
+  warn_power_disagreement(
+    curve, setup$n_sims,
+    sim_correction_resolved = setup$sim_correction_resolved,
+    epsilon = setup$epsilon
+  )
 
   structure(
     list(
@@ -213,6 +220,8 @@ power_curve <- function(between = NULL,
       custom_covariance = setup$custom_covariance,
       custom_means_pattern = setup$custom_means_pattern,
       ss_type = setup$ss_type,
+      sim_correction = setup$sim_correction,
+      sim_correction_resolved = setup$sim_correction_resolved,
       design = setup$spec,
       call = match.call()
     ),
@@ -225,15 +234,18 @@ power_curve <- function(between = NULL,
 #'
 #' Adaptive simulation search for the per-between-cell sample size needed to
 #' reach a requested power for a balanced factorial ANOVA design. The search
-#' doubles upward from `n_start` until it brackets the target or reaches
-#' `n_max`, then refines the bracket using interpolation with midpoint
-#' bisection as a fallback.
+#' searches upward from `n_start` until it brackets the target or reaches
+#' `n_max`. If `n_start` already reaches the target, the search probes the
+#' smallest sample size supported by the design to establish a lower bracket.
+#' It then refines the bracket using interpolation with midpoint bisection as
+#' a fallback.
 #'
 #' @inheritParams power_curve
 #' @param power Desired target power.
-#' @param n_start Starting sample size per between-subject cell. If `NULL`,
-#'   starts at the smallest value that can support empirical calibration for
-#'   the requested design.
+#' @param n_start Starting sample size per between-subject cell, not a lower
+#'   bound for the search. If `NULL`, an initial value is estimated from
+#'   calculated power and constrained to values that support empirical
+#'   calibration for the requested design.
 #' @param n_max Maximum sample size per between-subject cell.
 #' @param tol Acceptable precision above target power. If no simulated value at
 #'   or above `power` is also no more than `power + tol`, `power_n()` warns that
@@ -279,7 +291,8 @@ power_n <- function(between = NULL,
                     cores = NULL,
                     seed = NULL,
                     covariance = NULL,
-                    means_pattern = NULL) {
+                    means_pattern = NULL,
+                    sim_correction = c("auto", "GG", "none")) {
   sd <- 1
   r <- 0.5
   setup <- prepare_power_curve_inputs(
@@ -297,7 +310,8 @@ power_n <- function(between = NULL,
     progress = progress,
     parallel = parallel,
     cores = cores,
-    means_pattern = means_pattern
+    means_pattern = means_pattern,
+    sim_correction = sim_correction
   )
   assert_unit_interval(power, "power")
   if (is.finite(power) && power < 0.90) {
@@ -323,6 +337,7 @@ power_n <- function(between = NULL,
       target_power = power,
       alpha = alpha,
       ss_type = setup$ss_type,
+      sim_correction_resolved = setup$sim_correction_resolved,
       sd = sd,
       r = r,
       covariance = setup$covariance,
@@ -362,7 +377,7 @@ power_n <- function(between = NULL,
 
   progress_bar <- make_progress_bar(
     enabled = setup$progress,
-    total = estimate_adaptive_progress_total(n_start, n_max),
+    total = estimate_adaptive_progress_total(n_start, n_max, n_min = min_n),
     label = "Searching sample size"
   )
   on.exit(close_progress_bar(progress_bar), add = TRUE)
@@ -394,9 +409,14 @@ power_n <- function(between = NULL,
     n_start = n_start,
     n_max = n_max,
     tol = tol,
+    n_min = min_n,
     progress_bar = progress_bar
   )
-  warn_power_disagreement(curve, setup$n_sims)
+  warn_power_disagreement(
+    curve, setup$n_sims,
+    sim_correction_resolved = setup$sim_correction_resolved,
+    epsilon = setup$epsilon
+  )
 
   n_needed <- estimate_design_n_needed(curve, target = power)
   warn_target_power_not_reached(
@@ -433,6 +453,8 @@ power_n <- function(between = NULL,
       custom_covariance = setup$custom_covariance,
       custom_means_pattern = setup$custom_means_pattern,
       ss_type = setup$ss_type,
+      sim_correction = setup$sim_correction,
+      sim_correction_resolved = setup$sim_correction_resolved,
       design = setup$spec,
       call = match.call()
     ),
@@ -457,6 +479,9 @@ power_n <- function(between = NULL,
 #' directions within a multi-df term can nevertheless produce different
 #' simulated power.
 #'
+#' This differs from [cell_design()], where each `m` is a literal population
+#' mean whose magnitude directly determines the simulated effect.
+#'
 #' @section Default direction:
 #' When no pattern is supplied, balanced simulations use centered scores in
 #' generated level order, `i - (L + 1) / 2` for levels `i = 1, ..., L`,
@@ -476,6 +501,8 @@ power_n <- function(between = NULL,
 #' @return An object of class `anovapowersim_means_pattern`, retaining the
 #'   sparse definitions until a balanced simulation function resolves them
 #'   against its design and tested term.
+#'
+#' @seealso [cell_design()] for unbalanced designs with literal cell means.
 #'
 #' @examples
 #' trend <- means_pattern(
@@ -605,6 +632,14 @@ balanced_anova_design <- function(between = NULL, within = NULL) {
 #' reference dataset has the requested partial eta squared under the supplied
 #' balanced design assumptions.
 #'
+#' @section Covariance limitation:
+#' This manual helper does not accept [within_covariance()] specifications.
+#' Calibration always uses the compound-symmetric covariance defined by `sd`
+#' and `r`. Consequently, its calibrated means can differ from those used by
+#' [power_curve()], [power_n()], or [power_achieved()] with a custom
+#' `covariance`, because the covariance affects the reference residual sum of
+#' squares and therefore the mean scale factor.
+#'
 #' @param design An `anovapowersim_design_spec` from [balanced_anova_design()].
 #' @param term Character scalar naming the ANOVA term to target. Interaction
 #'   terms are order-insensitive.
@@ -661,6 +696,11 @@ design_term_means <- function(design, term, target_pes, n, sd = 1, r = 0.5,
     spec = design,
     term = term
   )
+  message_custom_means_pattern(
+    custom_means_pattern = !is.null(means_pattern),
+    term = term,
+    target_pes = target_pes
+  )
   calibrate_design_means(
     spec = design,
     term = term,
@@ -680,6 +720,12 @@ design_term_means <- function(design, term, target_pes, n, sd = 1, r = 0.5,
 #' Generates one long-format dataset from a balanced design. Supply means from
 #' [design_term_means()] or any conformable matrix with one row per
 #' between-subject cell and one column per within-subject cell.
+#'
+#' @section Covariance limitation:
+#' This manual helper does not accept [within_covariance()] specifications. It
+#' always simulates from the compound-symmetric covariance defined by `sd` and
+#' `r`. It therefore cannot reproduce a balanced power-function call that uses
+#' a custom `covariance`; use the power functions directly for that workflow.
 #'
 #' @param design An `anovapowersim_design_spec` from [balanced_anova_design()].
 #' @param n Sample size per between-subject cell. For pure within designs, this
@@ -885,7 +931,8 @@ prepare_power_curve_inputs <- function(between, within, term, target_pes,
                                        n_sims, alpha, ss_type, sd, r,
                                        covariance = NULL, gpower, progress,
                                        parallel, cores,
-                                       means_pattern = NULL) {
+                                       means_pattern = NULL,
+                                       sim_correction = c("auto", "GG", "none")) {
   setup <- prepare_balanced_power_inputs(
     between = between,
     within = within,
@@ -900,9 +947,15 @@ prepare_power_curve_inputs <- function(between, within, term, target_pes,
     progress = progress,
     parallel = parallel,
     cores = cores,
-    means_pattern = means_pattern
+    means_pattern = means_pattern,
+    sim_correction = sim_correction
   )
   validate_target_pes(target_pes)
+  message_custom_means_pattern(
+    custom_means_pattern = setup$custom_means_pattern,
+    term = setup$term,
+    target_pes = target_pes
+  )
   setup
 }
 
@@ -915,9 +968,19 @@ prepare_balanced_power_inputs <- function(between, within, term, n_sims,
                                           alpha, ss_type, sd, r,
                                           covariance = NULL, gpower, progress,
                                           parallel, cores,
-                                          means_pattern = NULL) {
+                                          means_pattern = NULL,
+                                          sim_correction = c("auto", "GG", "none")) {
   spec <- balanced_anova_design(between = between, within = within)
   term <- resolve_design_term(term, spec)
+  if (!is.null(covariance) &&
+      !inherits(covariance, "anovapowersim_covariance_spec")) {
+    stop(
+      "`covariance` must be created by within_covariance(); raw covariance ",
+      "matrices are not accepted by balanced power functions because their ",
+      "within-cell order can be ambiguous.",
+      call. = FALSE
+    )
+  }
   resolved_means_pattern <- resolve_means_pattern(
     means_pattern = means_pattern,
     spec = spec,
@@ -936,7 +999,19 @@ prepare_balanced_power_inputs <- function(between, within, term, n_sims,
     term = term
   )
   ss_type <- validate_ss_type(ss_type)
-  warn_ss_type_i_uncorrected_gg(ss_type = ss_type, epsilon = epsilon)
+  correction <- resolve_sim_correction(
+    sim_correction = sim_correction,
+    ss_type = ss_type,
+    spec = spec,
+    term = term,
+    epsilon = epsilon
+  )
+  warn_uncorrected_nonsphericity(
+    sim_correction = correction$requested,
+    sim_correction_resolved = correction$resolved,
+    ss_type = ss_type,
+    epsilon = epsilon
+  )
   warn_direction_sensitivity(
     spec = spec,
     term = term,
@@ -977,6 +1052,8 @@ prepare_balanced_power_inputs <- function(between, within, term, n_sims,
     means_pattern = resolved_means_pattern,
     custom_means_pattern = custom_means_pattern,
     epsilon = epsilon,
+    sim_correction = correction$requested,
+    sim_correction_resolved = correction$resolved,
     gpower = gpower,
     progress = progress,
     parallel = parallel,
@@ -1053,6 +1130,47 @@ warn_ss_type_i_uncorrected_gg <- function(ss_type, epsilon) {
 }
 
 
+#' Select the p-value used for one simulated ANOVA test
+#'
+#' @keywords internal
+#' @noRd
+select_simulated_p <- function(stats, use_gg_correction) {
+  if (isTRUE(use_gg_correction)) {
+    if (length(stats$p_value_gg) != 1L ||
+        !is.finite(stats$p_value_gg)) {
+      return(NA_real_)
+    }
+    return(as.numeric(stats$p_value_gg))
+  }
+
+  if (length(stats$p_value) != 1L || !is.finite(stats$p_value)) {
+    return(NA_real_)
+  }
+  as.numeric(stats$p_value)
+}
+
+
+#' Assert that a reference fit supplied the required GG p-value
+#'
+#' @keywords internal
+#' @noRd
+assert_reference_gg_p <- function(stats, use_gg_correction, term) {
+  if (!isTRUE(use_gg_correction)) return(invisible(NULL))
+  if (length(stats$p_value_gg) == 1L && is.finite(stats$p_value_gg)) {
+    return(invisible(NULL))
+  }
+
+  stop(
+    "Internal error: Greenhouse-Geisser correction is required for term '",
+    term, "', but the empirical reference fit did not return a finite ",
+    "GG-corrected p-value. Please file a bug report at ",
+    "https://github.com/shaheedazaad/anovapowersim/issues and include the ",
+    "function call.",
+    call. = FALSE
+  )
+}
+
+
 #' Warn when the default direction is consequential for simulated power
 #'
 #' @keywords internal
@@ -1072,6 +1190,37 @@ warn_direction_sensitivity <- function(spec, term, epsilon,
     "Supply `means_pattern` to describe the expected relative mean shape.",
     call. = FALSE,
     immediate. = TRUE
+  )
+  invisible(NULL)
+}
+
+
+#' Explain the shape-only semantics of custom balanced means patterns
+#'
+#' @keywords internal
+#' @noRd
+message_custom_means_pattern <- function(custom_means_pattern, term,
+                                         target_pes = NULL) {
+  if (!isTRUE(custom_means_pattern)) return(invisible(NULL))
+
+  rescaling <- if (is.null(target_pes)) {
+    "It will be rescaled to each candidate `target_pes` during the search."
+  } else {
+    paste0(
+      "It will be rescaled to `target_pes = ",
+      format(target_pes, trim = TRUE), "`."
+    )
+  }
+  rlang::inform(
+    paste0(
+      "Custom `means_pattern` values are shape-only. The pattern was ",
+      "projected onto term '", term, "' and normalized; its supplied ",
+      "magnitude and any components outside term '", term,
+      "' are discarded. ",
+      rescaling, " By contrast, `cell_design()` uses literal `m` values."
+    ),
+    .frequency = "once",
+    .frequency_id = "anovapowersim_custom_means_pattern_semantics"
   )
   invisible(NULL)
 }
@@ -1197,6 +1346,13 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     epsilon = epsilon,
     ss_type = ss_type
   )
+  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8) &&
+    ss_type %in% c("II", "III")
+  assert_reference_gg_p(
+    stats = sanity,
+    use_gg_correction = use_gg_correction,
+    term = term
+  )
 
   helpers <- parallel_worker_helpers(c(
     "simulate_balanced_design_data",
@@ -1217,12 +1373,13 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
     "validate_calibration_n",
     "minimum_calibration_n",
     "compound_symmetric_sigma",
+    "select_simulated_p",
     "tick_progress_bar"
   ))
   fit_one_stats <- helpers$fit_design_term_stats
   simulate_one_dataset <- helpers$simulate_balanced_design_data
+  select_p <- helpers$select_simulated_p
   tick_progress <- helpers$tick_progress_bar
-  use_gg_correction <- isTRUE(epsilon < 1 - 1e-8)
   simulate_one <- function(i) {
     sim <- simulate_one_dataset(
       spec = spec,
@@ -1239,11 +1396,7 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
       error = function(e) NULL
     )
     if (is.null(stats)) return(NA)
-    p_value <- if (use_gg_correction && is.finite(stats$p_value_gg)) {
-      stats$p_value_gg
-    } else {
-      stats$p_value
-    }
+    p_value <- select_p(stats, use_gg_correction)
     if (!is.finite(p_value)) return(NA)
     isTRUE(p_value < alpha)
   }
@@ -1302,9 +1455,11 @@ run_design_power_at_n <- function(spec, term, target_pes, n, n_sims,
 #' @keywords internal
 #' @noRd
 adaptive_design_search <- function(run_one, target, n_start, n_max, tol,
-                                   max_iter = 25L, progress_bar = NULL) {
+                                   max_iter = 25L, progress_bar = NULL,
+                                   n_min = 1L) {
   visited <- list()
   n <- max(1L, as.integer(n_start))
+  n_min <- max(1L, min(n, as.integer(n_min)))
   lo <- NULL
   lo_p <- NA_real_
   hi <- NULL
@@ -1318,6 +1473,19 @@ adaptive_design_search <- function(run_one, target, n_start, n_max, tol,
     if (!is.na(p) && p >= target) {
       hi <- n
       hi_p <- p
+      if (is.null(lo) && n > n_min) {
+        lower_row <- run_one(n_min)
+        tick_progress_bar(progress_bar)
+        visited[[length(visited) + 1L]] <- lower_row
+        lower_p <- lower_row$power_sim
+        if (!is.na(lower_p) && lower_p >= target) {
+          hi <- n_min
+          hi_p <- lower_p
+        } else {
+          lo <- n_min
+          lo_p <- lower_p
+        }
+      }
       break
     }
     if (n >= n_max) {
@@ -2339,8 +2507,10 @@ close_progress_bar <- function(progress_bar) {
 
 #' @keywords internal
 #' @noRd
-estimate_adaptive_progress_total <- function(n_start, n_max, max_iter = 25L) {
+estimate_adaptive_progress_total <- function(n_start, n_max, max_iter = 25L,
+                                             n_min = 1L) {
   n <- max(1L, as.integer(n_start))
+  probes_lower_bound <- n > as.integer(n_min)
   n_max <- as.integer(n_max)
   steps <- 1L
   while (n < n_max) {
@@ -2348,5 +2518,5 @@ estimate_adaptive_progress_total <- function(n_start, n_max, max_iter = 25L) {
     steps <- steps + 1L
     n <- n_next
   }
-  steps + max_iter
+  steps + as.integer(probes_lower_bound) + max_iter
 }

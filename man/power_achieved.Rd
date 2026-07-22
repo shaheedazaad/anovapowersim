@@ -70,19 +70,19 @@ cores, with a minimum of one.}
 
 \item{seed}{Optional integer seed for reproducibility.}
 
-\item{covariance}{Optional within-subject covariance specification from
-\code{\link[=within_covariance]{within_covariance()}} or a numeric covariance matrix. The default \code{NULL}
-uses standard deviations of \code{1} and a compound-symmetric correlation of
-\code{0.5} and issues a warning stating those defaults. A
+\item{covariance}{Optional within-subject covariance specification created
+by \code{\link[=within_covariance]{within_covariance()}}. Raw covariance matrices are not accepted, which
+avoids silently assuming a within-cell order. The default \code{NULL} uses
+standard deviations of \code{1} and a compound-symmetric correlation of \code{0.5}
+and issues a warning stating those defaults. A
 \code{\link[=within_covariance]{within_covariance()}} specification issues a warning when correlation
 pairs are omitted: its \code{default_correlation} applies only to those
 undefined pairs, while explicitly defined correlations are unchanged.
-All measurements must have one common marginal variance. A supplied matrix
-must therefore have equal diagonal entries and one row and column per
-within-subject cell; named matrices are reordered to the design's cell
-order. Unequal correlations remain supported. For terms
-containing within-subject factors, the matrix is also used to derive a
-term-specific population Greenhouse--Geisser epsilon for \code{power_calc}. If
+All measurements use the specification's common marginal variance, while
+unequal correlations remain supported. For terms containing
+within-subject factors, the resolved covariance matrix is also used to
+derive a term-specific population Greenhouse--Geisser epsilon for
+\code{power_calc}. If
 that population epsilon is below \code{1}, \code{power_sim} is also based on each
 simulated dataset's Greenhouse--Geisser-corrected p-value (from
 \code{car::Anova()}) rather than the uncorrected univariate test, so \code{power_sim}

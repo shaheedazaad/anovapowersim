@@ -121,21 +121,21 @@ power_sensitivity(
 
 - covariance:
 
-  Optional within-subject covariance specification from
+  Optional within-subject covariance specification created by
   [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
-  or a numeric covariance matrix. The default `NULL` uses standard
+  Raw covariance matrices are not accepted, which avoids silently
+  assuming a within-cell order. The default `NULL` uses standard
   deviations of `1` and a compound-symmetric correlation of `0.5` and
   issues a warning stating those defaults. A
   [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
   specification issues a warning when correlation pairs are omitted: its
   `default_correlation` applies only to those undefined pairs, while
-  explicitly defined correlations are unchanged. All measurements must
-  have one common marginal variance. A supplied matrix must therefore
-  have equal diagonal entries and one row and column per within-subject
-  cell; named matrices are reordered to the design's cell order. Unequal
+  explicitly defined correlations are unchanged. All measurements use
+  the specification's common marginal variance, while unequal
   correlations remain supported. For terms containing within-subject
-  factors, the matrix is also used to derive a term-specific population
-  Greenhouse–Geisser epsilon for `power_calc`. If that population
+  factors, the resolved covariance matrix is also used to derive a
+  term-specific population Greenhouse–Geisser epsilon for `power_calc`.
+  If that population
   epsilon is below `1`, `power_sim` is also based on each simulated
   dataset's Greenhouse–Geisser-corrected p-value (from
   [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html)) rather than
