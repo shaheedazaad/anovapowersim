@@ -2,6 +2,51 @@
 
 ## anovapowersim (development version)
 
+- Added `sim_correction = c("auto", "GG", "none")` to all simulation
+  power functions. The default `"auto"` preserves existing behavior,
+  while users can now prespecify corrected or uncorrected simulated
+  tests. Uncorrected tests under nonsphericity warn that excess
+  rejection reflects alpha inflation.
+- Fixed
+  [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md)
+  and
+  [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
+  treating `n_start` as an implicit lower bound when power at that value
+  already met the target. Both searches now probe the smallest valid
+  sample size and refine the resulting lower bracket before reporting
+  `n_needed`.
+- Balanced simulation functions now issue a once-per-session message
+  when a custom `means_pattern` is resolved, clarifying that its values
+  are projected, normalized, and rescaled to `target_pes`, unlike the
+  literal means supplied through
+  [`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md).
+  Both documentation pages now cross-reference this semantic
+  distinction.
+- [`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md)
+  now messages the count and exact factor-level combinations of cells
+  created by `default_n` and `default_m`, making accidental factor
+  levels visible instead of silently expanding the design.
+- [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md)
+  now warns when the deterministic reference data imply essentially zero
+  partial eta squared for the tested term, pointing users to possible
+  mean typos or a mismatched `term`.
+- Unbalanced within-subject designs now reject `:` in level values and
+  reject duplicate cell names produced by joining multi-factor levels
+  with `_`, with errors that identify the problematic levels or
+  colliding cells before any correlations are assigned.
+- Unbalanced power print and summary output now explain that simulated
+  sample partial eta squared is upward-biased and that its mean, median,
+  and interval are diagnostics rather than population/reference effects.
+- [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md)
+  now warns when `ss_type = "I"` is used with unequal sample sizes,
+  explains that sequential sums of squares are order-dependent, and
+  reports the factor order inherited from
+  [`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md).
+- Balanced simulation power functions now require custom covariance
+  inputs to be created by
+  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+  and reject raw matrices, eliminating ambiguous assumptions about
+  within-cell row and column order.
 - Added
   [`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
   and an optional `means_pattern` argument to

@@ -39,6 +39,11 @@ leaves the same target-term direction (up to sign). Under nonsphericity,
 different directions within a multi-df term can nevertheless produce
 different simulated power.
 
+This differs from
+[`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md),
+where each `m` is a literal population mean whose magnitude directly
+determines the simulated effect.
+
 ## Default direction
 
 When no pattern is supplied, balanced simulations use centered scores in
@@ -48,6 +53,11 @@ their factors' normalized score vectors, followed by one final
 normalization after broadcasting. This is an ordered, reproducible
 convention rather than a neutral scientific assumption; an explicit
 pattern is recommended whenever the expected shape is known.
+
+## See also
+
+[`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md)
+for unbalanced designs with literal cell means.
 
 ## Examples
 

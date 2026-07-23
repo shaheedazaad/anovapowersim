@@ -27,7 +27,8 @@ power_sensitivity(
   cores = NULL,
   seed = NULL,
   covariance = NULL,
-  means_pattern = NULL
+  means_pattern = NULL,
+  sim_correction = c("auto", "GG", "none")
 )
 ```
 
@@ -73,10 +74,8 @@ power_sensitivity(
   for order-invariant tests in unbalanced designs. Use `"I"` to
   reproduce sequential
   [`stats::aov()`](https://rdrr.io/r/stats/aov.html) tests.
-  Greenhouse–Geisser-corrected simulated p-values (see `covariance`) are
-  only available for `"III"` and `"II"`; under `"I"`, simulated p-values
-  always use the uncorrected univariate test, and a warning is issued if
-  the supplied covariance yields a population epsilon below `1`.
+  Greenhouse–Geisser-corrected simulated p-values are available only for
+  `"III"` and `"II"`.
 
 - pes_min:
 
@@ -122,7 +121,7 @@ power_sensitivity(
 - covariance:
 
   Optional within-subject covariance specification created by
-  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+  [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md).
   Raw covariance matrices are not accepted, which avoids silently
   assuming a within-cell order. The default `NULL` uses standard
   deviations of `1` and a compound-symmetric correlation of `0.5` and
@@ -135,12 +134,9 @@ power_sensitivity(
   correlations remain supported. For terms containing within-subject
   factors, the resolved covariance matrix is also used to derive a
   term-specific population Greenhouse–Geisser epsilon for `power_calc`.
-  If that population
-  epsilon is below `1`, `power_sim` is also based on each simulated
-  dataset's Greenhouse–Geisser-corrected p-value (from
-  [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html)) rather than
-  the uncorrected univariate test, so `power_sim` and `power_calc`
-  estimate the same corrected test.
+  With the default `sim_correction = "auto"`, a population epsilon below
+  `1 - 1e-8` also selects Greenhouse–Geisser-corrected simulated
+  p-values for `ss_type` `"II"` or `"III"`.
 
 - means_pattern:
 
@@ -152,6 +148,17 @@ power_sensitivity(
   nonspherical within-subject terms, simulated power is conditional on
   this direction, so an explicit pattern is recommended when the
   expected shape is known.
+
+- sim_correction:
+
+  Sphericity correction for simulated p-values: `"auto"` (the default)
+  uses Greenhouse–Geisser correction when the term-specific population
+  epsilon is below `1 - 1e-8` and `ss_type` is `"II"` or `"III"`; `"GG"`
+  requests correction for every simulated dataset; and `"none"` always
+  uses the uncorrected univariate test. `"GG"` is an error with
+  `ss_type = "I"`. For a between-only term or a within component with
+  one degree of freedom, `"GG"` silently resolves to `"none"` because no
+  sphericity correction applies.
 
 ## Value
 
@@ -197,6 +204,7 @@ power_sensitivity(
 #>   final width:      0.007048313
 #>   converged:        yes
 #>   simulations/point: 100 
+#>   simulated test:   uncorrected (auto)
 #>   means pattern:    default linear/Kronecker
 #>   SS type:          III
 #> 

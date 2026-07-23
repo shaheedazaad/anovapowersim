@@ -79,7 +79,8 @@ simulates datasets, refits the ANOVA, and estimates power by counting
 <span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  covariance <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  means_pattern <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  means_pattern <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sim_correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"GG"</span>, <span class="st">"none"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -125,10 +126,7 @@ pure within-subject designs, this is the total sample size.</p></dd>
 <dd><p>Sums-of-squares type for the tested ANOVA term. <code>"III"</code> is
 the default for order-invariant tests in unbalanced designs. Use <code>"I"</code> to
 reproduce sequential <code><a href="https://rdrr.io/r/stats/aov.html" class="external-link">stats::aov()</a></code> tests. Greenhouse–Geisser-corrected
-simulated p-values (see <code>covariance</code>) are only available for <code>"III"</code> and
-<code>"II"</code>; under <code>"I"</code>, simulated p-values always use the uncorrected
-univariate test, and a warning is issued if the supplied covariance
-yields a population epsilon below <code>1</code>.</p></dd>
+simulated p-values are available only for <code>"III"</code> and <code>"II"</code>.</p></dd>
 
 
 <dt id="arg-gpower">gpower<a class="anchor" aria-label="anchor" href="#arg-gpower"></a></dt>
@@ -173,11 +171,9 @@ All measurements use the specification's common marginal variance, while
 unequal correlations remain supported. For terms containing
 within-subject factors, the resolved covariance matrix is also used to
 derive a term-specific population Greenhouse–Geisser epsilon for
-<code>power_calc</code>. If
-that population epsilon is below <code>1</code>, <code>power_sim</code> is also based on each
-simulated dataset's Greenhouse–Geisser-corrected p-value (from
-<code><a href="https://rdrr.io/pkg/car/man/Anova.html" class="external-link">car::Anova()</a></code>) rather than the uncorrected univariate test, so <code>power_sim</code>
-and <code>power_calc</code> estimate the same corrected test.</p></dd>
+<code>power_calc</code>. With the default <code>sim_correction = "auto"</code>, a population
+epsilon below <code>1 - 1e-8</code> also selects Greenhouse–Geisser-corrected
+simulated p-values for <code>ss_type</code> <code>"II"</code> or <code>"III"</code>.</p></dd>
 
 
 <dt id="arg-means-pattern">means_pattern<a class="anchor" aria-label="anchor" href="#arg-means-pattern"></a></dt>
@@ -188,6 +184,17 @@ the package's deterministic linear/Kronecker pattern. For multi-df
 nonspherical within-subject terms, simulated power is conditional on this
 direction, so an explicit pattern is recommended when the expected shape
 is known.</p></dd>
+
+
+<dt id="arg-sim-correction">sim_correction<a class="anchor" aria-label="anchor" href="#arg-sim-correction"></a></dt>
+<dd><p>Sphericity correction for simulated p-values:
+<code>"auto"</code> (the default) uses Greenhouse–Geisser correction when the
+term-specific population epsilon is below <code>1 - 1e-8</code> and <code>ss_type</code> is
+<code>"II"</code> or <code>"III"</code>; <code>"GG"</code> requests correction for every simulated
+dataset; and <code>"none"</code> always uses the uncorrected univariate test.
+<code>"GG"</code> is an error with <code>ss_type = "I"</code>. For a between-only term or a
+within component with one degree of freedom, <code>"GG"</code> silently resolves to
+<code>"none"</code> because no sphericity correction applies.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -200,12 +207,30 @@ is known.</p></dd>
 (<code>power_calc</code>), and simulated power (<code>power_sim</code>). The full-precision
 <code>power_sim</code> value, not its printed three-decimal representation, is used
 by adaptive searches. When <code>epsilon &lt; 1</code>, the reported degrees of freedom
-and noncentrality are the corrected values used for <code>power_calc</code>, and
-<code>power_sim</code> (for <code>ss_type</code> <code>"III"</code>/<code>"II"</code>) is based on the
-Greenhouse–Geisser-corrected simulated p-value rather than the
-uncorrected univariate test. Balanced simulation result objects also
-include <code>custom_means_pattern</code>, indicating whether the relative direction
-was supplied explicitly.</p>
+and noncentrality are the corrected values used for <code>power_calc</code>. With the
+default <code>sim_correction = "auto"</code>, <code>power_sim</code> uses the
+Greenhouse–Geisser-corrected simulated p-value when
+<code>epsilon &lt; 1 - 1e-8</code> and <code>ss_type</code> is <code>"III"</code> or <code>"II"</code>; otherwise it
+uses the uncorrected univariate test. Balanced simulation result objects
+also include <code>custom_means_pattern</code>, indicating whether the relative
+direction was supplied explicitly, plus <code>sim_correction</code> and
+<code>sim_correction_resolved</code> for the requested and applied simulated-test
+correction.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="simulated-sphericity-correction">Simulated sphericity correction<a class="anchor" aria-label="anchor" href="#simulated-sphericity-correction"></a></h2>
+
+
+<p><code>sim_correction</code> changes only <code>power_sim</code>. When Greenhouse–Geisser
+correction is selected, each simulated dataset is tested using its own
+sample-estimated epsilon from <code><a href="https://rdrr.io/pkg/car/man/Anova.html" class="external-link">car::Anova()</a></code>. <code>power_calc</code> is unchanged and
+always models the population-epsilon-adjusted test. Consequently, forcing
+<code>sim_correction = "GG"</code> under a truly spherical population can make
+<code>power_sim</code> slightly smaller than <code>power_calc</code>, because sample-epsilon GG
+correction is mildly conservative under sphericity.</p>
+<p>Power is estimated for the prespecified corrected or uncorrected test.
+Conditional procedures that first run Mauchly's test and then decide whether
+to correct are not simulated.</p>
     </div>
     <div class="section level2">
     <h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h2>

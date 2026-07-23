@@ -108,9 +108,10 @@ reports how many pairs are undefined. <code>default_correlation</code>
 fills only those undefined pairs; correlations explicitly listed by the
 user are never replaced.</li>
 </ul>
-<p>A raw covariance matrix defines both variances and correlations
-directly and does not use these defaults. Its diagonal variances must
-all be equal.</p>
+<p>Balanced power functions do not accept raw covariance matrices.
+Always use <code><a href="../reference/within_covariance.html">within_covariance()</a></code> so pair names identify the
+intended cells explicitly; this prevents an unnamed matrix from being
+silently interpreted in the package’s generated within-cell order.</p>
 </div>
 <div class="section level2">
 <h2 id="use-the-covariance-specification">Use the covariance specification<a class="anchor" aria-label="anchor" href="#use-the-covariance-specification"></a>
@@ -131,11 +132,51 @@ generates every simulated dataset. The package projects the covariance
 into the tested term’s contrast space and calculates a population
 Greenhouse–Geisser epsilon. <code>power_calc</code> applies this epsilon
 to its degrees of freedom and noncentrality.</p>
-<p>When the population epsilon is below 1, <code>power_sim</code> uses
-each simulated dataset’s sample-estimated Greenhouse–Geisser-adjusted
-p-value for sums-of- squares type II or III. Type I tests remain
-uncorrected and issue a warning. Huynh–Feldt corrections are not
-currently implemented.</p>
+<p>The exported manual helpers are currently different:
+<code><a href="../reference/design_term_means.html">design_term_means()</a></code> and
+<code><a href="../reference/simulate_design_dataset.html">simulate_design_dataset()</a></code> do not accept a
+<code><a href="../reference/within_covariance.html">within_covariance()</a></code> object. They always use the
+compound-symmetric covariance defined by their <code>sd</code> and
+<code>r</code> arguments. Consequently, <code><a href="../reference/design_term_means.html">design_term_means()</a></code>
+can return a different mean scale from a power-function call with custom
+covariance, because covariance changes the reference residual sum of
+squares used for calibration. The manual helpers therefore cannot be
+used to reproduce or inspect a custom-covariance power call exactly.</p>
+<p>The <code>sim_correction</code> argument makes the simulated test
+explicit:</p>
+<ul>
+<li>
+<code>"auto"</code> is the default and preserves the package’s
+original behavior. It uses a Greenhouse–Geisser-corrected test when the
+population epsilon is below <code>1 - 1e-8</code> and
+<code>ss_type</code> is <code>"II"</code> or <code>"III"</code>, and
+otherwise uses the uncorrected test.</li>
+<li>
+<code>"GG"</code> prespecifies a Greenhouse–Geisser-corrected test.
+Each simulated dataset uses its own sample-estimated epsilon from
+<code><a href="https://rdrr.io/pkg/car/man/Anova.html" class="external-link">car::Anova()</a></code>.</li>
+<li>
+<code>"none"</code> prespecifies the uncorrected univariate test.
+Under nonsphericity, the package warns that the resulting excess
+rejection reflects inflated Type I error rather than real power.</li>
+</ul>
+<p>Type I tests cannot provide GG-corrected p-values, so
+<code>sim_correction = "GG"</code> requires <code>ss_type = "II"</code>
+or <code>"III"</code>. A between-only term or a one-degree-of-freedom
+within component needs no sphericity correction; in those cases a
+request for <code>"GG"</code> resolves silently to the uncorrected
+test.</p>
+<p><code>sim_correction</code> changes only <code>power_sim</code>.
+<code>power_calc</code> always applies the population epsilon and
+therefore always models the corrected test. If <code>"GG"</code> is
+forced under a truly spherical population, <code>power_sim</code> can be
+slightly below <code>power_calc</code>: correction by a sample-estimated
+epsilon is mildly conservative even when the population epsilon is
+one.</p>
+<p>These functions estimate power for a prespecified corrected or
+uncorrected test. They do not simulate a conditional workflow that first
+applies Mauchly’s test and corrects only after rejecting sphericity.
+Huynh–Feldt corrections are not currently implemented.</p>
 </div>
 <div class="section level2">
 <h2 id="why-the-relative-means-pattern-matters">Why the relative means pattern matters<a class="anchor" aria-label="anchor" href="#why-the-relative-means-pattern-matters"></a>

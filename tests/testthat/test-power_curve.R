@@ -1183,6 +1183,51 @@ test_that("power_curve handles common factorial design classes", {
   expect_equal(mixed_within_main$results$num_df, 2)
 })
 
+test_that("three-way mixed interactions resolve and match car and aov dfs", {
+  common <- list(
+    between = c(a = 2, b = 2),
+    within = c(time = 2),
+    term = "time:b:a",
+    target_pes = 0.1,
+    n_range = 5,
+    n_sims = 2,
+    progress = FALSE,
+    seed = 703
+  )
+  type_iii <- do.call(quiet_power_curve, c(common, list(ss_type = "III")))
+  type_i <- do.call(quiet_power_curve, c(common, list(ss_type = "I")))
+
+  expect_identical(type_iii$term, "a:b:time")
+  expect_identical(type_i$term, "a:b:time")
+  expect_equal(type_iii$results$num_df, 1)
+  expect_equal(type_i$results$num_df, 1)
+  expect_equal(type_iii$results$den_df, 16)
+  expect_equal(type_i$results$den_df, 16)
+  expect_identical(type_iii$results$failed_sims, 0L)
+  expect_identical(type_i$results$failed_sims, 0L)
+})
+
+test_that("five-level between-subject contrasts have the expected dfs", {
+  common <- list(
+    between = c(group = 5),
+    term = "group",
+    target_pes = 0.1,
+    n_range = 5,
+    n_sims = 2,
+    progress = FALSE,
+    seed = 704
+  )
+  type_iii <- do.call(quiet_power_curve, c(common, list(ss_type = "III")))
+  type_i <- do.call(quiet_power_curve, c(common, list(ss_type = "I")))
+
+  expect_equal(type_iii$results$num_df, 4)
+  expect_equal(type_i$results$num_df, 4)
+  expect_equal(type_iii$results$den_df, 20)
+  expect_equal(type_i$results$den_df, 20)
+  expect_true(is.finite(type_iii$results$power_sim))
+  expect_true(is.finite(type_i$results$power_sim))
+})
+
 test_that("power_curve validates design inputs", {
   expect_error(
     quiet_power_curve(term = "x", target_pes = 0.2, n_range = 10),
@@ -1534,6 +1579,50 @@ test_that("power_n supports parallel simulations within each searched n", {
   expect_s3_class(pc, "anovapowersim_curve")
   expect_true(nrow(pc$results) >= 1L)
   expect_true(all(pc$results$power_sim >= 0 & pc$results$power_sim <= 1))
+})
+
+test_that("parallel and serial simulation agree within Monte Carlo uncertainty", {
+  common <- list(
+    between = c(group = 2),
+    term = "group",
+    target_pes = 0.12,
+    n_range = 12,
+    n_sims = 300,
+    progress = FALSE,
+    seed = 705
+  )
+  serial <- do.call(quiet_power_curve, c(common, list(parallel = FALSE)))
+  parallel <- do.call(
+    quiet_power_curve,
+    c(common, list(
+      parallel = TRUE,
+      cores = min(2L, as.integer(future::availableCores()[[1L]]))
+    ))
+  )
+
+  interval <- function(result) {
+    anovapowersim:::binomial_wilson_interval(
+      successes = round(
+        result$results$power_sim * result$results$valid_sims
+      ),
+      trials = result$results$valid_sims,
+      conf_level = 0.99
+    )
+  }
+  serial_interval <- interval(serial)
+  parallel_interval <- interval(parallel)
+  expected <- serial$results$power_calc[[1L]]
+
+  expect_identical(serial$results$failed_sims, 0L)
+  expect_identical(parallel$results$failed_sims, 0L)
+  expect_lte(max(serial_interval[["lower"]],
+                 parallel_interval[["lower"]]),
+             min(serial_interval[["upper"]],
+                 parallel_interval[["upper"]]))
+  expect_lte(serial_interval[["lower"]], expected)
+  expect_gte(serial_interval[["upper"]], expected)
+  expect_lte(parallel_interval[["lower"]], expected)
+  expect_gte(parallel_interval[["upper"]], expected)
 })
 
 test_that("parallel power_n returns finite simulation power for mixed interactions", {

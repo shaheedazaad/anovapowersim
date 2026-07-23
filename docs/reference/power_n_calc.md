@@ -58,8 +58,9 @@ power_n_calc(
 
 - n_start:
 
-  Starting sample size per between-subject cell. If `NULL`, starts from
-  the smallest value with valid calculated-power degrees of freedom.
+  Starting sample size per between-subject cell, not a lower bound for
+  the search. If `NULL`, starts from the smallest value with valid
+  calculated-power degrees of freedom.
 
 - n_max:
 

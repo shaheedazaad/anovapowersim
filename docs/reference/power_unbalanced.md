@@ -4,6 +4,9 @@ Estimates achieved power for exact, potentially unequal cell sizes and
 user-supplied population means under one common standard deviation. This
 function is simulation-only: it does not calculate power from a
 noncentral F distribution and does not scale the supplied sample sizes.
+A warning is issued when the deterministic reference data imply
+essentially zero effect for the tested term, which often indicates a
+typo, a wrong `term`, or means that contain only other effects.
 
 ## Usage
 
@@ -18,7 +21,8 @@ power_unbalanced(
   progress = interactive(),
   parallel = FALSE,
   cores = NULL,
-  seed = NULL
+  seed = NULL,
+  sim_correction = c("auto", "GG", "none")
 )
 ```
 
@@ -47,12 +51,9 @@ power_unbalanced(
   change the common SD; correlation settings are not applicable. When an
   [`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md)
   specification omits some correlation pairs, a warning states that
-  `default_correlation` is used only for those undefined pairs. If the
-  term's population covariance is non-spherical, `power_sim` is based on
-  each simulated dataset's Greenhouse–Geisser-corrected p-value rather
-  than the uncorrected univariate test. This correction requires
-  `ss_type` `"III"` or `"II"`; under `"I"`, simulated p-values remain
-  uncorrected, and a warning is issued.
+  `default_correlation` is used only for those undefined pairs. The
+  resolved covariance determines the term-specific population
+  Greenhouse–Geisser epsilon used by `sim_correction = "auto"`.
 
 - n_sims:
 
@@ -64,7 +65,10 @@ power_unbalanced(
 
 - ss_type:
 
-  Sums-of-squares type: `"III"`, `"II"`, or `"I"`.
+  Sums-of-squares type: `"III"`, `"II"`, or `"I"`. For unequal-N
+  designs, `"I"` uses sequential, order-dependent hypotheses; a warning
+  reports the factor order inherited from
+  [`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md).
 
 - progress:
 
@@ -82,6 +86,17 @@ power_unbalanced(
 
   Optional integer seed for reproducibility.
 
+- sim_correction:
+
+  Sphericity correction for simulated p-values: `"auto"` (the default)
+  uses Greenhouse–Geisser correction when the term-specific population
+  epsilon is below `1 - 1e-8` and `ss_type` is `"II"` or `"III"`; `"GG"`
+  requests correction for every simulated dataset; and `"none"` always
+  uses the uncorrected univariate test. `"GG"` is an error with
+  `ss_type = "I"`. For a between-only term or a within component with
+  one degree of freedom, `"GG"` silently resolves to `"none"` because no
+  sphericity correction applies.
+
 ## Value
 
 An `anovapowersim_unbalanced_power` object. `$power` and
@@ -89,7 +104,12 @@ An `anovapowersim_unbalanced_power` object. `$power` and
 term effect size in a deterministic reference dataset. `$epsilon` is the
 population Greenhouse–Geisser epsilon for the tested term. `$results`
 also reports the common SD, simulated partial eta-squared distribution,
-and failed fits.
+and failed fits. Sample partial eta squared is upward-biased in finite
+samples, so `mean_pes_sim`, `median_pes_sim`, and the simulated interval
+are sampling diagnostics rather than estimates of the supplied
+population effect; use `$partial_eta_squared` as the reference effect.
+The object stores the requested `sim_correction` and applied
+`sim_correction_resolved` values.
 
 ## Lifecycle
 
@@ -98,6 +118,17 @@ and failed fits.
 `power_unbalanced()` is experimental and is available only in the
 development version of `anovapowersim`. Its API and reporting format may
 change.
+
+## Simulated sphericity correction
+
+`sim_correction` governs only the simulated test. With `"GG"`, each
+dataset uses its own sample-estimated Greenhouse–Geisser epsilon from
+[`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html). Under a truly
+spherical population, that sample correction is mildly conservative.
+Power is estimated for the prespecified corrected or uncorrected test;
+conditional Mauchly-then-correct procedures are not simulated. Unlike
+the balanced simulation functions, `power_unbalanced()` does not report
+a `power_calc` diagnostic.
 
 ## Examples
 
@@ -125,12 +156,14 @@ power_unbalanced(
 #>   fixed total N:         30
 #>   between-cell n range:  12 to 18
 #>   simulations:           100
+#>   simulated test:        uncorrected (auto)
 #>   common SD:             2
 #>   simulated power:       0.970
 #>   reference pes:         0.3000
 #>   mean simulated pes:    0.3278
 #>   median simulated pes:  0.3222
 #>   simulated pes 95%:     [0.1132, 0.5841]
+#>   pes note:              sample pes is upward-biased; simulated pes summaries are diagnostics, not the population/reference effect.
 #>   within correlations:   custom
 #>   SS type:               III
 #> 

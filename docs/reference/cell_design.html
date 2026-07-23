@@ -72,7 +72,9 @@ must appear exactly once (or be filled automatically; see <code>default_n</code>
 <dt id="arg-within">within<a class="anchor" aria-label="anchor" href="#arg-within"></a></dt>
 <dd><p>Character vector naming factors in <code>...</code> that are measured
 within subjects, or <code>NULL</code> for a purely between-subject design. Stored on
-the returned object and read by <code><a href="power_unbalanced.html">power_unbalanced()</a></code>.</p></dd>
+the returned object and read by <code><a href="power_unbalanced.html">power_unbalanced()</a></code>. Within-cell names
+used by <code><a href="unbalanced_covariance.html">unbalanced_covariance()</a></code> join level values with <code>_</code>; these names
+must be unique, and within-factor levels must not contain <code>:</code>.</p></dd>
 
 
 <dt id="arg-default-n-default-m">default_n, default_m<a class="anchor" aria-label="anchor" href="#arg-default-n-default-m"></a></dt>
@@ -80,12 +82,21 @@ the returned object and read by <code><a href="power_unbalanced.html">power_unba
 in the complete factorial design. Supply both to
 auto-fill missing cells with these values; supply none to require every
 cell to be defined explicitly (the default). Supplying only one is an
-error.</p></dd>
+error. When cells are auto-filled, a message reports their count and exact
+factor-level combinations so that unintended levels can be spotted.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code>anovapowersim_cell_design</code> tibble with one row per design cell.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The <code>m</code> values are literal population cell means: their magnitudes and all
+effects they contain are used as supplied. This differs from
+<code><a href="means_pattern.html">means_pattern()</a></code>, whose values specify only a relative shape that balanced
+simulation functions project onto the tested term, normalize, and rescale
+to <code>target_pes</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="lifecycle">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle"></a></h2>
@@ -94,6 +105,11 @@ error.</p></dd>
 <p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a></p>
 <p><code>cell_design()</code> is experimental and is available only in the development
 version of <code>anovapowersim</code>. Its API may change.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="means_pattern.html">means_pattern()</a></code> for shape-only patterns used by balanced
+simulation functions.</p></div>
     </div>
 
     <div class="section level2">

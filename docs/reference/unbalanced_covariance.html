@@ -73,7 +73,10 @@ to those pairs.</p></dd>
 
 <dt id="arg-correlations">correlations<a class="anchor" aria-label="anchor" href="#arg-correlations"></a></dt>
 <dd><p>Optional named numeric vector of pair-specific
-correlations. Name pairs as <code>"cell1:cell2"</code>; pair order does not matter.</p></dd>
+correlations. Name pairs as <code>"cell1:cell2"</code>; pair order does not matter.
+For multiple within factors, cell names join their level values with <code>_</code>.
+Constructed names must be unique, and level values must not contain <code>:</code>
+because it separates the two cells in a pair name.</p></dd>
 
 </dl></div>
     <div class="section level2">

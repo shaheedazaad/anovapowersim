@@ -29,17 +29,32 @@ cell_design(..., within = NULL, default_n = NULL, default_m = NULL)
   subjects, or `NULL` for a purely between-subject design. Stored on the
   returned object and read by
   [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md).
+  Within-cell names used by
+  [`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md)
+  join level values with `_`; these names must be unique, and
+  within-factor levels must not contain `:`.
 
 - default_n, default_m:
 
   Optional scalars used to fill any missing cells in the complete
   factorial design. Supply both to auto-fill missing cells with these
   values; supply none to require every cell to be defined explicitly
-  (the default). Supplying only one is an error.
+  (the default). Supplying only one is an error. When cells are
+  auto-filled, a message reports their count and exact factor-level
+  combinations so that unintended levels can be spotted.
 
 ## Value
 
 An `anovapowersim_cell_design` tibble with one row per design cell.
+
+## Details
+
+The `m` values are literal population cell means: their magnitudes and
+all effects they contain are used as supplied. This differs from
+[`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md),
+whose values specify only a relative shape that balanced simulation
+functions project onto the tested term, normalize, and rescale to
+`target_pes`.
 
 ## Lifecycle
 
@@ -47,6 +62,11 @@ An `anovapowersim_cell_design` tibble with one row per design cell.
 
 `cell_design()` is experimental and is available only in the development
 version of `anovapowersim`. Its API may change.
+
+## See also
+
+[`means_pattern()`](https://shaheedazaad.github.io/anovapowersim/reference/means_pattern.md)
+for shape-only patterns used by balanced simulation functions.
 
 ## Examples
 

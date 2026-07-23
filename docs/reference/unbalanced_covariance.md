@@ -28,7 +28,10 @@ unbalanced_covariance(sd = 1, default_correlation = 0.5, correlations = NULL)
 - correlations:
 
   Optional named numeric vector of pair-specific correlations. Name
-  pairs as `"cell1:cell2"`; pair order does not matter.
+  pairs as `"cell1:cell2"`; pair order does not matter. For multiple
+  within factors, cell names join their level values with `_`.
+  Constructed names must be unique, and level values must not contain
+  `:` because it separates the two cells in a pair name.
 
 ## Value
 

@@ -726,6 +726,95 @@ test_that("common-SD simulations are scale invariant", {
 })
 
 
+test_that("negative correlations increase gain variance and reduce power", {
+  design <- cell_design(
+    time = "pre",  n = 30, m = -1.0,
+    time = "post", n = 30, m = -0.5,
+    within = "time"
+  )
+  positive <- quiet_power_unbalanced(
+    design,
+    term = "time",
+    covariance = unbalanced_covariance(
+      sd = 1, correlations = c("pre:post" = 0.6)
+    ),
+    n_sims = 200,
+    progress = FALSE,
+    seed = 701
+  )
+  negative <- quiet_power_unbalanced(
+    design,
+    term = "time",
+    covariance = unbalanced_covariance(
+      sd = 1, correlations = c("pre:post" = -0.6)
+    ),
+    n_sims = 200,
+    progress = FALSE,
+    seed = 701
+  )
+
+  contrast <- c(-1, 1)
+  positive_sigma <- positive$sd^2 * positive$correlation
+  negative_sigma <- negative$sd^2 * negative$correlation
+  positive_gain_variance <- drop(
+    t(contrast) %*% positive_sigma %*% contrast
+  )
+  negative_gain_variance <- drop(
+    t(contrast) %*% negative_sigma %*% contrast
+  )
+
+  expect_true(all(design$m < 0))
+  expect_equal(positive_gain_variance, 2 * (1 - 0.6))
+  expect_equal(negative_gain_variance, 2 * (1 - (-0.6)))
+  expect_gt(negative_gain_variance, positive_gain_variance)
+  expect_gt(positive$partial_eta_squared, negative$partial_eta_squared)
+  expect_gt(positive$power - negative$power, 0.25)
+})
+
+
+test_that("unbalanced Type I power depends on cell_design factor order", {
+  design_ab <- cell_design(
+    a = "a1", b = "b1", n = 10, m = 0,
+    a = "a1", b = "b2", n = 40, m = 2,
+    a = "a2", b = "b1", n = 40, m = 0,
+    a = "a2", b = "b2", n = 10, m = 2
+  )
+  design_ba <- cell_design(
+    b = "b1", a = "a1", n = 10, m = 0,
+    b = "b2", a = "a1", n = 40, m = 2,
+    b = "b1", a = "a2", n = 40, m = 0,
+    b = "b2", a = "a2", n = 10, m = 2
+  )
+  run <- function(design, ss_type) {
+    quiet_power_unbalanced(
+      design,
+      term = "a",
+      covariance = unbalanced_covariance(sd = 1),
+      n_sims = 200,
+      ss_type = ss_type,
+      progress = FALSE,
+      seed = 702
+    )
+  }
+
+  type_i_ab <- run(design_ab, "I")
+  type_i_ba <- run(design_ba, "I")
+  type_iii_ab <- run(design_ab, "III")
+  type_iii_ba <- run(design_ba, "III")
+
+  expect_identical(type_i_ab$design_spec$factor_names, c("a", "b"))
+  expect_identical(type_i_ba$design_spec$factor_names, c("b", "a"))
+  # There is only a b effect. Entering a first lets it absorb the imbalance-
+  # induced marginal association; entering it after b tests the adjusted null.
+  expect_gt(type_i_ab$power - type_i_ba$power, 0.7)
+  expect_gt(type_i_ab$power - type_iii_ab$power, 0.7)
+  expect_lt(type_i_ba$power, 0.15)
+  expect_lt(type_iii_ab$power, 0.15)
+  expect_lt(type_iii_ba$power, 0.15)
+  expect_lt(abs(type_iii_ab$power - type_iii_ba$power), 0.1)
+})
+
+
 test_that("unequal N with a common variance controls null rejection", {
   design <- cell_design(
     group = "small", n = 10, m = 0,

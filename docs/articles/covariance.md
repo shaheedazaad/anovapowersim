@@ -53,9 +53,12 @@ The package warns whenever these defaults are actually needed:
   undefined pairs; correlations explicitly listed by the user are never
   replaced.
 
-A raw covariance matrix defines both variances and correlations directly
-and does not use these defaults. Its diagonal variances must all be
-equal.
+Balanced power functions do not accept raw covariance matrices. Always
+use
+[`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+so pair names identify the intended cells explicitly; this prevents an
+unnamed matrix from being silently interpreted in the package’s
+generated within-cell order.
 
 ## Use the covariance specification
 
@@ -80,10 +83,49 @@ into the tested term’s contrast space and calculates a population
 Greenhouse–Geisser epsilon. `power_calc` applies this epsilon to its
 degrees of freedom and noncentrality.
 
-When the population epsilon is below 1, `power_sim` uses each simulated
-dataset’s sample-estimated Greenhouse–Geisser-adjusted p-value for
-sums-of- squares type II or III. Type I tests remain uncorrected and
-issue a warning. Huynh–Feldt corrections are not currently implemented.
+The exported manual helpers are currently different:
+[`design_term_means()`](https://shaheedazaad.github.io/anovapowersim/reference/design_term_means.md)
+and
+[`simulate_design_dataset()`](https://shaheedazaad.github.io/anovapowersim/reference/simulate_design_dataset.md)
+do not accept a
+[`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
+object. They always use the compound-symmetric covariance defined by
+their `sd` and `r` arguments. Consequently,
+[`design_term_means()`](https://shaheedazaad.github.io/anovapowersim/reference/design_term_means.md)
+can return a different mean scale from a power-function call with custom
+covariance, because covariance changes the reference residual sum of
+squares used for calibration. The manual helpers therefore cannot be
+used to reproduce or inspect a custom-covariance power call exactly.
+
+The `sim_correction` argument makes the simulated test explicit:
+
+- `"auto"` is the default and preserves the package’s original behavior.
+  It uses a Greenhouse–Geisser-corrected test when the population
+  epsilon is below `1 - 1e-8` and `ss_type` is `"II"` or `"III"`, and
+  otherwise uses the uncorrected test.
+- `"GG"` prespecifies a Greenhouse–Geisser-corrected test. Each
+  simulated dataset uses its own sample-estimated epsilon from
+  [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html).
+- `"none"` prespecifies the uncorrected univariate test. Under
+  nonsphericity, the package warns that the resulting excess rejection
+  reflects inflated Type I error rather than real power.
+
+Type I tests cannot provide GG-corrected p-values, so
+`sim_correction = "GG"` requires `ss_type = "II"` or `"III"`. A
+between-only term or a one-degree-of-freedom within component needs no
+sphericity correction; in those cases a request for `"GG"` resolves
+silently to the uncorrected test.
+
+`sim_correction` changes only `power_sim`. `power_calc` always applies
+the population epsilon and therefore always models the corrected test.
+If `"GG"` is forced under a truly spherical population, `power_sim` can
+be slightly below `power_calc`: correction by a sample-estimated epsilon
+is mildly conservative even when the population epsilon is one.
+
+These functions estimate power for a prespecified corrected or
+uncorrected test. They do not simulate a conditional workflow that first
+applies Mauchly’s test and corrects only after rejecting sphericity.
+Huynh–Feldt corrections are not currently implemented.
 
 ## Why the relative means pattern matters
 

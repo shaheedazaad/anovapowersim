@@ -82,11 +82,15 @@ columns indexing within cells.
 
 This manual helper does not accept
 [`within_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/within_covariance.md)
-specifications. Calibration always uses the compound-symmetric covariance
-defined by `sd` and `r`. Consequently, its calibrated means can differ from
-those used by `power_curve()`, `power_n()`, or `power_achieved()` with a custom
-`covariance`, because covariance affects the reference residual sum of squares
-and therefore the mean scale factor.
+specifications. Calibration always uses the compound-symmetric
+covariance defined by `sd` and `r`. Consequently, its calibrated means
+can differ from those used by
+[`power_curve()`](https://shaheedazaad.github.io/anovapowersim/reference/power_curve.md),
+[`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md),
+or
+[`power_achieved()`](https://shaheedazaad.github.io/anovapowersim/reference/power_achieved.md)
+with a custom `covariance`, because the covariance affects the reference
+residual sum of squares and therefore the mean scale factor.
 
 ## Examples
 

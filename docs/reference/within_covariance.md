@@ -79,6 +79,7 @@ power_n(
 #>   effect size:   pes = 0.14
 #>   n values:      5 per-cell sample sizes visited
 #>   sims per cell size: 100
+#>   simulated test: GG-corrected (auto)
 #>   means pattern: default linear/Kronecker
 #>   epsilon:       0.9795918
 #>   covariance:    custom 6 x 6 within-subject matrix

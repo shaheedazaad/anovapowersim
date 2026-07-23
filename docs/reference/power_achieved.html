@@ -67,7 +67,8 @@ power result; noncentral-F calculated power is retained as a diagnostic.</p>
 <span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  covariance <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  means_pattern <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  means_pattern <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sim_correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"GG"</span>, <span class="st">"none"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -113,10 +114,7 @@ within-subject design, this is the total sample size.</p></dd>
 <dd><p>Sums-of-squares type for the tested ANOVA term. <code>"III"</code> is
 the default for order-invariant tests in unbalanced designs. Use <code>"I"</code> to
 reproduce sequential <code><a href="https://rdrr.io/r/stats/aov.html" class="external-link">stats::aov()</a></code> tests. Greenhouse–Geisser-corrected
-simulated p-values (see <code>covariance</code>) are only available for <code>"III"</code> and
-<code>"II"</code>; under <code>"I"</code>, simulated p-values always use the uncorrected
-univariate test, and a warning is issued if the supplied covariance
-yields a population epsilon below <code>1</code>.</p></dd>
+simulated p-values are available only for <code>"III"</code> and <code>"II"</code>.</p></dd>
 
 
 <dt id="arg-gpower">gpower<a class="anchor" aria-label="anchor" href="#arg-gpower"></a></dt>
@@ -161,11 +159,9 @@ All measurements use the specification's common marginal variance, while
 unequal correlations remain supported. For terms containing
 within-subject factors, the resolved covariance matrix is also used to
 derive a term-specific population Greenhouse–Geisser epsilon for
-<code>power_calc</code>. If
-that population epsilon is below <code>1</code>, <code>power_sim</code> is also based on each
-simulated dataset's Greenhouse–Geisser-corrected p-value (from
-<code><a href="https://rdrr.io/pkg/car/man/Anova.html" class="external-link">car::Anova()</a></code>) rather than the uncorrected univariate test, so <code>power_sim</code>
-and <code>power_calc</code> estimate the same corrected test.</p></dd>
+<code>power_calc</code>. With the default <code>sim_correction = "auto"</code>, a population
+epsilon below <code>1 - 1e-8</code> also selects Greenhouse–Geisser-corrected
+simulated p-values for <code>ss_type</code> <code>"II"</code> or <code>"III"</code>.</p></dd>
 
 
 <dt id="arg-means-pattern">means_pattern<a class="anchor" aria-label="anchor" href="#arg-means-pattern"></a></dt>
@@ -176,6 +172,17 @@ the package's deterministic linear/Kronecker pattern. For multi-df
 nonspherical within-subject terms, simulated power is conditional on this
 direction, so an explicit pattern is recommended when the expected shape
 is known.</p></dd>
+
+
+<dt id="arg-sim-correction">sim_correction<a class="anchor" aria-label="anchor" href="#arg-sim-correction"></a></dt>
+<dd><p>Sphericity correction for simulated p-values:
+<code>"auto"</code> (the default) uses Greenhouse–Geisser correction when the
+term-specific population epsilon is below <code>1 - 1e-8</code> and <code>ss_type</code> is
+<code>"II"</code> or <code>"III"</code>; <code>"GG"</code> requests correction for every simulated
+dataset; and <code>"none"</code> always uses the uncorrected univariate test.
+<code>"GG"</code> is an error with <code>ss_type = "I"</code>. For a between-only term or a
+within component with one degree of freedom, <code>"GG"</code> silently resolves to
+<code>"none"</code> because no sphericity correction applies.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -213,6 +220,7 @@ version of <code>anovapowersim</code>. Its API and reporting format may change.<
 <span class="r-out co"><span class="r-pr">#&gt;</span>   target pes:       0.1400</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   alpha:            0.05</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   simulations:      100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   simulated test:   uncorrected (auto)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   means pattern:    default linear/Kronecker</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   achieved power:   0.640</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   calculated power: 0.679</span>
