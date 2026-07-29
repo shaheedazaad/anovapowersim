@@ -112,12 +112,8 @@ Azaad, S. (2026). A priori power analysis for ANOVA interaction effects with the
 - Heteroskedastic ANOVA. Simulation functions require one common marginal
   variance; unequal correlations and Greenhouse--Geisser corrections remain
   supported for repeated-measures designs.
-
-Simulation functions warn when their default common `sd = 1` or default
-within-subject correlation of `0.5` is used. Covariance specifications also
-warn when only some correlations are defined; the default correlation fills
-only the undefined pairs.
 - Simple main effects/pairwise comparisons
+
 
 ## Other packages
 
