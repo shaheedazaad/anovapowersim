@@ -1,5 +1,8 @@
 # anovapowersim (development version)
 
+* Added `f_to_pes()` to convert a scalar Cohen's f to partial eta squared,
+  including inline use such as `target_pes = f_to_pes(0.25)`.
+
 * Fixed calculated power collapsing to zero for very small `alpha` values.
   Critical F values now use the upper tail directly, including in simulation
   diagnostics and the calculated starting estimates for adaptive searches.

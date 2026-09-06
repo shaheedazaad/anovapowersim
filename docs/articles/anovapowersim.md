@@ -26,7 +26,7 @@ power_n(
   between = c(cond = 2), # cond has 2 levels
   within = c(stim = 4), # stim has 4 levels
   term = "cond:stim",
-  target_pes = 0.14,
+  target_pes = 0.14, 
   alpha = 0.05,
   power = 0.90,
   n_sims = 1000, # use 5000+ for a more precise estimate
@@ -73,12 +73,11 @@ For example, this design includes a three-level between-subject factor
 and tests a three-way interaction:
 
 ``` r
-
 power_n(
   between = c(cond = 2, age = 3),
   within = c(stim = 4),
   term = "cond:stim:age",
-  target_pes = 0.14,
+  target_pes = f_to_pes(0.50)
   power = 0.90,
   n_sims = 5000,
   seed = 123

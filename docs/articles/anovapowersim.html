@@ -88,7 +88,7 @@ eta squared of 0.14.</p>
 <span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="co"># cond has 2 levels</span></span>
 <span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, <span class="co"># stim has 4 levels</span></span>
 <span>  term <span class="op">=</span> <span class="st">"cond:stim"</span>,</span>
-<span>  target_pes <span class="op">=</span> <span class="fl">0.14</span>,</span>
+<span>  target_pes <span class="op">=</span> <span class="fl">0.14</span>, </span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  power <span class="op">=</span> <span class="fl">0.90</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">1000</span>, <span class="co"># use 5000+ for a more precise estimate</span></span>
@@ -130,16 +130,15 @@ simulations for a more stable estimate; the package default is
 <p>Add as many factors and levels as required and name the term to test.
 For example, this design includes a three-level between-subject factor
 and tests a three-way interaction:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/power_n.html">power_n</a></span><span class="op">(</span></span>
-<span>  between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cond <span class="op">=</span> <span class="fl">2</span>, age <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>stim <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  term <span class="op">=</span> <span class="st">"cond:stim:age"</span>,</span>
-<span>  target_pes <span class="op">=</span> <span class="fl">0.14</span>,</span>
-<span>  power <span class="op">=</span> <span class="fl">0.90</span>,</span>
-<span>  n_sims <span class="op">=</span> <span class="fl">5000</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">123</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">power_n</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">between =</span> <span class="fu">c</span>(<span class="at">cond =</span> <span class="dv">2</span>, <span class="at">age =</span> <span class="dv">3</span>),</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">within =</span> <span class="fu">c</span>(<span class="at">stim =</span> <span class="dv">4</span>),</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">term =</span> <span class="st">"cond:stim:age"</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">target_pes =</span> <span class="fu">f_to_pes</span>(<span class="fl">0.50</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">power =</span> <span class="fl">0.90</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">n_sims =</span> <span class="dv">5000</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">123</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 </div>
 <div class="section level2">

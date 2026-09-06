@@ -59,6 +59,8 @@ Component functions for power analyses.
 - [`compute_scale_factor()`](https://shaheedazaad.github.io/anovapowersim/reference/compute_scale_factor.md)
   : Compute the mean-deviation scaling factor from a change in partial
   eta squared
+- [`f_to_pes()`](https://shaheedazaad.github.io/anovapowersim/reference/f_to_pes.md)
+  : Convert Cohen's f to partial eta squared
 
 ## Output methods
 

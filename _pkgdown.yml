@@ -78,6 +78,7 @@ reference:
       - design_term_means
       - simulate_design_dataset
       - compute_scale_factor
+      - f_to_pes
 
   - title: Output methods
     desc: >
