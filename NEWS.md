@@ -1,5 +1,8 @@
 # anovapowersim (development version)
 
+* Fixed calculated power collapsing to zero for very small `alpha` values.
+  Critical F values now use the upper tail directly, including in simulation
+  diagnostics and the calculated starting estimates for adaptive searches.
 * Added `sim_correction = c("auto", "GG", "none")` to all simulation power
   functions. The default `"auto"` preserves existing behavior, while users can
   now prespecify corrected or uncorrected simulated tests. Uncorrected tests

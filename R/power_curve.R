@@ -2066,7 +2066,7 @@ sanity_check_term_effect <- function(spec, term, target_pes, n, means, sd, r,
   stats$den_df <- epsilon * stats$den_df
   stats$ncp <- epsilon * uncorrected_ncp
   stats$power_calc <- stats::pf(
-    stats::qf(1 - alpha, stats$num_df, stats$den_df),
+    stats::qf(alpha, stats$num_df, stats$den_df, lower.tail = FALSE),
     stats$num_df,
     stats$den_df,
     ncp = stats$ncp,
@@ -2155,7 +2155,7 @@ power_calc_at_n <- function(spec, term, target_pes, n, alpha, ss_type, sd, r,
   den_df <- epsilon * term_stats$den_df
   ncp <- epsilon * uncorrected_ncp
   stats::pf(
-    stats::qf(1 - alpha, num_df, den_df),
+    stats::qf(alpha, num_df, den_df, lower.tail = FALSE),
     num_df,
     den_df,
     ncp = ncp,

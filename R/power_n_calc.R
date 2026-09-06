@@ -263,7 +263,7 @@ analytic_power_row <- function(n, spec, term, target_pes, alpha, gpower,
   den_df <- epsilon * dfs$den_df
   ncp <- epsilon * uncorrected_ncp
   power_calc <- stats::pf(
-    stats::qf(1 - alpha, num_df, den_df),
+    stats::qf(alpha, num_df, den_df, lower.tail = FALSE),
     num_df,
     den_df,
     ncp = ncp,
