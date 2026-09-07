@@ -1988,19 +1988,19 @@ calibrate_design_means <- function(spec, term, target_pes, n, sd, r,
     empirical = TRUE
   )
   stats <- fit_design_term_stats(exact, spec, term, ss_type = ss_type)
-  old_pes <- stats$pes
-  if (is.na(old_pes) || old_pes <= 0 || old_pes >= 1) {
+  reference_ncp <- stats$f_value * stats$num_df
+  if (!is.finite(reference_ncp) || reference_ncp <= 0) {
     stop("Could not calibrate the means pattern for term '", term, "'.",
          call. = FALSE)
   }
-  calibration_pes <- calibration_pes_for_ncp(
-    target_pes = target_pes,
+  target_ncp <- ncp_from_pes(
+    pes = target_pes,
     total_n = n * max(1L, spec$n_between_cells),
-    num_df = stats$num_df,
     den_df = stats$den_df,
     gpower = gpower
   )
-  k <- compute_scale_factor(old_pes, calibration_pes)
+  # Avoid rounding reference partial eta squared to one when F is large.
+  k <- sqrt(target_ncp / reference_ncp)
   base * k
 }
 
@@ -2358,6 +2358,7 @@ fit_car_term_stats <- function(data, spec, term, ss_type) {
   list(
     num_df = as.numeric(row$num_df),
     den_df = as.numeric(row$den_df),
+    f_value = as.numeric(row$f_value),
     pes = as.numeric(pes),
     p_value = as.numeric(row$p_value),
     p_value_gg = p_value_gg
@@ -2475,6 +2476,7 @@ extract_term_stats <- function(fit, term) {
   list(
     num_df = as.numeric(row$num_df),
     den_df = as.numeric(row$den_df),
+    f_value = as.numeric(row$f_value),
     pes = as.numeric(pes),
     p_value = as.numeric(row$p_value),
     p_value_gg = NA_real_

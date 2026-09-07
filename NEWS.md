@@ -1,5 +1,10 @@
 # anovapowersim (development version)
 
+* Fixed loss of precision in balanced means calibration at small measurement
+  scales. Calibration now uses the reference F statistic directly rather than
+  converting through partial eta squared near one. Both effect-size conventions
+  and the existing calibration sanity check are preserved.
+
 * Added `f_to_pes()` to convert a scalar Cohen's f to partial eta squared,
   including inline use such as `target_pes = f_to_pes(0.25)`.
 
