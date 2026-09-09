@@ -14,7 +14,13 @@ simple as running the following:
 
 ``` r
 
-install.packages("anovapowersim") # if not already installed
+install.packages(
+  "anovapowersim",
+  repos = c(
+    shaheedazaad = "https://shaheedazaad.r-universe.dev",
+    CRAN = "https://cloud.r-project.org"
+  )
+) # if not already installed
 
 library(anovapowersim)
 
@@ -88,12 +94,21 @@ tutorial](https://shaheedazaad.github.io/anovapowersim/articles/unbalanced-desig
 
 ## Installation
 
-`anovapowersim` can be installed from CRAN:
+Install the latest stable release of `anovapowersim` from R-universe:
 
 ``` r
 
-install.packages("anovapowersim")
+install.packages(
+  "anovapowersim",
+  repos = c(
+    shaheedazaad = "https://shaheedazaad.r-universe.dev",
+    CRAN = "https://cloud.r-project.org"
+  )
+)
 ```
+
+R-universe follows published GitHub Releases. Development commits do not
+update the stable release. CRAN may provide an older version.
 
 You can install the development version from GitHub:
 

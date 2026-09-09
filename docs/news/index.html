@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">anovapowersim</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,8 +40,10 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="anovapowersim-development-version">anovapowersim (development version)<a class="anchor" aria-label="anchor" href="#anovapowersim-development-version"></a></h2>
-<ul><li><p>Added <code><a href="../reference/f_to_pes.html">f_to_pes()</a></code> to convert a scalar Cohen’s f to partial eta squared, including inline use such as <code>target_pes = f_to_pes(0.25)</code>.</p></li>
+<h2 class="pkg-version" data-toc-text="1.2.0" id="anovapowersim-120">anovapowersim 1.2.0<a class="anchor" aria-label="anchor" href="#anovapowersim-120"></a></h2>
+<ul><li><p>Stable releases are now published through R-universe. Development snapshots remain available from GitHub; see the README for installation instructions.</p></li>
+<li><p>Fixed loss of precision in balanced means calibration at small measurement scales. Calibration now uses the reference F statistic directly rather than converting through partial eta squared near one. Both effect-size conventions and the existing calibration sanity check are preserved.</p></li>
+<li><p>Added <code><a href="../reference/f_to_pes.html">f_to_pes()</a></code> to convert a scalar Cohen’s f to partial eta squared, including inline use such as <code>target_pes = f_to_pes(0.25)</code>.</p></li>
 <li><p>Fixed calculated power collapsing to zero for very small <code>alpha</code> values. Critical F values now use the upper tail directly, including in simulation diagnostics and the calculated starting estimates for adaptive searches.</p></li>
 <li><p>Added <code>sim_correction = c("auto", "GG", "none")</code> to all simulation power functions. The default <code>"auto"</code> preserves existing behavior, while users can now prespecify corrected or uncorrected simulated tests. Uncorrected tests under nonsphericity warn that excess rejection reflects alpha inflation.</p></li>
 <li><p>Fixed <code><a href="../reference/power_n.html">power_n()</a></code> and <code><a href="../reference/power_n_calc.html">power_n_calc()</a></code> treating <code>n_start</code> as an implicit lower bound when power at that value already met the target. Both searches now probe the smallest valid sample size and refine the resulting lower bracket before reporting <code>n_needed</code>.</p></li>

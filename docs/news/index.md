@@ -1,6 +1,16 @@
 # Changelog
 
-## anovapowersim (development version)
+## anovapowersim 1.2.0
+
+- Stable releases are now published through R-universe. Development
+  snapshots remain available from GitHub; see the README for
+  installation instructions.
+
+- Fixed loss of precision in balanced means calibration at small
+  measurement scales. Calibration now uses the reference F statistic
+  directly rather than converting through partial eta squared near one.
+  Both effect-size conventions and the existing calibration sanity check
+  are preserved.
 
 - Added
   [`f_to_pes()`](https://shaheedazaad.github.io/anovapowersim/reference/f_to_pes.md)

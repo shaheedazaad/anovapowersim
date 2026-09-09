@@ -13,3 +13,4 @@
 ^.*\.tar\.gz$
 ^.*\.Rcheck$
 ^\.claude$
+^migration_plan\.md$
