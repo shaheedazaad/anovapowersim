@@ -1,7 +1,8 @@
 # anovapowersim 1.2.0
 
-* Stable releases are now published through R-universe. Development snapshots
-  remain available from GitHub; see the README for installation instructions.
+* R-universe now tracks published GitHub Releases rather than development
+  snapshots. CRAN remains the primary installation source, and development
+  versions remain available from GitHub.
 
 * Fixed loss of precision in balanced means calibration at small measurement
   scales. Calibration now uses the reference F statistic directly rather than

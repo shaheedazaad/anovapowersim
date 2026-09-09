@@ -1,73 +1,40 @@
-# Move anovapowersim releases to its existing R-universe
+# Track releases on R-universe while retaining CRAN
 
-## Summary
+## Current decision
 
-Keep the existing `shaheedazaad.r-universe.dev` page, replace its automatic
-`main` tracking with tagged-release tracking, and publish `1.2.0` as the final
-CRAN release carrying an attach-time migration message.
+The proposed migration away from CRAN is cancelled. CRAN remains the primary
+installation source, with continuing CRAN releases. There is no final-CRAN
+version or attach-time migration message.
 
-## Package changes
+R-universe is an additional source for published GitHub Releases, not development
+snapshots. Development versions remain available from GitHub.
 
-- Add an `.onAttach()` startup message only when both conditions hold:
-  - the installed version is exactly `1.2.0`;
-  - the installed `Repository` metadata is `CRAN`.
-- Display:
+## R-universe configuration
 
-  > anovapowersim 1.2.0 is the final release on CRAN. Future versions will be
-  > released through R-universe. Installation instructions:
-  > https://shaheedazaad.github.io/anovapowersim/#installation
+The registry at `shaheedazaad/shaheedazaad.r-universe.dev` contains:
 
-- Update the README/pkgdown Installation section to make R-universe the stable
-  source:
+```json
+[
+  {
+    "package": "anovapowersim",
+    "url": "https://github.com/shaheedazaad/anovapowersim",
+    "branch": "*release"
+  }
+]
+```
 
-  ```r
-  install.packages(
-    "anovapowersim",
-    repos = c(
-      shaheedazaad = "https://shaheedazaad.r-universe.dev",
-      CRAN = "https://cloud.r-project.org"
-    )
-  )
-  ```
+Publish a GitHub Release for each version intended for R-universe. Ordinary
+commits to `main` do not change its published version. CRAN submission remains
+an independent release step; publishing a GitHub Release does not submit to CRAN.
 
-- Retain GitHub instructions for development snapshots and explain that CRAN
-  remains frozen at `1.2.0`.
-- Add the existing R-universe package page to `DESCRIPTION`, prepare version
-  `1.2.0`, update `NEWS.md` and `cran-comments.md`, and rebuild the tracked
-  pkgdown site.
+## Installation
 
-No exported R API changes.
+```r
+install.packages("anovapowersim")
+```
 
-## Take control of the existing universe
+For development snapshots:
 
-- Confirm the R-universe GitHub app remains installed for the `shaheedazaad`
-  account.
-- Create `shaheedazaad/shaheedazaad.r-universe.dev` with:
-
-  ```json
-  [
-    {
-      "package": "anovapowersim",
-      "url": "https://github.com/shaheedazaad/anovapowersim",
-      "branch": "*release"
-    }
-  ]
-  ```
-
-- Let this custom registry replace the current automatically generated
-  registry, which tracks `HEAD`.
-- Tag the final commit as `v1.2.0` and create a GitHub Release. Future stable
-  versions will use the same tag-and-release process.
-
-## Verification and rollout
-
-- Test that the message appears only for CRAN-installed `1.2.0`; confirm silence
-  for development, R-universe, GitHub, local, and later versions.
-- Run the test suite and `R CMD check`, rebuild pkgdown, and verify the
-  Installation link.
-- Confirm R-universe reports `RemoteRef` as the latest release rather than
-  `HEAD`.
-- Install `1.2.0` from R-universe in a temporary library and confirm quiet
-  attachment.
-- Submit `1.2.0` to CRAN, then install its published build and confirm the
-  migration message appears.
+```r
+remotes::install_github("shaheedazaad/anovapowersim")
+```

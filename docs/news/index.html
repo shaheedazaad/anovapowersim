@@ -41,7 +41,7 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.0" id="anovapowersim-120">anovapowersim 1.2.0<a class="anchor" aria-label="anchor" href="#anovapowersim-120"></a></h2>
-<ul><li><p>Stable releases are now published through R-universe. Development snapshots remain available from GitHub; see the README for installation instructions.</p></li>
+<ul><li><p>R-universe now tracks published GitHub Releases rather than development snapshots. CRAN remains the primary installation source, and development versions remain available from GitHub.</p></li>
 <li><p>Fixed loss of precision in balanced means calibration at small measurement scales. Calibration now uses the reference F statistic directly rather than converting through partial eta squared near one. Both effect-size conventions and the existing calibration sanity check are preserved.</p></li>
 <li><p>Added <code><a href="../reference/f_to_pes.html">f_to_pes()</a></code> to convert a scalar Cohen’s f to partial eta squared, including inline use such as <code>target_pes = f_to_pes(0.25)</code>.</p></li>
 <li><p>Fixed calculated power collapsing to zero for very small <code>alpha</code> values. Critical F values now use the upper tail directly, including in simulation diagnostics and the calculated starting estimates for adaptive searches.</p></li>

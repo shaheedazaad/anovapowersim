@@ -2,9 +2,10 @@
 
 Checked 2026-09-09 against official documentation.
 
-The existing `migration_plan.md` already chooses a workable separation: stable
-releases on `shaheedazaad.r-universe.dev`, development snapshots installed from
-GitHub.
+The migration away from CRAN was cancelled. CRAN remains the primary
+installation source. R-universe provides published GitHub Releases as an
+additional source, while development snapshots remain available from GitHub.
+See `migration_plan.md` for the revised decision.
 
 R-universe supports one version of each package per universe. The registry's
 `branch` field accepts a Git branch or tag; `"*release"` follows the latest
