@@ -49,7 +49,7 @@ power_n(
 
 ## Additional power analyses
 
-The development version includes several experimental power-analysis options.
+`anovapowersim` includes several experimental power-analysis options.
 Their full examples and guidance are kept in the dedicated guides linked below.
 
 ### Achieved power and sensitivity

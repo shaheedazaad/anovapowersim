@@ -60,8 +60,7 @@ functions project onto the tested term, normalize, and rescale to
 
 [![\[Experimental\]](https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-`cell_design()` is experimental and is available only in the development
-version of `anovapowersim`. Its API may change.
+`cell_design()` is experimental. Its API may change.
 
 ## See also
 

@@ -646,7 +646,7 @@ test_that("cell_design rejects unsafe constructed within-cell names", {
       time = "post", n = 5, m = 1,
       within = "time"
     ),
-    "must not contain ':'.*`time` = 'pre:baseline'"
+    "must not contain ':'.*`time` = [\"']pre:baseline[\"']"
   )
 
   expect_error(
@@ -657,7 +657,10 @@ test_that("cell_design rejects unsafe constructed within-cell names", {
       first = "a",   second = "b_c", n = 5, m = 3,
       within = c("first", "second")
     ),
-    "not unique.*'a_b_c'.*first = 'a_b'.*second = 'c'.*first = 'a'.*second = 'b_c'"
+    paste0(
+      "not unique.*[\"']a_b_c[\"'].*first = [\"']a_b[\"'].*second = [\"']c[\"']",
+      ".*first = [\"']a[\"'].*second = [\"']b_c[\"']"
+    )
   )
 })
 

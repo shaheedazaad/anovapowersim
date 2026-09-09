@@ -7,8 +7,7 @@
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `power_achieved_calc()` is experimental and is available only in the
-#' development version of `anovapowersim`. Its API and reporting format may
+#' `power_achieved_calc()` is experimental. Its API and reporting format may
 #' change.
 #'
 #' @inheritParams power_n_calc
@@ -97,8 +96,7 @@ power_achieved_calc <- function(between = NULL,
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `power_sensitivity_calc()` is experimental and is available only in the
-#' development version of `anovapowersim`. Its API and reporting format may
+#' `power_sensitivity_calc()` is experimental. Its API and reporting format may
 #' change.
 #'
 #' @inheritParams power_achieved_calc

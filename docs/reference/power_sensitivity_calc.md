@@ -99,9 +99,8 @@ calculated-power search; simulation-specific result columns are always
 
 [![\[Experimental\]](https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-`power_sensitivity_calc()` is experimental and is available only in the
-development version of `anovapowersim`. Its API and reporting format may
-change.
+`power_sensitivity_calc()` is experimental. Its API and reporting format
+may change.
 
 ## Examples
 

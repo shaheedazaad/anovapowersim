@@ -115,8 +115,7 @@ power result; noncentral-F calculated power is retained as a diagnostic.
 
 \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 
-\code{power_achieved()} is experimental and is available only in the development
-version of \code{anovapowersim}. Its API and reporting format may change.
+\code{power_achieved()} is experimental. Its API and reporting format may change.
 }
 
 \examples{

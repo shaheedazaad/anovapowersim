@@ -115,8 +115,7 @@ The object stores the requested `sim_correction` and applied
 
 [![\[Experimental\]](https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-`power_unbalanced()` is experimental and is available only in the
-development version of `anovapowersim`. Its API and reporting format may
+`power_unbalanced()` is experimental. Its API and reporting format may
 change.
 
 ## Simulated sphericity correction

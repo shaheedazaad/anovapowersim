@@ -45,8 +45,7 @@ to \code{target_pes}.
 
 \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 
-\code{cell_design()} is experimental and is available only in the development
-version of \code{anovapowersim}. Its API may change.
+\code{cell_design()} is experimental. Its API may change.
 }
 
 \examples{

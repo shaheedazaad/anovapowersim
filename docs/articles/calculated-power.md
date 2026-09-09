@@ -9,8 +9,8 @@ The calculation-only functions provide fast power calculations for
 balanced factorial ANOVA designs. They use the noncentral F distribution
 directly and do not simulate datasets or fit ANOVA models.
 
-These functions are experimental and available only in the development
-version of `anovapowersim`:
+The following calculation-only functions are available in
+`anovapowersim`:
 
 - [`power_n_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n_calc.md)
   finds the sample size required for a target effect size and power.
@@ -252,6 +252,6 @@ when you need:
 - a complete within-subject covariance structure;
 - simulated ANOVA fitting and Greenhouse–Geisser-adjusted tests;
 - direct comparison between calculated and simulated power; or
-- exact unequal sample sizes, cell means, and standard deviations
-  through
+- exact unequal sample sizes and cell means, with a common standard
+  deviation, through
   [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md).

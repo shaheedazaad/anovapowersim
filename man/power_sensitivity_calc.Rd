@@ -75,8 +75,7 @@ models.
 
 \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 
-\code{power_sensitivity_calc()} is experimental and is available only in the
-development version of \code{anovapowersim}. Its API and reporting format may
+\code{power_sensitivity_calc()} is experimental. Its API and reporting format may
 change.
 }
 

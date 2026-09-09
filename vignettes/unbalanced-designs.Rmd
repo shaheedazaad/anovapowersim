@@ -18,9 +18,8 @@ knitr::opts_chunk$set(
 library(anovapowersim)
 ```
 
-`power_unbalanced()` is experimental and available only in the development
-version of `anovapowersim`. Use it when the exact allocation, population means,
-and standard deviations are already known. It simulates one fixed design; it
+`power_unbalanced()` is experimental. Use it when the exact allocation,
+population means, and common standard deviation are already known. It simulates one fixed design; it
 does not search over sample sizes or return calculated power.
 
 ## Define the cells

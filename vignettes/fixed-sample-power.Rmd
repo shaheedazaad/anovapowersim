@@ -18,9 +18,8 @@ knitr::opts_chunk$set(
 library(anovapowersim)
 ```
 
-`power_achieved()` and `power_sensitivity()` are experimental and available
-only in the development version of `anovapowersim`. They use the same balanced
-design construction, ANOVA fitting, covariance handling, and simulation
+`power_achieved()` and `power_sensitivity()` are experimental. They use the same
+balanced design construction, ANOVA fitting, covariance handling, and simulation
 controls as `power_n()`.
 
 ## Achieved power

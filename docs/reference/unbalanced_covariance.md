@@ -41,8 +41,7 @@ An `anovapowersim_unbalanced_covariance_spec` object.
 
 [![\[Experimental\]](https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-`unbalanced_covariance()` is experimental and is available only in the
-development version of `anovapowersim`. Its API may change.
+`unbalanced_covariance()` is experimental. Its API may change.
 
 ## Examples
 

@@ -84,7 +84,7 @@
   covariance constructors warn when `sd` is omitted, and resolved covariance
   specifications warn when `default_correlation` fills unnamed pairs while
   preserving every explicitly supplied correlation.
-* Added the experimental, development-version-only `cell_design()`,
+* Added the experimental `cell_design()`,
   `unbalanced_covariance()`, and `power_unbalanced()` functions for
   simulation-only power analysis of a fixed unbalanced allocation with
   user-defined cell means and sample sizes under a common standard deviation
@@ -114,13 +114,13 @@
   within-subject rows of the same between-subject cell) now runs in
   `cell_design()` at construction time; it previously only surfaced inside
   `power_unbalanced()`.
-* Added the experimental, development-version-only `power_achieved()` function
+* Added the experimental `power_achieved()` function
   for simulation-based achieved-power estimation at a fixed sample size and
   partial eta squared.
-* Added the experimental, development-version-only `power_sensitivity()`
+* Added the experimental `power_sensitivity()`
   function for simulation-based minimum-detectable partial eta-squared
   searches at a fixed sample size and target power.
-* Added experimental, development-version-only `power_achieved_calc()` and
+* Added experimental `power_achieved_calc()` and
   `power_sensitivity_calc()` functions for equivalent fixed-sample analyses
   using calculated noncentral-F power without simulations.
 * Added `power_n_calc()` for calculated-power, simulation-free sample-size searches in

@@ -8,8 +8,7 @@ library(anovapowersim)
 [`power_achieved()`](https://shaheedazaad.github.io/anovapowersim/reference/power_achieved.md)
 and
 [`power_sensitivity()`](https://shaheedazaad.github.io/anovapowersim/reference/power_sensitivity.md)
-are experimental and available only in the development version of
-`anovapowersim`. They use the same balanced design construction, ANOVA
+are experimental. They use the same balanced design construction, ANOVA
 fitting, covariance handling, and simulation controls as
 [`power_n()`](https://shaheedazaad.github.io/anovapowersim/reference/power_n.md).
 

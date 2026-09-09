@@ -7,8 +7,7 @@
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `power_achieved()` is experimental and is available only in the development
-#' version of `anovapowersim`. Its API and reporting format may change.
+#' `power_achieved()` is experimental. Its API and reporting format may change.
 #'
 #' @inheritParams power_curve
 #' @param n Number of subjects per between-subject cell. For a purely
@@ -142,8 +141,7 @@ power_achieved <- function(between = NULL,
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `power_sensitivity()` is experimental and is available only in the
-#' development version of `anovapowersim`. Its API and reporting format may
+#' `power_sensitivity()` is experimental. Its API and reporting format may
 #' change.
 #'
 #' @inheritParams power_achieved

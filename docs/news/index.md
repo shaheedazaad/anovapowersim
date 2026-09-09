@@ -136,7 +136,7 @@
   fills unnamed pairs while preserving every explicitly supplied
   correlation.
 
-- Added the experimental, development-version-only
+- Added the experimental
   [`cell_design()`](https://shaheedazaad.github.io/anovapowersim/reference/cell_design.md),
   [`unbalanced_covariance()`](https://shaheedazaad.github.io/anovapowersim/reference/unbalanced_covariance.md),
   and
@@ -186,17 +186,17 @@
   at construction time; it previously only surfaced inside
   [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md).
 
-- Added the experimental, development-version-only
+- Added the experimental
   [`power_achieved()`](https://shaheedazaad.github.io/anovapowersim/reference/power_achieved.md)
   function for simulation-based achieved-power estimation at a fixed
   sample size and partial eta squared.
 
-- Added the experimental, development-version-only
+- Added the experimental
   [`power_sensitivity()`](https://shaheedazaad.github.io/anovapowersim/reference/power_sensitivity.md)
   function for simulation-based minimum-detectable partial eta-squared
   searches at a fixed sample size and target power.
 
-- Added experimental, development-version-only
+- Added experimental
   [`power_achieved_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_achieved_calc.md)
   and
   [`power_sensitivity_calc()`](https://shaheedazaad.github.io/anovapowersim/reference/power_sensitivity_calc.md)

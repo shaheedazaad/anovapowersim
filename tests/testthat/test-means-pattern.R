@@ -119,7 +119,7 @@ test_that("pattern resolution rejects invalid factors and levels clearly", {
     pattern <- means_pattern(time = bad, value = 1)
     expect_error(
       anovapowersim:::resolve_means_pattern(pattern, design, "time"),
-      "indices 1 through 4.*'time1'.*'time4'"
+      "indices 1 through 4.*[\"']time1[\"'].*[\"']time4[\"']"
     )
   }
   expect_error(

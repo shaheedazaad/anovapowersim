@@ -14,8 +14,7 @@
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `cell_design()` is experimental and is available only in the development
-#' version of `anovapowersim`. Its API may change.
+#' `cell_design()` is experimental. Its API may change.
 #'
 #' @param ... Repeated named cell definitions. Each cell must contain the same
 #'   factor names in the same order, plus `n` and `m`. Every factor must
@@ -358,8 +357,7 @@ resolve_unbalanced_grid <- function(data, factor_names, within) {
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `unbalanced_covariance()` is experimental and is available only in the
-#' development version of `anovapowersim`. Its API may change.
+#' `unbalanced_covariance()` is experimental. Its API may change.
 #'
 #' @param sd Common positive finite marginal standard deviation. If omitted,
 #'   `1` is used and a warning is issued.
@@ -438,8 +436,7 @@ unbalanced_covariance <- function(sd = 1,
 #' @section Lifecycle:
 #' \ifelse{html}{\out{<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>}}{\strong{Experimental}}
 #'
-#' `power_unbalanced()` is experimental and is available only in the
-#' development version of `anovapowersim`. Its API and reporting format may
+#' `power_unbalanced()` is experimental. Its API and reporting format may
 #' change.
 #'
 #' @param design A complete design table created by [cell_design()].

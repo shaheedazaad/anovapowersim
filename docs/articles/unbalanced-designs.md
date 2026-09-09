@@ -6,10 +6,9 @@ library(anovapowersim)
 ```
 
 [`power_unbalanced()`](https://shaheedazaad.github.io/anovapowersim/reference/power_unbalanced.md)
-is experimental and available only in the development version of
-`anovapowersim`. Use it when the exact allocation, population means, and
-standard deviations are already known. It simulates one fixed design; it
-does not search over sample sizes or return calculated power.
+is experimental. Use it when the exact allocation, population means, and
+common standard deviation are already known. It simulates one fixed
+design; it does not search over sample sizes or return calculated power.
 
 ## Define the cells
 

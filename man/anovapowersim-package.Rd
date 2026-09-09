@@ -41,6 +41,7 @@ Useful links:
 \itemize{
   \item \url{https://shaheedazaad.github.io/anovapowersim/}
   \item \url{https://github.com/shaheedazaad/anovapowersim}
+  \item \url{https://shaheedazaad.r-universe.dev/anovapowersim}
   \item Report bugs at \url{https://github.com/shaheedazaad/anovapowersim/issues}
 }
 

@@ -55,6 +55,8 @@ Useful links:
 
 - <https://github.com/shaheedazaad/anovapowersim>
 
+- <https://shaheedazaad.r-universe.dev/anovapowersim>
+
 - Report bugs at <https://github.com/shaheedazaad/anovapowersim/issues>
 
 ## Author
